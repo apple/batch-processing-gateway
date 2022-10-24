@@ -1,0 +1,46 @@
+defaultSparkConf:
+  spark.kubernetes.submission.connectionTimeout: 30000
+  spark.kubernetes.submission.requestTimeout: 30000
+  spark.kubernetes.driver.connectionTimeout: 30000
+  spark.kubernetes.driver.requestTimeout: 30000
+  spark.sql.catalog.iceberg.io-impl: org.apache.iceberg.aws.s3.S3FileIO
+s3Bucket: {{ s3_bucket }}
+s3Folder: {{ s3_folder }}
+sparkLogS3Bucket: {{ historyServer_s3_bucket }}
+sparkLogIndex: index/index.txt
+batchFileLimit: 2016
+sparkHistoryDns: {{ historyServer_endpoint }}
+gatewayDns: {{ ingress_endpoint }}
+sparkHistoryUrl: https://{{ ingress_endpoint }}
+memoryMbSecondCost: 0.000000000372
+vCoreSecondCost: 0.000003
+allowedUsers:
+  - '*'
+blockedUsers:
+  - blocked_user_1
+queueTokenSOPS:
+  secrets:
+    - {{queue_token_secret}}
+dbStorageSOPS:
+  connectionString: {{db_storage_connection_string }}
+  user: {{ db_storage_user}}
+  password: {{ db_storage_password}}
+  dbName: {{ database_name }}
+server:
+  applicationConnectors:
+    -   type: http
+        port: 8080
+logging:
+  level: {{ logging_level }}
+  loggers:
+    com.apple.spark: {{ logging_level }}
+sparkImages:
+  {%- for s in spark_images %}
+  {{ s }}
+  {%- endfor %}
+sparkClusters:
+  {%- for c in spark_cluster_configs %}
+  {{ c }}
+  {%- endfor %}
+queues:
+{{ queues }}

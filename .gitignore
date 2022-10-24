@@ -1,0 +1,12 @@
+.idea/
+*.iml
+.DS_Store
+target/
+classes/
+dependency-reduced-pom.xml
+
+config.yml
+
+venv/
+__pycache__/
+minikube-config.yaml

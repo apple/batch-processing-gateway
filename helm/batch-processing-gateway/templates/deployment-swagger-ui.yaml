@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bpg-swagger-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bpg-swagger-ui
+  template:
+    metadata:
+      labels:
+        app: bpg-swagger-ui
+    spec:
+      containers:
+        - image: {{ .Values.swagger.image }}
+          name: bpg-swagger-ui
+          env:
+            - name: URL
+              value: /openapi.json  # the openapi endpoint exposed
+            - name: SUPPORTED_SUBMIT_METHODS
+              value: '[]'
+          ports:
+            - containerPort: 8080

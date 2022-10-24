@@ -1,0 +1,85 @@
+  - weight: 100
+    id: {{ cluster_id }}
+    eksCluster: {{spark_eks_name}}
+    masterUrl: {{spark_eks_endpoint}}
+    caCertDataSOPS: {{spark_eks_ca_crt}}
+    userName: spark-operator-api-user
+    userTokenSOPS: {{spark_eks_sa_token_base64_encoded}}
+    sparkApplicationNamespace: {{ spark_applications_ns }}
+    sparkServiceAccount: spark
+    sparkVersions:
+    {%- for spark_v in spark_versions %}
+      - {{ spark_v }}
+    {%- endfor %}
+    queues:
+    {%- for queue in jobs_queues %}
+      - {{queue}}
+    {%- endfor %}
+    # 1 day TTL for terminated spark application
+    ttlSeconds: 86400
+    timeoutMillis: 180000
+    sparkUIUrl: {{spark_eks_webui_endpoint}}
+    batchScheduler: yunikorn
+    sparkConf:
+      spark.kubernetes.executor.podNamePrefix: '{spark-application-resource-name}'
+      spark.eventLog.enabled: "true"
+      spark.kubernetes.allocation.batch.size: 2000
+      spark.kubernetes.allocation.batch.delay: 1s
+      spark.eventLog.dir: {{shs_s3_location}}
+      spark.history.fs.logDirectory: {{shs_s3_location}}
+      spark.hadoop.fs.s3a.aws.credentials.provider: com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+      spark.hadoop.hive.metastore.uris: {{hms_endpoint}}
+      spark.sql.warehouse.dir: {{ hms_warehouse_s3_location }}
+      spark.sql.catalogImplementation: hive
+      spark.decommission.enabled: "true"
+      spark.executor.decommission.killInterval: "360"
+      spark.storage.decommission.enabled: "true"
+      spark.storage.decommission.rddBlocks.enabled: "true"
+      spark.storage.decommission.shuffleBlocks.enabled: "true"
+      spark.storage.decommission.shuffleBlocks.maxThreads: "16"
+      spark.storage.decommission.maxReplicationFailuresPerBlock: "3"
+      spark.driver.extraJavaOptions:
+      spark.executor.extraJavaOptions:
+    sparkUIOptions:
+      ServicePort: 4040
+      ingressAnnotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+        nginx.ingress.kubernetes.io/proxy-redirect-from: http://$host/
+        nginx.ingress.kubernetes.io/proxy-redirect-to: /{{ spark_applications_ns }}/{spark-application-resource-name}/
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          proxy_set_header Accept-Encoding ""; # disable compression
+          sub_filter_last_modified off;
+          sub_filter '<head>' '<head> <base href="/{{ spark_applications_ns }}/{spark-application-resource-name}/">'; # add base url
+          sub_filter 'href="/' 'href="'; # remove absolute URL path so base url applies
+          sub_filter 'src="/' 'src="'; # remove absolute URL path so base url applies
+          {% raw %}
+          sub_filter '/{{num}}/jobs/' '/jobs/';
+          {% endraw %}
+          sub_filter "setUIRoot('')" "setUIRoot('/{{ spark_applications_ns }}/{spark-application-resource-name}/')"; # Set UI root for JS scripts
+          sub_filter "document.baseURI.split" "document.documentURI.split"; # Executors page issue fix
+          sub_filter_once off;
+      ingressTLS:
+        - hosts:
+            - {{spark_eks_webui_endpoint}}
+          secretName: {{spark_eks_webui_tls_secret}}
+    driver:
+      env:
+        - name: STATSD_SERVER_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: STATSD_SERVER_PORT
+          value: "8125"
+        - name: AWS_STS_REGIONAL_ENDPOINTS
+          value: "regional"
+    executor:
+      env:
+        - name: STATSD_SERVER_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: STATSD_SERVER_PORT
+          value: "8125"
+        - name: AWS_STS_REGIONAL_ENDPOINTS
+          value: "regional"

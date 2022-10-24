@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bpg
+binaryData:
+  # Config is stored as a base64 encoded string
+  encoded-config-yaml: '{{ .Values.encodedConfig }}'

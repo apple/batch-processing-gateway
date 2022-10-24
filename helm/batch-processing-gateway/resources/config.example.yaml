@@ -1,0 +1,230 @@
+defaultSparkConf:
+  spark.kubernetes.submission.connectionTimeout: 30000
+  spark.kubernetes.submission.requestTimeout: 30000
+  spark.kubernetes.driver.connectionTimeout: 30000
+  spark.kubernetes.driver.requestTimeout: 30000
+  spark.sql.debug.maxToStringFields: 75
+
+sparkClusters:
+  - weight: 100
+    id: cluster-id-1
+    eksCluster: cluster-name-1
+    masterUrl: https://cluster-1.k8s.api.endpoint.com
+    caCertDataSOPS: caCertString
+    userName: spark-operator-api-user
+    userTokenSOPS: userTokenString
+    sparkApplicationNamespace: spark-applications
+    sparkServiceAccount: spark
+    sparkVersions:
+      - 3.2
+      - 3.1
+    queues:
+      - poc
+      - vip
+    ttlSeconds: 86400  # 1 day TTL for terminated spark application
+    timeoutMillis: 180000
+    sparkUIUrl: https://spark.cluster-1.host.com
+    batchScheduler: yunikorn
+    sparkConf:
+      spark.kubernetes.executor.podNamePrefix: '{spark-application-resource-name}'
+      spark.eventLog.enabled: "true"
+      spark.kubernetes.allocation.batch.size: 2000
+      spark.kubernetes.allocation.batch.delay: 1s
+      spark.eventLog.dir: s3a://s3-bucket-logs/eventlog
+      spark.history.fs.logDirectory: s3a://s3-bucket-logs/eventlog
+      spark.hadoop.fs.s3a.aws.credentials.provider: com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+      spark.hadoop.hive.metastore.uris: thrift://hms.endpoint.com:9083
+      spark.sql.warehouse.dir: s3a://s3-bucket-warehouse/warehouse
+      spark.sql.catalogImplementation: hive
+      spark.driver.extraJavaOptions: -Dadditional.driver.java.options=some.value
+      spark.executor.extraJavaOptions: -Dadditional.executor.java.options=some.value
+    sparkUIOptions:
+      ServicePort: 4040
+      ingressAnnotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+        nginx.ingress.kubernetes.io/proxy-redirect-from: http://$host/
+        nginx.ingress.kubernetes.io/proxy-redirect-to: /spark-applications/{spark-application-resource-name}/
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          proxy_set_header Accept-Encoding ""; # disable compression
+          sub_filter_last_modified off;
+          sub_filter '<head>' '<head> <base href="/spark-applications/{spark-application-resource-name}/">'; # add base url
+          sub_filter 'href="/' 'href="'; # remove absolute URL path so base url applies
+          sub_filter 'src="/' 'src="'; # remove absolute URL path so base url applies
+          
+          sub_filter '/{{num}}/jobs/' '/jobs/';
+          
+          sub_filter "setUIRoot('')" "setUIRoot('/spark-applications/{spark-application-resource-name}/')"; # Set UI root for JS scripts
+          sub_filter "document.baseURI.split" "document.documentURI.split"; # Executors page issue fix
+          sub_filter_once off;
+      ingressTLS:
+        - hosts:
+            - spark.cluster-1.host.com
+          secretName: spark.cluster-1.host.com-tls-secret
+    driver:
+      env:
+        - name: STATSD_SERVER_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: STATSD_SERVER_PORT
+          value: "8125"
+        - name: AWS_STS_REGIONAL_ENDPOINTS
+          value: "regional"
+    executor:
+      env:
+        - name: STATSD_SERVER_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: STATSD_SERVER_PORT
+          value: "8125"
+        - name: AWS_STS_REGIONAL_ENDPOINTS
+          value: "regional"
+
+  - weight: 200
+    id: cluster-id-2
+    eksCluster: cluster-name-2
+    masterUrl: https://cluster-2.k8s.api.endpoint.com
+    caCertDataSOPS: caCertString
+    userName: spark-operator-api-user
+    userTokenSOPS: userTokenString
+    sparkApplicationNamespace: spark-applications
+    sparkServiceAccount: spark
+    sparkVersions:
+      - 3.2
+      - 3.1
+    queues:
+      - vip
+    ttlSeconds: 86400  # 1 day TTL for terminated spark application
+    timeoutMillis: 180000
+    sparkUIUrl: https://spark.cluster-2.host.com
+    batchScheduler: yunikorn
+    sparkConf:
+      spark.kubernetes.executor.podNamePrefix: '{spark-application-resource-name}'
+      spark.eventLog.enabled: "true"
+      spark.kubernetes.allocation.batch.size: 2000
+      spark.kubernetes.allocation.batch.delay: 1s
+      spark.eventLog.dir: s3a://s3-bucket-logs/eventlog
+      spark.history.fs.logDirectory: s3a://s3-bucket-logs/eventlog
+      spark.hadoop.fs.s3a.aws.credentials.provider: com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+      spark.hadoop.hive.metastore.uris: thrift://hms.endpoint.com:9083
+      spark.sql.warehouse.dir: s3a://s3-bucket-warehouse/warehouse
+      spark.sql.catalogImplementation: hive
+      spark.driver.extraJavaOptions: -Dadditional.driver.java.options=some.value
+      spark.executor.extraJavaOptions: -Dadditional.executor.java.options=some.value
+    sparkUIOptions:
+      ServicePort: 4040
+      ingressAnnotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+        nginx.ingress.kubernetes.io/proxy-redirect-from: http://$host/
+        nginx.ingress.kubernetes.io/proxy-redirect-to: /spark-applications/{spark-application-resource-name}/
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          proxy_set_header Accept-Encoding ""; # disable compression
+          sub_filter_last_modified off;
+          sub_filter '<head>' '<head> <base href="/spark-applications/{spark-application-resource-name}/">'; # add base url
+          sub_filter 'href="/' 'href="'; # remove absolute URL path so base url applies
+          sub_filter 'src="/' 'src="'; # remove absolute URL path so base url applies
+          
+          sub_filter '/{{num}}/jobs/' '/jobs/';
+          
+          sub_filter "setUIRoot('')" "setUIRoot('/spark-applications/{spark-application-resource-name}/')"; # Set UI root for JS scripts
+          sub_filter "document.baseURI.split" "document.documentURI.split"; # Executors page issue fix
+          sub_filter_once off;
+      ingressTLS:
+        - hosts:
+            - spark.cluster-2.host.com
+          secretName: spark.cluster-2.host.com-tls-secret
+    driver:
+      env:
+        - name: STATSD_SERVER_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: STATSD_SERVER_PORT
+          value: "8125"
+        - name: AWS_STS_REGIONAL_ENDPOINTS
+          value: "regional"
+    executor:
+      env:
+        - name: STATSD_SERVER_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: STATSD_SERVER_PORT
+          value: "8125"
+        - name: AWS_STS_REGIONAL_ENDPOINTS
+          value: "regional"
+
+sparkImages:
+  -   name: uri-to-3_1-pyspark-image
+      types:
+        - Python
+      version: "3.1"
+  -   name: uri-to-3_1-spark-image
+      types:
+        - Java
+        - Scala
+      version: "3.1"
+  -   name: uri-to-3_2-pyspark-image
+      types:
+        - Python
+      version: "3.2"
+  -   name: uri-to-3_1-spark-image
+      types:
+        - Java
+        - Scala
+      version: "3.2"
+
+s3Bucket: s3-bucket-artifacts
+s3Folder: uploaded
+sparkLogS3Bucket: s3-bucket-logs
+sparkLogIndex: index/index.txt
+batchFileLimit: 2016
+sparkHistoryDns: sparkhistory.host.com
+gatewayDns: gateway.host.com
+sparkHistoryUrl: https://sparkhistory.host.com
+memoryMbSecondCost: 0.000000000372
+vCoreSecondCost: 0.000003
+allowedUsers:
+  - '*'
+blockedUsers:
+  - blocked_user_1
+queues:
+  -   name: poc
+      driverNodeLabelKey: "node_group_category"
+      driverNodeLabelValues:
+        - "spark_driver"
+      executorNodeLabelKey: "node_group_category"
+      executorNodeLabelValues:
+        - "spark_executor"
+  -   name: vip
+      secure: true
+
+queueTokenSOPS:
+  secrets:
+    - secret$$$1
+
+dbStorageSOPS:
+  connectionString: jdbc:mysql://sql-host.com/dbname?useUnicode=yes&characterEncoding=UTF-8&useLegacyDatetimeCode=false&connectTimeout=10000&socketTimeout=30000
+  user: username
+  password: password
+  dbName: dbname
+
+server:
+  applicationConnectors:
+    -   type: http
+        port: 8080
+
+s3Folder: uploaded
+
+server:
+  applicationConnectors:
+    - type: http
+      port: 8080
+
+logging:
+  level: INFO
+  loggers:
+    com.apple.spark: INFO

@@ -1,0 +1,29 @@
+image:
+  registry: ''
+  repository: ''
+  tag: ''
+
+replicas: 3
+
+namespace: bpg
+
+resources:
+  requests:
+    memory: '16G'
+    cpu: 4
+  limits:
+    memory: '16G'
+    cpu: 4
+
+
+ingress:
+  endpoint: 'bpg.values.example.com'
+  tlsSecretName: 'bpg.tls.name.values.example'
+
+# Config is provided as a base64-encoded,
+# compressed content which will be projected into pods as /app/app-config.gz.
+encodedConfig: ''
+
+# For Swagger UI which visualizes API specs.
+swagger:
+  image: 'swaggerapi/swagger-ui:v4.14.0'

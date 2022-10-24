@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bpg-helper
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: bpg-helper
+  annotations:
+    reloader.stakater.com/search: "true"
+spec:
+  replicas: 1  # helper should have only 1 pod
+  selector:
+    matchLabels:
+      app: bpg-helper
+  template:
+    metadata:
+      labels:
+        app: bpg-helper
+    spec:
+      containers:
+        - name: bpg-helper
+          image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
+          command: ["/opt/entrypoint.sh"]
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+          ports:
+            - containerPort: 8080
+            - containerPort: 8081
+              name: healthcheck
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: healthcheck
+            failureThreshold: 3
+            periodSeconds: 15
+          volumeMounts:
+            - name: configuration
+              mountPath: "/app/"
+              readOnly: true
+          env:
+            - name: MAX_HEAP_SIZE
+              value: "-Xmx20G"
+            - name: APP_MONITOR_ENABLED  # enabled for helper instance for app state monitoring
+              value: "true"
+            - name: CONFIG_FILE_PATH
+              value: "/etc/app_config/app-config.yaml"
+            - name: GZ_FILE_PATH
+              value: "/app/app-config.gz"
+            - name: STATSD_SERVER_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: STATSD_SERVER_PORT
+              value: "8125"
+      volumes:
+        - name: configuration
+          configMap:
+            name: 'bpg'
+            items:
+              - key: 'encoded-config-yaml'
+                path: 'app-config.gz'

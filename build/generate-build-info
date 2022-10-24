@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+RESOURCE_DIR="$1"
+mkdir -p "$RESOURCE_DIR"
+
+BUILD_INFO_FILE="${RESOURCE_DIR}"/build-info.properties
+
+echo Generating build info file: "$BUILD_INFO_FILE"
+
+echo_properties() {
+  echo version=$1
+  echo revision=$(git rev-parse HEAD)
+}
+
+echo_properties $2 > "$BUILD_INFO_FILE"

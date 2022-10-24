@@ -1,0 +1,8 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+    rev: v2.4.0
+    hooks:
+      - id: pretty-format-java
+        args: [--autofix, --google-java-formatter-version=1.15.0]

@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    ingress.beta.kubernetes.io/sni: "true"
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: 800m
+    nginx.ingress.kubernetes.io/upstream-hash-by: $binary_remote_addr
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "200"
+  name: bpg
+spec:
+  rules:
+    - host: {{ .Values.ingress.endpoint }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: bpg
+                port:
+                  number: 80
+            path: /apiv2/(.*)
+            pathType: ImplementationSpecific
+  tls:
+    - hosts:
+        - {{ .Values.ingress.endpoint }}
+      secretName: {{ .Values.ingress.tlsSecretName }}

@@ -1,0 +1,3 @@
+version: INJECT_VERSION
+buildTime: INJECT_BUILD_TIME
+gitCommit: INJECT_GIT_COMMIT
