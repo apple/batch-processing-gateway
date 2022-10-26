@@ -26,4 +26,6 @@ kubectl delete namespace local-spark-operator | echo "local-spark-operator names
 
 minikube ssh "sudo rm -rf /tmp/hostpath-provisioner/local-mariadb /tmp/hostpath-provisioner/local-ozone"
 
+rm bpg-config.yaml
+
 echo "All components removed."
