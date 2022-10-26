@@ -27,19 +27,19 @@ import java.util.concurrent.TimeUnit;
 public class Constants {
 
   // This value will be used as certain prefixes and suffixes
-  public static final String SERVICE_ABBR = "bpg";
+  public static final String SERVICE_ABBR = "skate";
   public static final String REALM = SERVICE_ABBR;
   public static final String KUBERNETES_USER_AGENT = SERVICE_ABBR;
 
   public static final String DEFAULT_DB_NAME = SERVICE_ABBR;
 
   // The header to use as an option to pass in user account
-  public static final String USER_HEADER_KEY = "User-Account";
+  public static final String USER_HEADER_KEY = "X-Appleconnect-Acaccountname";
 
   // Hardcoded Airflow system accounts
   // This is to help BPG identify those apps submitted by Airflow DAGs
   public static final Set<String> AIRFLOW_SYSTEM_ACCOUNTS =
-      new HashSet<>(Arrays.asList("airflow_system_account"));
+      new HashSet<>(Arrays.asList("aimldpiairflow_bot", "aimldpiairflow_bot_2"));
 
   public static final String UNKNOWN_STATE = "UNKNOWN";
   public static final String FAILED_STATE = "FAILED";
@@ -110,9 +110,9 @@ public class Constants {
       String.format("statsd.%s.monitor.dropped_event", SERVICE_ABBR);
 
   // API Endpoints
-  public static final String SPARK_API_V2 = "/apiv2/spark";
-  public static final String S3_API_V2 = "/apiv2/s3";
-  public static final String HEALTH_CHECK_API_V2 = "/apiv2/healthcheck";
-  public static final String ADMIN_API_V2 = "/apiv2/admin";
-  public static final String LOG_API_V2 = "/apiv2/log";
+  public static final String SPARK_API_V2 = "/skatev2/spark";
+  public static final String S3_API_V2 = "/skatev2/s3";
+  public static final String HEALTH_CHECK_API_V2 = "/skatev2/healthcheck";
+  public static final String ADMIN_API_V2 = "/skatev2/admin";
+  public static final String LOG_API_V2 = "/skatev2/log";
 }
