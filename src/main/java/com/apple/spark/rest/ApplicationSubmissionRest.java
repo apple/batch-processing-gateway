@@ -19,15 +19,7 @@
 
 package com.apple.spark.rest;
 
-import static com.apple.spark.core.ApplicationSubmissionHelper.getDriverSpec;
-import static com.apple.spark.core.ApplicationSubmissionHelper.getExecutorSpec;
-import static com.apple.spark.core.ApplicationSubmissionHelper.getImage;
-import static com.apple.spark.core.ApplicationSubmissionHelper.getProxyUser;
-import static com.apple.spark.core.ApplicationSubmissionHelper.getSparkConf;
-import static com.apple.spark.core.ApplicationSubmissionHelper.getSparkUIConfiguration;
-import static com.apple.spark.core.ApplicationSubmissionHelper.getType;
-import static com.apple.spark.core.ApplicationSubmissionHelper.getVolumes;
-import static com.apple.spark.core.ApplicationSubmissionHelper.getYuniKornSchedulerConfig;
+import static com.apple.spark.core.ApplicationSubmissionHelper.*;
 import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_ROOT_QUEUE;
 import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_SCHEDULER;
 import static com.apple.spark.core.Constants.*;
@@ -326,6 +318,14 @@ public class ApplicationSubmissionRest extends RestBase {
         Tag.of("spark_version", sparkVersionTagValue),
         Tag.of("spark_cluster", sparkCluster.getId()),
         Tag.of("queue", queueTagValue));
+
+    // Setting a default Spark conf to support spark query listener
+    // rdar://98086206 (Hot fix: Enable spark listener for the latest Spark 3.2 image)
+    // This should only be set when default spark images are used
+    // TODO: clean this up and make this configurable in Skate config
+    if (request.getImage() == null || request.getImage().isEmpty()) {
+      applyQueryListenerSparkConf(sparkSpec);
+    }
 
     logDao.logApplicationSubmission(submissionId, sparkSpec.getProxyUser(), request);
     SubmitApplicationResponse response =
