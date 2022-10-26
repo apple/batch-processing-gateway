@@ -66,7 +66,7 @@ pipelines:
             BASE_IMG: docker.apple.com/base-images/ubi9-minimal/java17-runtime:latest
           dockerfilePath: Dockerfile
           publish:
-            - repo: docker.apple.com/aiml-di-dpi/skate/release
+            - repo: docker.apple.com/aiml-di-dpi/skate/master
     finally:
       pipelineChain:
         - pipeline: dpi-skate-publish-helm-chart
