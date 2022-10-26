@@ -69,30 +69,10 @@ pipelines:
             - repo: docker.apple.com/aiml-di-dpi/skate/master
     finally:
       pipelineChain:
-        - pipeline: dpi-skate-publish-helm-chart
-          buildArguments:
-            - name: "SKATE_VERSION"
-              value: ${VERSION}
         - pipeline: dpi-skate-publish-spinnaker-chart
           buildArguments:
             - name: "SKATE_VERSION"
               value: ${VERSION}
-
-
-  - name: dpi-skate-publish-helm-chart
-    branchName: release
-    timeout: 95
-    trigger:
-      gitPush: false
-    build:
-      template: freestyle:v4:publish
-      steps:
-        - ./apple-internal/publish_chart.sh ${BUILD_PARAM_SKATE_VERSION}
-    package:
-      freeform:
-        - publish:
-            - repo: apple-helm-release-local
-
 
   - name: dpi-skate-publish-spinnaker-chart
     branchName: release
