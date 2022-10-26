@@ -1,0 +1,8 @@
+sparkVersion: 3.2
+mainApplicationFile: s3a://di-batch-genie-test/load-test/spark-app-for-load-test.py
+driver:
+  cores: 1
+  memory: 1g
+executor:
+  cores: 1
+  memory: 1g

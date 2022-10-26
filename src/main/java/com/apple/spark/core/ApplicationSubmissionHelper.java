@@ -192,6 +192,26 @@ public class ApplicationSubmissionHelper {
     return sparkConf;
   }
 
+  /**
+   * This is to apply the Spark conf to enable query listener used by CDO team This requires the
+   * Spark images to be the default (or newer) images provided by AIML:
+   * docker.apple.com/aiml-di-dpi/spark/branch-3.2.0-aiml-spark/spark:aiml-pyspark-3.2.0.66
+   * docker.apple.com/aiml-di-dpi/spark/branch-3.2.0-aiml-spark/spark:aiml-spark-3.2.0.51
+   *
+   * @param sparkSpec the spark spec to be populated
+   */
+  public static void applyQueryListenerSparkConf(SparkApplicationSpec sparkSpec) {
+    if (sparkSpec.getSparkConf() == null) {
+      sparkSpec.setSparkConf(new HashMap<>());
+    }
+
+    sparkSpec
+        .getSparkConf()
+        .put(
+            "spark.sql.queryExecutionListeners",
+            "com.apple.aiml.iceberg.usage.listener.query_execution.QueryExecutionListenerCDO");
+  }
+
   public static SparkUIConfiguration getSparkUIConfiguration(
       String submissionId, AppConfig.SparkCluster sparkCluster) {
     SparkUIConfiguration sparkJobUIConfiguration = null;

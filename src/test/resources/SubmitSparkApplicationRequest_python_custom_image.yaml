@@ -1,0 +1,9 @@
+sparkVersion: 3.2
+mainApplicationFile:
+image: 606462133786.dkr.ecr.us-west-2.amazonaws.com/di-batch:aiml-pyspark-3.2.0.65
+driver:
+  cores: 1
+  memory: 1g
+executor:
+  cores: 1
+  memory: 1g
