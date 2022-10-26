@@ -4,8 +4,6 @@
 Follow this guide to set up service locally for development.
 Local development is easier with a K8s cluster to which the Spark apps can be submitted. You can set up your own K8s cluster, or follow the minikube setup guide below.
 
-> One of the steps below is to install Ozone S3 service. Up to today [Ozone does not support arm64 (Apple Silicon) well](https://issues.apache.org/jira/browse/HDDS-6263). If you are using Apple Silicon and want to set up dev services locally, you can choose to use an Intel machine, or use a remote K8s cluster / S3 endpoint as an alternative.
-
 ### Prerequisites
 
 Install [Homebrew](https://brew.sh) as the package manager. Ensure it is up-to-date and working nicely.
@@ -67,11 +65,9 @@ Create namespace `local-ozone`, and deploy Ozone S3:
 
     $ sh ./setup-ozone-s3.sh
 
-This can take a few minutes. Ensure all the pods are running before moving on to the next step.
+This can take a few minutes. Ensure all the pods are running for 1 minute before moving on to the next step.
 
-    $ kubectl -n local-ozone get pods
-
-> Up to today [Ozone does not support arm64 (Apple Silicon) well](https://issues.apache.org/jira/browse/HDDS-6263). If you are using Apple Silicon and want to set up dev services locally, you can choose to use an Intel machine, or use a remote K8s cluster / S3 endpoint as an alternative.
+    $ watch -n 5 kubectl -n local-ozone get pods
 
 ### Initiate S3 Bucket
 Create a S3 bucket and put all initial objects needed:
@@ -184,8 +180,8 @@ The health check endpoint runs on port 8081 by default. Check the server health 
 {"deadlocks":{"healthy":true,"duration":0,"timestamp":"2022-03-31T12:28:10.642-07:00"},"sparkClusters":{"healthy":true,"duration":0,"timestamp":"2022-03-31T12:28:10.642-07:00"}}
 ```
 
-### Minikube Cleanup (Optional)
+### Cleanup (Optional)
 
 If you used minikube and followed all steps above, you can quickly remove everything set up:
 
-    $ ./dev-setup/minikube-cleanup.sh
+    $ ./dev-setup/cleanup.sh
