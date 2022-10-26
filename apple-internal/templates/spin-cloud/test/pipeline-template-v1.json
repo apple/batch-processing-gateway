@@ -1,0 +1,485 @@
+{
+  "id": "skate-pipeline-template-v1",
+  "metadata": {
+    "description": "A pipeline template derived from pipeline \"Skate\" in application \"aimlsparktest\"",
+    "name": "skate-pipeline-template-with-token-v1",
+    "owner": "chaoran_yu@apple.com",
+    "scopes": [
+      "global"
+    ]
+  },
+  "pipeline": {
+    "appConfig": {},
+    "keepWaitingPipelines": false,
+    "lastModifiedBy": "amarindersingh_bindra@apple.com",
+    "limitConcurrent": true,
+    "parameterConfig": [
+      {
+        "default": "${ templateVariables.HelmChartVersion }",
+        "description": "The version of the Skate Helm Chart to use for deployment. The chart must exist in https://helm.apple.com/apple-aiml-skate-spinnaker/",
+        "hasOptions": false,
+        "label": "Helm Chart Version (SemVer Format)",
+        "name": "helm_chart_version",
+        "options": [
+          {
+            "value": ""
+          }
+        ],
+        "pinned": true,
+        "required": true
+      },
+      {
+        "default": "${ templateVariables.SpinnakerClusterName }",
+        "description": "The spinnaker cluster name for this pipeline.",
+        "hasOptions": false,
+        "label": "Spinnaker Cluster Account",
+        "name": "spinnaker_cluster_account",
+        "options": [
+          {
+            "value": ""
+          }
+        ],
+        "pinned": false,
+        "required": true
+      },
+      {
+        "default": "${ templateVariables.SpinnakerApplicationName }",
+        "description": "The spinnaker application name for this spinnaker instance.",
+        "hasOptions": false,
+        "label": "Spinnaker Application Name",
+        "name": "spinnaker_application_name",
+        "options": [
+          {
+            "value": ""
+          }
+        ],
+        "pinned": false,
+        "required": true
+      },
+      {
+        "default": "${ templateVariables.EnvironmentID }",
+        "description": "The environment ID for this deployment. For example \"siri_test\" or \"search_prod\".",
+        "hasOptions": false,
+        "label": "Environment ID",
+        "name": "env_id",
+        "options": [
+          {
+            "value": ""
+          }
+        ],
+        "pinned": true,
+        "required": true
+      },
+      {
+        "default": "${ templateVariables.ClusterID }",
+        "description": "The cluster used for deployment and used to source the overlay file from for that environment.",
+        "hasOptions": false,
+        "label": "Cluster ID",
+        "name": "cluster_id",
+        "options": [
+          {
+            "value": ""
+          }
+        ],
+        "pinned": true,
+        "required": true
+      },
+      {
+        "default": "${ templateVariables.ConfigRepoBranch }",
+        "description": "The branch of the configuration repository to pull the overlay from. Default is \"develop\".",
+        "hasOptions": false,
+        "label": "Config Repo Branch",
+        "name": "config_repo_branch",
+        "options": [
+          {
+            "value": ""
+          }
+        ],
+        "pinned": true,
+        "required": true
+      },
+      {
+        "default": "${ templateVariables.ApplicationConfiguration }",
+        "description": "The path to the overlay configuration file in dp configuration.",
+        "hasOptions": false,
+        "label": "Helm Overlay Configuration File",
+        "name": "application_configuration",
+        "options": [
+          {
+            "value": ""
+          }
+        ],
+        "pinned": false,
+        "required": true
+      },
+      {
+        "default": "${ templateVariables.Namespace }",
+        "description": "The default namespace to deploy spark operator to.",
+        "hasOptions": false,
+        "label": "Namespace",
+        "name": "namespace",
+        "options": [
+          {
+            "value": ""
+          }
+        ],
+        "pinned": false,
+        "required": true
+      },
+      {
+        "default": "og60-skate-eks-02-secrets-example",
+        "description": "",
+        "hasOptions": false,
+        "label": "",
+        "name": "whisper_bucket",
+        "options": [
+          {
+            "value": ""
+          }
+        ],
+        "pinned": false,
+        "required": false
+      },
+      {
+        "default": "8286483",
+        "description": "",
+        "hasOptions": false,
+        "label": "",
+        "name": "whisper_namespace",
+        "options": [
+          {
+            "value": ""
+          }
+        ],
+        "pinned": false,
+        "required": false
+      }
+    ],
+    "spelEvaluator": "v4",
+    "stages": [
+      {
+        "account": "${parameters.spinnaker_cluster_account}",
+        "alias": "runJob",
+        "application": "${parameters.spinnaker_application_name}",
+        "cloudProvider": "kubernetes",
+        "consumeArtifactSource": "propertyFile",
+        "credentials": "${parameters.spinnaker_cluster_account}",
+        "expectedArtifacts": [
+          {
+            "defaultArtifact": {
+              "customKind": true,
+              "id": "1f532959-c7e3-42c8-b772-8a4c74ec9773"
+            },
+            "displayName": "helm_chart_overlay",
+            "id": "f13d792f-e1b6-49e3-b2b3-4fdecb429ae6",
+            "matchArtifact": {
+              "artifactAccount": "embedded-artifact",
+              "id": "1999ffb9-af31-48bb-b39c-f77979ca52a3",
+              "name": "job_generated_artifact",
+              "type": "embedded/base64"
+            },
+            "useDefaultArtifact": false,
+            "usePriorArtifact": false
+          }
+        ],
+        "manifest": {
+          "apiVersion": "batch/v1",
+          "kind": "Job",
+          "metadata": {
+            "name": "automation-agent",
+            "namespace": "skate"
+          },
+          "spec": {
+            "backoffLimit": 0,
+            "template": {
+              "spec": {
+                "containers": [
+                  {
+                    "command": [
+                      "/automation/agent",
+                      "-v",
+                      "skate-dynamic-config",
+                      "--config-repo-branch",
+                      "${execution.trigger.parameters.config_repo_branch}"
+                    ],
+                    "env": [
+                      {
+                        "name": "DP_AUTOMATION_GITHUB_PAT",
+                        "value": "4494dbdab852a9e8d77256d4fa349e4bb9be34a7"
+                      },
+                      {
+                        "name": "DP_AUTOMATION_ENV",
+                        "value": "${execution.trigger.parameters.env_id}"
+                      },
+                      {
+                        "name": "DP_AUTOMATION_APP",
+                        "value": "skate"
+                      },
+                      {
+                        "name": "DP_AUTOMATION_CLUSTER",
+                        "value": "${execution.trigger.parameters.cluster_id}"
+                      },
+                      {
+                        "name": "PULUMI_CONFIG_PASSPHRASE",
+                        "value": "lx2Q0LIzhtJi5Hl0tvIY5ccWjllKLNl1"
+                      }
+                    ],
+                    "envFrom": [
+                      {
+                        "secretRef": {
+                          "name": "skate-rds-secret"
+                        }
+                      }
+                    ],
+                    "image": "docker.apple.com/ad_bindra/automation-agent:0.2.10-pre.7",
+                    "imagePullPolicy": "Always",
+                    "name": "automation-agent"
+                  }
+                ],
+                "restartPolicy": "Never"
+              }
+            }
+          }
+        },
+        "name": "Dynamic Configuration",
+        "propertyFile": "automation-agent",
+        "refId": "1",
+        "requisiteStageRefIds": [
+          "5"
+        ],
+        "source": "text",
+        "type": "runJobManifest"
+      },
+      {
+        "expectedArtifacts": [
+          {
+            "defaultArtifact": {
+              "customKind": true,
+              "id": "5886cee4-3acb-4e9e-8357-192fc6119eb7"
+            },
+            "displayName": "rendered_helm_chart",
+            "id": "2eadca23-fe8a-443b-a19f-e04b1bb1c194",
+            "matchArtifact": {
+              "artifactAccount": "embedded-artifact",
+              "customKind": false,
+              "id": "f97c39b6-2721-4b4e-987b-7260d9252e68",
+              "name": "skate",
+              "type": "embedded/base64"
+            },
+            "useDefaultArtifact": false,
+            "usePriorArtifact": false
+          }
+        ],
+        "inputArtifacts": [
+          {
+            "account": "no-auth-http-account",
+            "artifact": {
+              "artifactAccount": "no-auth-http-account",
+              "id": "2edce636-c180-4e52-bcb0-57b77f5a9e7f",
+              "reference": "https://helm.apple.com/apple-aiml-skate-spinnaker/spinnaker-skate-${execution.trigger.parameters.helm_chart_version}.tgz",
+              "type": "http/file"
+            }
+          },
+          {
+            "account": "",
+            "id": "f13d792f-e1b6-49e3-b2b3-4fdecb429ae6"
+          }
+        ],
+        "name": "Render Helm Chart",
+        "namespace": "skate",
+        "outputName": "skate",
+        "overrides": {},
+        "refId": "2",
+        "requisiteStageRefIds": [
+          "1"
+        ],
+        "templateRenderer": "HELM3",
+        "type": "bakeManifest"
+      },
+      {
+        "account": "${parameters.spinnaker_cluster_account}",
+        "cloudProvider": "kubernetes",
+        "manifestArtifactId": "2eadca23-fe8a-443b-a19f-e04b1bb1c194",
+        "moniker": {
+          "app": "${parameters.spinnaker_application_name}"
+        },
+        "name": "Stage Deployment",
+        "namespaceOverride": "skate",
+        "refId": "3",
+        "requisiteStageRefIds": [
+          "2"
+        ],
+        "skipExpressionEvaluation": false,
+        "source": "artifact",
+        "trafficManagement": {
+          "enabled": false,
+          "options": {
+            "enableTraffic": true,
+            "namespace": "skate",
+            "services": [
+              "service skate",
+              "service skate-hidden-authed"
+            ],
+            "strategy": "highlander"
+          }
+        },
+        "type": "deployManifest"
+      },
+      {
+        "account": "${parameters.spinnaker_cluster_account}",
+        "alias": "runJob",
+        "application": "${parameters.spinnaker_application_name}",
+        "cloudProvider": "kubernetes",
+        "comments": "Smoketest to test Skate deployment",
+        "consumeArtifactSource": "propertyFile",
+        "credentials": "${parameters.spinnaker_cluster_account}",
+        "manifest": {
+          "apiVersion": "batch/v1",
+          "kind": "Job",
+          "metadata": {
+            "name": "automation-agent-test",
+            "namespace": "skate"
+          },
+          "spec": {
+            "backoffLimit": 0,
+            "template": {
+              "spec": {
+                "containers": [
+                  {
+                    "command": [
+                      "python",
+                      "/automation/test/skate_smoke_test.py"
+                    ],
+                    "env": [
+                      {
+                        "name": "GITHUB_PAT",
+                        "value": "db2165a6d3c41193a93571412dead6d6b433ff49"
+                      },
+                      {
+                        "name": "DP_AUTOMATION_ENV",
+                        "value": "${execution.trigger.parameters.env_id}"
+                      },
+                      {
+                        "name": "DP_AUTOMATION_APP",
+                        "value": "skate"
+                      },
+                      {
+                        "name": "DP_AUTOMATION_CLUSTER",
+                        "value": "${execution.trigger.parameters.cluster_id}"
+                      },
+                      {
+                        "name": "PULUMI_CONFIG_PASSPHRASE",
+                        "value": "lx2Q0LIzhtJi5Hl0tvIY5ccWjllKLNl1"
+                      }
+                    ],
+                    "image": "docker.apple.com/ad_bindra/automation-agent-test:1.0.5",
+                    "imagePullPolicy": "Always",
+                    "name": "automation-agent-test"
+                  }
+                ],
+                "restartPolicy": "Never"
+              }
+            }
+          }
+        },
+        "name": "Skate Smoke Test",
+        "refId": "4",
+        "requisiteStageRefIds": [
+          "3"
+        ],
+        "source": "text",
+        "type": "runJobManifest"
+      },
+      {
+        "account": "${parameters.spinnaker_cluster_account}",
+        "cloudProvider": "kubernetes",
+        "manifests": [
+          {
+            "apiVersion": "v1",
+            "kind": "Secret",
+            "metadata": {
+              "annotations": {
+                "whisper.apple.com/bucket": "${execution.trigger.parameters.whisper_bucket}",
+                "whisper.apple.com/namespace": "${execution.trigger.parameters.whisper_namespace}",
+                "whisper.apple.com/secretMatch": "^og\\d\\d-(\\w+)-(\\w+)-\\d\\d-(.*)$",
+                "whisper.apple.com/secretRepl": "\\3"
+              },
+              "name": "skate-rds-secret",
+              "namespace": "skate"
+            }
+          }
+        ],
+        "moniker": {
+          "app": "${parameters.spinnaker_application_name}"
+        },
+        "name": "Whisper Secret",
+        "refId": "5",
+        "requisiteStageRefIds": [],
+        "skipExpressionEvaluation": false,
+        "source": "text",
+        "trafficManagement": {
+          "enabled": false,
+          "options": {
+            "enableTraffic": false,
+            "services": []
+          }
+        },
+        "type": "deployManifest"
+      }
+    ],
+    "triggers": [],
+    "updateTs": "1663191810390"
+  },
+  "protect": false,
+  "schema": "v2",
+  "variables": [
+    {
+      "type": "string",
+      "defaultValue": "1.1.258",
+      "description": "HelmChartVersion",
+      "name": "HelmChartVersion"
+    },
+    {
+      "type": "string",
+      "defaultValue": "aimlsparktest",
+      "description": "SpinnakerApplicationName",
+      "name": "SpinnakerApplicationName"
+    },
+    {
+      "type": "string",
+      "defaultValue": "aiml-di-og60-skate-eks-02",
+      "description": "SpinnakerClusterName",
+      "name": "SpinnakerClusterName"
+    },
+    {
+      "type": "string",
+      "defaultValue": "og60-skate-eks-02",
+      "description": "ClusterID",
+      "name": "ClusterID"
+    },
+    {
+      "type": "string",
+      "defaultValue": "siri_test",
+      "description": "EnvironmentID",
+      "name": "EnvironmentID"
+    },
+    {
+      "type": "string",
+      "defaultValue": "skate",
+      "description": "Namespace",
+      "name": "Namespace"
+    },
+    {
+      "type": "string",
+      "defaultValue": "develop",
+      "description": "ConfigRepoBranch",
+      "name": "ConfigRepoBranch"
+    },
+    {
+      "type": "string",
+      "defaultValue": "https://github.pie.apple.com/api/v3/repos/aiml-datainfra/dp-configuration/contents/environments/siri/test/skate/og60-skate-eks-02/config.yaml",
+      "description": "ApplicationConfiguration",
+      "name": "ApplicationConfiguration"
+    }
+  ]
+}

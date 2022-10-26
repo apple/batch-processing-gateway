@@ -1,0 +1,12 @@
+# Authentication container ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: appleconnect
+data:
+  APC_APP_ID: {{ .Values.appleConnect.appID | quote}}
+  APC_APP_KEY: {{ .Values.appleConnect.appKey | quote}}
+  APC_COOKIE_NAME: {{ .Values.appleConnect.cookieName | quote}}
+  APC_APP_ADMIN_PASSWORD: {{ .Values.appleConnect.appAdminPassword | quote}}
+  APC_LOGIN_URL: {{ .Values.appleConnect.loginUrl | quote}}
+  APC_VALIDATE_URL: {{ .Values.appleConnect.validateUrl | quote}}
