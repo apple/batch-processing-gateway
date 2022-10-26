@@ -1,0 +1,8 @@
+# Skate ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: skate
+binaryData:
+  # will be injected with cluster and database-specific configuration at deployment time
+  skate-config-yaml: '{{ .Values.skateConfiguration }}'

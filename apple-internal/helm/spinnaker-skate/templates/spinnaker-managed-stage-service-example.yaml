@@ -1,0 +1,15 @@
+{{ if false }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: stage
+  namespace: UPDATE-ON-MANUAL-SPINNAKER-DEPLOYMENT-WITH-STAGE-NAMESPACE
+spec:
+  type: ClusterIP
+  selector:
+    stage: 'true'
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+{{ end }}

@@ -1,0 +1,3 @@
+apiVersion: v2
+name: spinnaker-skate
+version: 1.1.263

@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: skate-hidden
+  namespace: {{ .Values.skate.namespace }}
+  labels:
+    app: skate-hidden
+  annotations:
+    reloader.stakater.com/search: "true"
+    strategy.spinnaker.io/max-version-history: '1'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: skate-hidden
+  template:
+    metadata:
+      labels:
+        app: skate-hidden
+      annotations:
+        ad.datadoghq.com/skate.check_names: '["skate"]'
+        ad.datadoghq.com/skate.init_configs: '[{"is_jmx": true, "collect_default_metrics": true}]'
+        ad.datadoghq.com/skate.instances: '[{"host": "%%host%%","port":"19081"}]'
+    spec:
+{{ if .Values.serviceAccounts.skate.create }}
+      serviceAccountName: {{ .Values.serviceAccounts.skate.name }}
+{{- end }}
+      containers:
+        - name: skate-hidden
+          image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
+          command: ["/opt/entrypoint.sh"]
+          args: []
+          resources:
+            requests:
+              memory: "32G"
+              cpu: "8"
+            limits:
+              memory: "32G"
+              cpu: "8"
+          ports:
+            - containerPort: 8080
+            - containerPort: 8081
+              name: healthcheck
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: healthcheck
+            failureThreshold: 3
+            periodSeconds: 15
+          volumeMounts:
+            - name: configuration
+              mountPath: "/app/"
+              readOnly: true
+          env:
+            - name: MAX_HEAP_SIZE
+              value: "-Xmx24G"
+            - name: APP_MONITOR_ENABLED  # enabled for hidden instance for app state monitoring
+              value: "true"
+            - name: STATSD_SERVER_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: STATSD_SERVER_PORT
+              value: "8125"
+            - name: AWS_STS_REGIONAL_ENDPOINTS
+              value: "regional"
+        - name: skate-auth
+          image: '{{ .Values.appleConnect.proxyImage.registry }}/{{ .Values.appleConnect.proxyImage.repository }}:{{ .Values.appleConnect.proxyImage.tag }}'
+          args:
+            - '-e=http://localhost:8080'
+            - '--idms-a3-lookup-account'
+            - '-p=9091'
+          envFrom:
+            - configMapRef:
+                name: appleconnect
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /__health
+              port: 9091
+            timeoutSeconds: 30
+          ports:
+            - containerPort: 9091
+              protocol: TCP
+          resources: {}
+      volumes:
+        - name: configuration
+          configMap:
+            name: 'skate'
+            items:
+              - key: "skate-config-yaml"
+                path: "app-config.gz"

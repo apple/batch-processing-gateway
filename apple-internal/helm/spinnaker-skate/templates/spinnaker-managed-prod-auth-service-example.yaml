@@ -1,0 +1,15 @@
+{{ if false }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: prod-auth
+  namespace: UPDATE-ON-MANUAL-SPINNAKER-DEPLOYMENT-WITH-PROD-NAMESPACE
+spec:
+  type: ClusterIP
+  selector:
+    prodAuth: 'true'
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 9090
+{{ end }}

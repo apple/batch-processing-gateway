@@ -1,0 +1,78 @@
+#
+# The values here are defaults and should be overridden during deployment.
+#
+replicas: 1
+
+image:
+  registry: 'docker.apple.com'
+  repository: 'aiml-di-dpi/skate/master'
+  tag: 'skate-1.1.200'
+
+
+resources:
+  requests:
+    memory: '48G' # 32G for testing, canary
+    cpu: 8
+  limits:
+    memory: '48G' # 32G for testing, canary
+    cpu: 8
+
+cloudTechAppEncryptionImage:
+  registry: 'docker.apple.com'
+  repository: 'cloud-technologies/app-encryption'
+  tag: '1.0.0'
+
+appleConnect:
+  appID: '99999'
+  appKey: 'valuesExampleAppKey' # TODO rdar://90185398 (Skate | Proper secret management at deployment)
+  appAdminPassword: 'valuesExampleAppAdminPassword' # TODO rdar://90185398 (Skate | Proper secret management at deployment)
+  cookieName: 'acack'
+  loginUrl: 'https://idmsac.corp.apple.com/IDMSWebAuth/login'
+  validateUrl: 'https://idmsac.corp.apple.com/IDMSWebAuth/validate'
+  proxyImage:
+    registry: 'docker.apple.com'
+    repository: 'isdteam/appleconnect-proxy'
+    tag: '1.2.134.fcd551d'
+
+sparkImage:
+  python30: 'example.ecr.us-west-2.amazonaws.com/example-pyspark-3.0'
+  python31: 'example.ecr.us-west-2.amazonaws.com/example-pyspark-3.1'
+  javaScala30: 'example.ecr.us-west-2.amazonaws.com/example-spark-3.0'
+  javaScala31: 'example.ecr.us-west-2.amazonaws.com/example-spark-3.1'
+
+ingress:
+  endpoint: 'skate-some-env.aws.ocean.g.apple.com/'
+  tlsSecretName: 'some-env.aws.ocean.g.apple.com-tls-secret-yyyy-MM-dd'
+
+# Will be compiled at deployment time and provided via overlay as a base64-encoded,
+# compressed content which will be projected into pods as /app/app-config.gz.
+# TODO rdar://90181556 (Replace Skate config-app.gz with Secret/ConfigMap)
+skateConfiguration: ''
+
+rbac:
+  # -- Create and use `rbac` resources
+  create: true
+  clusterRole: "skate-role"
+  clusterRoleEdit: "edit"
+  clusterRoleBinding: "skate-crb"
+
+serviceAccounts:
+  skate:
+    # -- Create a service account for spark apps
+    create: true
+    # -- Optional name for the skate service account
+    name: "skate-sa"
+    # -- to add iam annotation for svc account
+    eksServiceAccountARN: ""
+
+skate:
+  image:
+  namespace:
+
+whisper:
+  # -- Create a secret for whisper
+  create: true
+    # -- Whisper Namespace
+  namespace: ""
+    # -- Whisper Bucket
+  bucket: ""
