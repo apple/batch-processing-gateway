@@ -1,0 +1,13 @@
+{
+  "sparkVersion": "3.2",
+  "mainApplicationFile": "s3a://di-batch-genie-prod/skate_uploaded/20201211/3e8a3a78-f494-4f0b-9864-3c14db45ceaf/SparkExampleApp.py",
+  "driver": {
+    "cores": 1,
+    "memory": "1g"
+  },
+  "executor": {
+    "instances": 1,
+    "cores": 1,
+    "memory": "1g"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "sparkVersion": "3.0",
+  "mainApplicationFile": "s3a://di-batch-spark/testApplications/siri_instance_daily_d.py",
+  "driver": {
+    "cores": 1,
+    "memory": "10g"
+  },
+  "executor": {
+    "instances": 95,
+    "cores": 4,
+    "memory": "40g"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "sparkVersion": "3.2",
+  "mainApplicationFile": "s3a://di-batch-genie-prod/testApplications/spark-java-examples.jar",
+  "mainClass": "com.apple.spark.examples.OneStageApp",
+  "driver": {
+    "cores": 1,
+    "memory": "1g"
+  },
+  "executor": {
+    "instances": 2,
+    "cores": 1,
+    "memory": "1g"
+  }
+}
