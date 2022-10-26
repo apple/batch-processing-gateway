@@ -80,7 +80,7 @@ pipelines:
 
 
   - name: dpi-skate-publish-helm-chart
-    branchName: master
+    branchName: release
     timeout: 95
     trigger:
       gitPush: false
@@ -95,7 +95,7 @@ pipelines:
 
 
   - name: dpi-skate-publish-spinnaker-chart
-    branchName: master
+    branchName: release
     timeout: 95
     trigger:
       gitPush: false
