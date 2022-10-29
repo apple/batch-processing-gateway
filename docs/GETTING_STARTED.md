@@ -67,7 +67,15 @@ Create namespace `local-ozone`, and deploy Ozone S3:
 
 This can take a few minutes. Ensure all the pods are running for 1 minute before moving on to the next step.
 
-    $ watch -n 5 kubectl -n local-ozone get pods
+    $ kubectl -n local-ozone get pods
+
+### Port-forward
+Assuming you have PostgreSQL running on 5432 and Ozone S3 service running on 9878 by following the steps above.
+In a separate terminal window run `port-forward.sh`. Keep the window open.
+
+    $ sh ./port-forward.sh
+
+This will forward the PostgreSQL port 5432 and Ozone S3 service port 9878 to localhost.
 
 ### Initiate S3 Bucket
 Create a S3 bucket and put all initial objects needed:
@@ -82,15 +90,6 @@ Generate a config for development:
     $ sh ./generate-bpg-config.sh
 
 The script will generate a `bpg-config.yaml`. Be aware that this script assumes you have only one K8s cluster, while in production you can have many.
-
-### Port-forward the PostgreSQL
-Assuming you have PostgreSQL running on 5432 by following the steps above.
-In a separate terminal window run `port-forward.sh`. Keep the window open.
-
-    $ sh ./port-forward.sh
-
-This will forward the PostgreSQL port 5432 to localhost.
-
 
 ### Build and Run
 
