@@ -183,4 +183,5 @@ The health check endpoint runs on port 8081 by default. Check the server health 
 
 If you used minikube and followed all steps above, you can quickly remove everything set up:
 
-    $ ./dev-setup/cleanup.sh
+    $ cd dev-setup
+    $ sh cleanup.sh
