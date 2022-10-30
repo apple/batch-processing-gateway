@@ -108,18 +108,17 @@ public class SubmissionStatus {
   }
 
   public Long getDuration() {
-    Long duration = 0L;
     if (creationTime != null) {
       if (terminationTime == null) {
         if (getApplicationState().equals(RUNNING_STATE)
-            || getApplicationState().equals(SUBMITTED_STATE)) {
-          duration = System.currentTimeMillis() - getCreationTime();
+                || getApplicationState().equals(SUBMITTED_STATE)) {
+          this.duration = System.currentTimeMillis() - getCreationTime();
         }
       } else {
-        duration = getTerminationTime() - getCreationTime();
+        this.duration = getTerminationTime() - getCreationTime();
       }
     }
-    return duration;
+    return this.duration;
   }
 
   public void setDuration(Long duration) {
