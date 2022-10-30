@@ -135,6 +135,33 @@ public class RunningApplicationMonitor {
     }
   }
 
+  public static long getSpotTimeoutMillis(SparkApplicationResource sparkApplicationResource) {
+    if (sparkApplicationResource.getMetadata() == null
+            || sparkApplicationResource.getMetadata().getLabels() == null) {
+      return Constants.DEFAULT_MAX_RUNNING_MILLIS;
+    }
+    String labelValue =
+            sparkApplicationResource
+                    .getMetadata()
+                    .getLabels()
+                    .get(Constants.SPOT_TIMEOUT_LABEL);
+    if (labelValue == null || labelValue.isEmpty()) {
+      return Constants.DEFAULT_MAX_RUNNING_MILLIS;
+    }
+    try {
+      return Long.parseLong(labelValue);
+    } catch (Throwable ex) {
+      logger.warn(
+              String.format(
+                      "Failed to parse value %s for label %s on %s",
+                      labelValue,
+                      Constants.SPOT_TIMEOUT_LABEL,
+                      sparkApplicationResource.getMetadata().getName()),
+              ex);
+      return Constants.DEFAULT_MAX_RUNNING_MILLIS;
+    }
+  }
+
   /**
    * Notify the monitor instance about an application CRD update. The monitor instance relies on
    * this function to keep its hashmap updated.
@@ -172,7 +199,8 @@ public class RunningApplicationMonitor {
         runningApplications.remove(namespaceAndName);
       } else {
         long maxRunningTime = getMaxRunningMillis(currCRDState);
-        runningApplications.put(namespaceAndName, new RunningAppInfo(creationTime, maxRunningTime));
+        long spotTimeout = getSpotTimeoutMillis(currCRDState);
+        runningApplications.put(namespaceAndName, new RunningAppInfo(creationTime, maxRunningTime, spotTimeout));
       }
     }
   }
@@ -202,6 +230,33 @@ public class RunningApplicationMonitor {
       }
     }
   }
+
+  /** Kill all the apps that have been running for too long. */
+  public void deleteSpotTimeoutApplications() {
+    List<NamespaceAndName> expiredApplications =
+            runningApplications.entrySet().stream()
+                    .filter(t -> t.getValue().exceedSpotTimeout())
+                    .map(t -> t.getKey())
+                    .collect(Collectors.toList());
+    for (NamespaceAndName app : expiredApplications) {
+      RunningAppInfo runningAppInfo = runningApplications.remove(app);
+      if (runningAppInfo != null) {
+        logger.info(
+                "Killing application {}/{} due to exceeding Spot Timeout threshold ({} milliseconds)",
+                app.getNamespace(),
+                app.getName(),
+                System.currentTimeMillis() - runningAppInfo.getCreationTimeMillis());
+        try {
+          killApplication(app.getNamespace(), app.getName());
+        } catch (Throwable ex) {
+          logger.warn(
+                  String.format("Failed to kill application %s/%s", app.getNamespace(), app.getName()),
+                  ex);
+        }
+      }
+    }
+  }
+
 
   public int getApplicationCount() {
     return runningApplications.size();
@@ -263,9 +318,12 @@ public class RunningApplicationMonitor {
     private final long creationTimeMillis;
     private final long maxRunningMillis;
 
-    public RunningAppInfo(long creationTimeMillis, long maxRunningMillis) {
+    private final long SpotTimeoutMillis;
+
+    public RunningAppInfo(long creationTimeMillis, long maxRunningMillis, long spotTimeoutMillis) {
       this.creationTimeMillis = creationTimeMillis;
       this.maxRunningMillis = maxRunningMillis;
+      this.SpotTimeoutMillis = spotTimeoutMillis;
     }
 
     public long getCreationTimeMillis() {
@@ -283,11 +341,17 @@ public class RunningApplicationMonitor {
           + creationTimeMillis
           + ", maxRunningMillis="
           + maxRunningMillis
+          + "SpotTimeoutMillis="
+          + SpotTimeoutMillis
           + '}';
     }
 
     public boolean exceedMaxRunningTime() {
       return System.currentTimeMillis() - creationTimeMillis > maxRunningMillis;
+    }
+
+    public boolean exceedSpotTimeout() {
+      return System.currentTimeMillis() - creationTimeMillis > SpotTimeoutMillis;
     }
   }
 }
