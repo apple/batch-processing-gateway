@@ -1,8 +1,7 @@
 #!/bin/bash
 
 export AWS_ACCESS_KEY_ID="${USER}"
-AWS_SECRET_ACCESS_KEY=$(openssl rand -hex 32)
-export AWS_SECRET_ACCESS_KEY
+export AWS_SECRET_ACCESS_KEY=$(openssl rand -hex 32)
 kubectl -n local-ozone port-forward svc/s3g 9878:9878 &
 ozone_pid=$!
 
