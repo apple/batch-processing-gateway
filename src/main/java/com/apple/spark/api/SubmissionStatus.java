@@ -54,6 +54,22 @@ public class SubmissionStatus {
         this.setApplicationErrorMessage(status.getApplicationState().getErrorMessage());
       }
     }
+
+    this.setDuration(System.currentTimeMillis() - getCreationTime());
+
+    String spotTimeoutMillisLabel =
+            sparkApplicationResource.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
+    String spotInstanceLabel =
+            sparkApplicationResource.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
+    boolean spotInstanceLabelBool = Boolean.parseBoolean(spotInstanceLabel);
+    if (spotInstanceLabelBool && spotTimeoutMillisLabel != null && !spotTimeoutMillisLabel.isEmpty()) {
+        long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
+        // return timeout error only exceed
+        if (spotTimeoutMillisSetting < this.duration){
+          this.setApplicationState(Constants.SPOT_TIMEOUT);
+        }
+    }
+
     if (this.getApplicationState() == null) {
       this.setApplicationState(Constants.UNKNOWN_STATE);
     }
@@ -108,16 +124,6 @@ public class SubmissionStatus {
   }
 
   public Long getDuration() {
-    if (creationTime != null) {
-      if (terminationTime == null) {
-        if (getApplicationState().equals(RUNNING_STATE)
-                || getApplicationState().equals(SUBMITTED_STATE)) {
-          this.duration = System.currentTimeMillis() - getCreationTime();
-        }
-      } else {
-        this.duration = getTerminationTime() - getCreationTime();
-      }
-    }
     return this.duration;
   }
 

@@ -42,6 +42,7 @@ public class Constants {
       new HashSet<>(Arrays.asList("aimldpiairflow_bot", "aimldpiairflow_bot_2"));
 
   public static final String UNKNOWN_STATE = "UNKNOWN";
+  public static final String SPOT_TIMEOUT = "SPOTTIMEOUT";
   public static final String FAILED_STATE = "FAILED";
   public static final String SPARK_APPLICATION_RESOURCE_NAME_VAR =
       "{spark-application-resource-name}";
