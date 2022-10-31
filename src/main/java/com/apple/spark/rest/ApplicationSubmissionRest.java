@@ -739,7 +739,7 @@ public class ApplicationSubmissionRest extends RestBase {
 
       // add more information regarding spot timeout
       String extraSpotTimeoutMessage = "";
-      if (SPOT_TIMEOUT.equals(response.getApplicationState()){
+      if (SPOT_TIMEOUT.equals(response.getApplicationState())){
         String spotTimeoutMillisLabel =
                 sparkApplication.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
         long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
