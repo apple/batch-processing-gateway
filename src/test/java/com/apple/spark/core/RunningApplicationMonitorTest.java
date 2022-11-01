@@ -124,7 +124,7 @@ public class RunningApplicationMonitorTest {
 
     runningAppInfo = new RunningApplicationMonitor.RunningAppInfo(System.currentTimeMillis(), 1, 1);
     // sleep for a while to make sure the application exceeds max running time
-    Thread.sleep(30);
+    Thread.sleep(10);
     Assert.assertTrue(runningAppInfo.exceedSpotTimeout());
   }
 }

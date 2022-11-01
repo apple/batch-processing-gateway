@@ -715,7 +715,8 @@ public class ApplicationSubmissionRest extends RestBase {
         extraSpotTimeoutMessage =
                 String.format(
                         "(warning: application is configured with spot timeout: %s millis,"
-                                + " and running time has exceed it, please consider kill it )",
+                                + " and running time has exceed it, please consider kill it and retry " +
+                                "on On-Demand instances by setting spot-instance to False )",
                         spotTimeoutMillisSetting);
       }
 
