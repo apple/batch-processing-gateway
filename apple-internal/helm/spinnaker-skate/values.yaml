@@ -71,7 +71,7 @@ skate:
 
 whisper:
   # -- Create a secret for whisper
-  create: true
+  create: false
     # -- Whisper Namespace
   namespace: ""
     # -- Whisper Bucket
