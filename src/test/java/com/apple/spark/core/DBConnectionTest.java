@@ -36,7 +36,7 @@ public class DBConnectionTest {
     file.deleteOnExit();
 
     String connectionString =
-        String.format("jdbc:h2:%s;DB_CLOSE_DELAY=-1;MODE=PostgreSQL", file.getAbsolutePath());
+        String.format("jdbc:h2:%s;DB_CLOSE_DELAY=-1;MODE=MySQL", file.getAbsolutePath());
 
     DBConnection dbConnection = new DBConnection(connectionString);
     try (Connection connection = dbConnection.getConnection()) {
