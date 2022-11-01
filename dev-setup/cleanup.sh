@@ -15,15 +15,21 @@ grep -q local-spark-operator <<<${installed} && \
 grep -q local-yunikorn <<<${installed} &&  \
   helm uninstall -n local-yunikorn local-yunikorn
 
-grep -q local-mariadb <<<${installed} && \
-  helm uninstall -n local-mariadb local-mariadb
+grep -q local-postgresql <<<${installed} && \
+  helm uninstall -n local-postgresql local-postgresql
 
-kubectl -n local-ozone delete -f minikube/ozone | echo "Did not remove all ozone objects. Ok..."
+grep -q local-ozone <<<${installed} && \
+  helm uninstall -n local-ozone local-ozone
+
 kubectl delete namespace local-ozone | echo "local-ozone namespace already gone. Ok..."
-kubectl delete namespace local-mariadb | echo "local-mariadb namespace already gone. Ok..."
 kubectl delete namespace local-yunikorn | echo "local-yunikorn namespace already gone. Ok..."
 kubectl delete namespace local-spark-operator | echo "local-spark-operator namespace already gone. Ok..."
+kubectl delete namespace local-postgresql | echo "local-postgresql namespace already gone. Ok..."
 
 minikube ssh "sudo rm -rf /tmp/hostpath-provisioner/local-mariadb /tmp/hostpath-provisioner/local-ozone"
+
+rm bpg-config.yaml | echo "bgp-config.yaml cleaned up. Ok..."
+
+minikube delete
 
 echo "All components removed."

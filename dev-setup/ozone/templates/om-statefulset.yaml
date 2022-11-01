@@ -17,50 +17,42 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: scm
+  name: om
   labels:
     app.kubernetes.io/component: ozone
 spec:
   selector:
     matchLabels:
       app: ozone
-      component: scm
-  serviceName: scm
+      component: om
+  serviceName: om
   replicas: 1
   template:
     metadata:
       labels:
         app: ozone
-        component: scm
+        component: om
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "9876"
+        prometheus.io/port: "9874"
         prometheus.io/path: /prom
     spec:
       securityContext:
         fsGroup: 1000
-      initContainers:
-      - name: init
-        image: 'apache/ozone:1.2.1'
-        args:
-        - ozone
-        - scm
-        - --init
-        envFrom:
-        - configMapRef:
-            name: config
-        volumeMounts:
-        - name: data
-          mountPath: /data
       containers:
-      - name: scm
-        image: 'apache/ozone:1.2.1'
+      - name: om
+        image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
         args:
         - ozone
-        - scm
+        - om
+        env:
+        - name: WAITFOR
+          value: scm-0.scm:9876
+        - name: ENSURE_OM_INITIALIZED
+          value: /data/metadata/om/current/VERSION
         livenessProbe:
           tcpSocket:
-            port: 9861
+            port: 9862
           initialDelaySeconds: 30
         envFrom:
         - configMapRef:

@@ -17,39 +17,53 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: s3g
+  name: datanode
   labels:
     app.kubernetes.io/component: ozone
 spec:
   selector:
     matchLabels:
       app: ozone
-      component: s3g
-  serviceName: s3g
-  replicas: 1
+      component: datanode
+  serviceName: datanode
+  replicas: 3
   template:
     metadata:
       labels:
         app: ozone
-        component: s3g
+        component: datanode
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9882"
+        prometheus.io/path: /prom
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
-      - name: s3g
-        image: 'apache/ozone:1.2.1'
+      - name: datanode
+        image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
         args:
         - ozone
-        - s3g
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 9878
-          initialDelaySeconds: 30
+        - datanode
         envFrom:
         - configMapRef:
             name: config
         volumeMounts:
-        - name: data
+        - name: datanode
           mountPath: /data
-      volumes:
-      - name: data
-        emptyDir: {}
+  volumeClaimTemplates:
+  - kind: PersistentVolumeClaim
+    apiVersion: v1
+    metadata:
+      name: datanode
+      labels:
+        app.kubernetes.io/component: datanode
+        app.kubernetes.io/instance: ozone-datanode
+        app.kubernetes.io/name: ozone
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi
+      volumeMode: Filesystem

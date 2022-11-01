@@ -1,0 +1,4 @@
+image:
+  registry: 'apache'
+  repository: 'ozone'
+  tag: '1.2.1'

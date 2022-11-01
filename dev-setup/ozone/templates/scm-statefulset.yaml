@@ -17,53 +17,57 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: datanode
+  name: scm
   labels:
     app.kubernetes.io/component: ozone
 spec:
   selector:
     matchLabels:
       app: ozone
-      component: datanode
-  serviceName: datanode
-  replicas: 3
+      component: scm
+  serviceName: scm
+  replicas: 1
   template:
     metadata:
       labels:
         app: ozone
-        component: datanode
+        component: scm
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "9882"
+        prometheus.io/port: "9876"
         prometheus.io/path: /prom
     spec:
       securityContext:
         fsGroup: 1000
-      containers:
-      - name: datanode
-        image: 'apache/ozone:1.2.1'
+      initContainers:
+      - name: init
+        image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
         args:
         - ozone
-        - datanode
+        - scm
+        - --init
         envFrom:
         - configMapRef:
             name: config
         volumeMounts:
-        - name: datanode
+        - name: data
           mountPath: /data
-  volumeClaimTemplates:
-  - kind: PersistentVolumeClaim
-    apiVersion: v1
-    metadata:
-      name: datanode
-      labels:
-        app.kubernetes.io/component: datanode
-        app.kubernetes.io/instance: ozone-datanode
-        app.kubernetes.io/name: ozone
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 5Gi
-      volumeMode: Filesystem
+      containers:
+      - name: scm
+        image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
+        args:
+        - ozone
+        - scm
+        livenessProbe:
+          tcpSocket:
+            port: 9861
+          initialDelaySeconds: 30
+        envFrom:
+        - configMapRef:
+            name: config
+        volumeMounts:
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: data
+        emptyDir: {}
