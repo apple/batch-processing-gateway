@@ -595,6 +595,7 @@ public class ApplicationSubmissionRest extends RestBase {
     GetSubmissionStatusResponseCacheValue cacheValue;
     try {
       cacheValue = statusCache.get(submissionId);
+      logger.warn(String.format("aaaaaaaaaaaaaa  get value from cache .... " ));
     } catch (ExecutionException ex) {
       requestCounters.increment(
           STATUS_CACHE_GET_FAILURE, Tag.of("exception", ex.getClass().getSimpleName()));
@@ -736,6 +737,7 @@ public class ApplicationSubmissionRest extends RestBase {
           }
         }
       }
+      logger.warn(String.format("bbbbbbbbbbbb  get value from withoutcache .... " ));
 
       // add more information regarding spot timeout
       String extraSpotTimeoutMessage = "";
