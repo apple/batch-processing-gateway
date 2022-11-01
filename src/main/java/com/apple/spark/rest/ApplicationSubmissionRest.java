@@ -595,7 +595,6 @@ public class ApplicationSubmissionRest extends RestBase {
     GetSubmissionStatusResponseCacheValue cacheValue;
     try {
       cacheValue = statusCache.get(submissionId);
-      logger.warn(String.format("aaaaaaaaaaaaaa  get value from cache .... " ));
     } catch (ExecutionException ex) {
       requestCounters.increment(
           STATUS_CACHE_GET_FAILURE, Tag.of("exception", ex.getClass().getSimpleName()));
@@ -638,37 +637,6 @@ public class ApplicationSubmissionRest extends RestBase {
             Response.Status.INTERNAL_SERVER_ERROR);
       }
     }
-
-//    com.codahale.metrics.Timer timer =
-//            registry.timer(this.getClass().getSimpleName() + ".getStatus.k8s-time");
-//    AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
-//    try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
-//         com.codahale.metrics.Timer.Context context = timer.time()) {
-//      CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
-//      SparkApplicationResource sparkApplication =
-//              client
-//                  .customResources(
-//                          crdContext,
-//                          SparkApplicationResource.class,
-//                          SparkApplicationResourceList.class,
-//                          SparkApplicationResourceDoneable.class)
-//                  .inNamespace(sparkCluster.getSparkApplicationNamespace())
-//                  .withName(submissionId)
-//                  .get();
-//      context.stop();
-//
-//      if (sparkApplication == null) {
-//        throw new WebApplicationException(
-//                String.format("Application submission %s not found", submissionId),
-//                Response.Status.NOT_FOUND);
-//      }
-//      GetSubmissionStatusResponse response = new GetSubmissionStatusResponse();
-//      response.copyFrom(sparkApplication);
-//
-//      if(isSpotTimeout(sparkApplication, response, submissionId)){
-//        cacheValue.getResponse().setApplicationState(SparkConstants.SPOT_TIMEOUT_STATE);
-//      }
-//    }
 
     return cacheValue.getResponse();
   }
@@ -737,7 +705,6 @@ public class ApplicationSubmissionRest extends RestBase {
           }
         }
       }
-      logger.warn(String.format("bbbbbbbbbbbb  get value from withoutcache .... " ));
 
       // add more information regarding spot timeout
       String extraSpotTimeoutMessage = "";
@@ -770,33 +737,6 @@ public class ApplicationSubmissionRest extends RestBase {
       return response;
     }
   }
-
-//  private boolean isSpotTimeout (SparkApplicationResource sparkApplication,
-//                                    GetSubmissionStatusResponse response, String submissionId){
-//
-//    // add more information regarding spot timeout
-//    if (sparkApplication.getMetadata().getLabels() != null) {
-//      String spotTimeoutMillisLabel =
-//              sparkApplication.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
-//      String spotInstanceLabel =
-//              sparkApplication.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
-//      boolean spotInstanceLabelBool = Boolean.parseBoolean(spotInstanceLabel);
-//      if (spotInstanceLabelBool && spotTimeoutMillisLabel != null && !spotTimeoutMillisLabel.isEmpty()) {
-//        try {
-//          long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
-//          // return timeout error only exceed
-//          if (spotTimeoutMillisSetting < response.getDuration()){
-//            return true;
-//          }
-//        } catch (Throwable ex) {
-//          logger.warn(
-//                  String.format("Failed to check Spot timeout threshold mills for %s", submissionId), ex);
-//        }
-//      }
-//    }
-//    return  false;
-//  }
-
   @GET()
   @Path("{submissionId}/driver")
   @Timed

@@ -63,12 +63,15 @@ public class SubmissionStatus {
             sparkApplicationResource.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
     boolean spotInstanceLabelBool = Boolean.parseBoolean(spotInstanceLabel);
 
+    if (spotInstanceLabelBool){
+      System.out.println("oooooooooooooooo" + spotInstanceLabelBool);
+    }
 //    if (spotInstanceLabelBool && spotTimeoutMillisLabel != null && !spotTimeoutMillisLabel.isEmpty()) {
         long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
-        System.out.println("TTTTTTTTTTTTTTTT");
+
         // return timeout error only exceed
         if (spotTimeoutMillisSetting < this.duration){
-          System.out.println("TTTTTTTTTTTTTTTT");
+          System.out.println("TTTTTTTTTTTTTTTT, " + spotTimeoutMillisSetting);
           this.setApplicationState(Constants.SPOT_TIMEOUT);
         }
 //    }
