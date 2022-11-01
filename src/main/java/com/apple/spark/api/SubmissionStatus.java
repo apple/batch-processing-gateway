@@ -66,6 +66,7 @@ public class SubmissionStatus {
     if (spotInstanceLabelBool){
       System.out.println("oooooooooooooooo" + spotInstanceLabelBool);
     }
+    System.out.println("ssssssssssss" + spotInstanceLabelBool);
 //    if (spotInstanceLabelBool && spotTimeoutMillisLabel != null && !spotTimeoutMillisLabel.isEmpty()) {
         long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
 
