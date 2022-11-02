@@ -17,6 +17,7 @@ See [CONTRIBUTING](/CONTRIBUTING.md) for general contribution guidelines.
 - Huichao Zhao (huichao_zhao@apple.com)
 - Jiale Tan (jiale_tan@apple.com)
 - Luciano Resende (lresende@apple.com)
+- Rupesh Raghavan (rupesh_raghavan@apple.com)
 - Tianqi Tong (tianqi_tong@apple.com)
 - Weiwei Yang (weiwei_yang2@apple.com)
 - Xingyuan Lin (xingyuan_lin@apple.com)
