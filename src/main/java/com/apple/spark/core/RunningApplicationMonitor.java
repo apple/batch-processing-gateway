@@ -231,7 +231,9 @@ public class RunningApplicationMonitor {
     }
   }
 
-  /** Kill all the apps that have been running for too long. */
+  /** Kill all the apps that have been running for too long.
+   * We just list this function to the class as a placeholder, and we will not execute in it the timer part for now.
+   * */
   public void deleteSpotTimeoutApplications() {
     List<NamespaceAndName> expiredApplications =
             runningApplications.entrySet().stream()
