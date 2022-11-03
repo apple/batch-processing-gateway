@@ -59,10 +59,10 @@ public class SubmitApplicationRequest {
   private boolean spotInstance;
 
   @Schema(
-          description =
-                  "To set execution timeout for Spark app " +
-                          "and Skate will return error code once your job exceed the timeout threshold " +
-                          "it will take effect only when you've enabled Spot Instance feature ")
+      description =
+          "To set execution timeout for Spark app "
+              + "and Skate will return error code once your job exceed the timeout threshold "
+              + "it will take effect only when you've enabled Spot Instance feature ")
   private String spotTimeoutMillis;
 
   @Schema(

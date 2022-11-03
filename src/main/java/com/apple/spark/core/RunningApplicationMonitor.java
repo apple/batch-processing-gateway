@@ -137,14 +137,11 @@ public class RunningApplicationMonitor {
 
   public static long getSpotTimeoutMillis(SparkApplicationResource sparkApplicationResource) {
     if (sparkApplicationResource.getMetadata() == null
-            || sparkApplicationResource.getMetadata().getLabels() == null) {
+        || sparkApplicationResource.getMetadata().getLabels() == null) {
       return Constants.DEFAULT_MAX_RUNNING_MILLIS;
     }
     String labelValue =
-            sparkApplicationResource
-                    .getMetadata()
-                    .getLabels()
-                    .get(Constants.SPOT_TIMEOUT_LABEL);
+        sparkApplicationResource.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
     if (labelValue == null || labelValue.isEmpty()) {
       return Constants.DEFAULT_MAX_RUNNING_MILLIS;
     }
@@ -152,12 +149,12 @@ public class RunningApplicationMonitor {
       return Long.parseLong(labelValue);
     } catch (Throwable ex) {
       logger.warn(
-              String.format(
-                      "Failed to parse value %s for label %s on %s",
-                      labelValue,
-                      Constants.SPOT_TIMEOUT_LABEL,
-                      sparkApplicationResource.getMetadata().getName()),
-              ex);
+          String.format(
+              "Failed to parse value %s for label %s on %s",
+              labelValue,
+              Constants.SPOT_TIMEOUT_LABEL,
+              sparkApplicationResource.getMetadata().getName()),
+          ex);
       return Constants.DEFAULT_MAX_RUNNING_MILLIS;
     }
   }
@@ -200,7 +197,8 @@ public class RunningApplicationMonitor {
       } else {
         long maxRunningTime = getMaxRunningMillis(currCRDState);
         long spotTimeout = getSpotTimeoutMillis(currCRDState);
-        runningApplications.put(namespaceAndName, new RunningAppInfo(creationTime, maxRunningTime, spotTimeout));
+        runningApplications.put(
+            namespaceAndName, new RunningAppInfo(creationTime, maxRunningTime, spotTimeout));
       }
     }
   }
@@ -231,34 +229,34 @@ public class RunningApplicationMonitor {
     }
   }
 
-  /** Kill all the apps that have been running for too long.
-   * We just list this function to the class as a placeholder, and we will not execute in the timer part for now.
-   * */
+  /**
+   * Kill all the apps that have been running for too long. We just list this function to the class
+   * as a placeholder, and we will not execute in the timer part for now.
+   */
   public void deleteSpotTimeoutApplications() {
     List<NamespaceAndName> expiredApplications =
-            runningApplications.entrySet().stream()
-                    .filter(t -> t.getValue().exceedSpotTimeout())
-                    .map(t -> t.getKey())
-                    .collect(Collectors.toList());
+        runningApplications.entrySet().stream()
+            .filter(t -> t.getValue().exceedSpotTimeout())
+            .map(t -> t.getKey())
+            .collect(Collectors.toList());
     for (NamespaceAndName app : expiredApplications) {
       RunningAppInfo runningAppInfo = runningApplications.remove(app);
       if (runningAppInfo != null) {
         logger.info(
-                "Killing application {}/{} due to exceeding Spot Timeout threshold ({} milliseconds)",
-                app.getNamespace(),
-                app.getName(),
-                System.currentTimeMillis() - runningAppInfo.getCreationTimeMillis());
+            "Killing application {}/{} due to exceeding Spot Timeout threshold ({} milliseconds)",
+            app.getNamespace(),
+            app.getName(),
+            System.currentTimeMillis() - runningAppInfo.getCreationTimeMillis());
         try {
           killApplication(app.getNamespace(), app.getName());
         } catch (Throwable ex) {
           logger.warn(
-                  String.format("Failed to kill application %s/%s", app.getNamespace(), app.getName()),
-                  ex);
+              String.format("Failed to kill application %s/%s", app.getNamespace(), app.getName()),
+              ex);
         }
       }
     }
   }
-
 
   public int getApplicationCount() {
     return runningApplications.size();
