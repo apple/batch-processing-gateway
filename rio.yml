@@ -46,7 +46,7 @@ pipelines:
         - tar xzvf apache-maven-3.8.6-bin.tar.gz
         - rm apache-maven-3.8.6-bin.tar.gz
         - apache-maven-3.8.6/bin/mvn clean verify
-        -
+
   - name: publish-release
     branchName: release
     timeout: 95
