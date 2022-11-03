@@ -42,6 +42,7 @@ public class Constants {
       new HashSet<>(Arrays.asList("aimldpiairflow_bot", "aimldpiairflow_bot_2"));
 
   public static final String UNKNOWN_STATE = "UNKNOWN";
+  public static final String SPOT_TIMEOUT = "SPOT_TIMEOUT";
   public static final String FAILED_STATE = "FAILED";
   public static final String SPARK_APPLICATION_RESOURCE_NAME_VAR =
       "{spark-application-resource-name}";
@@ -54,6 +55,9 @@ public class Constants {
   public static final String TASK_NAME_LABEL = "task_name";
   public static final String COST_TABLE_NAME = "cost";
   public static final String MAX_RUNNING_MILLIS_LABEL = "maxRunningMillis";
+
+  public static final String SPOT_INSTANCE_LABEL = "spotInstance";
+  public static final String SPOT_TIMEOUT_LABEL = "spotTimeoutMillis";
   public static final String DEFAULT_DRIVER_NODE_LABEL_KEY = "node_group_category";
   public static final String DEFAULT_EXECUTOR_NODE_LABEL_KEY = "node_group_category";
   public static final long DEFAULT_MAX_RUNNING_MILLIS = TimeUnit.HOURS.toMillis(12);

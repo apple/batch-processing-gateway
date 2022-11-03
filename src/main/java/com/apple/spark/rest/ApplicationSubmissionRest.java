@@ -405,6 +405,43 @@ public class ApplicationSubmissionRest extends RestBase {
           .getLabels()
           .put(MAX_RUNNING_MILLIS_LABEL, String.valueOf(maxRunningMillis));
 
+      if (request.getSpotInstance()) {
+        long spotTimeoutMillis = getMaxRunningMillisForQueue(parentQueue);
+        // check spot timeout setting from request
+        if (request.getSparkConf() != null) {
+          String confValue = request.getSpotTimeoutMillis();
+          if (confValue != null && !confValue.isEmpty()) {
+            try {
+              spotTimeoutMillis = Long.parseLong(confValue);
+            } catch (Throwable ex) {
+              throw new WebApplicationException(
+                  String.format(
+                      "Invalid value for config %s: %s", Constants.SPOT_TIMEOUT_LABEL, confValue),
+                  Response.Status.BAD_REQUEST);
+            }
+            // make sure spot timeout not exceed the configured value for the queue
+            long maxRunningMillisForQueue = getMaxRunningMillisForQueue(parentQueue);
+            if (maxRunningMillisForQueue < spotTimeoutMillis) {
+              throw new WebApplicationException(
+                  String.format(
+                      "spotTimeoutMillis %s is too large than allowed %s for queue %s",
+                      spotTimeoutMillis, maxRunningMillisForQueue, queue),
+                  Response.Status.BAD_REQUEST);
+            }
+          }
+        }
+
+        sparkApplicationResource
+            .getMetadata()
+            .getLabels()
+            .put(SPOT_INSTANCE_LABEL, String.valueOf(request.getSpotInstance()));
+
+        sparkApplicationResource
+            .getMetadata()
+            .getLabels()
+            .put(SPOT_TIMEOUT_LABEL, String.valueOf(spotTimeoutMillis));
+      }
+
       try {
         String sparkSpecJson = CustomSerDe.sparkSpecToNonSensitiveJson(sparkSpec);
         logger.info("Spark Spec (non-sensitive info): {}", sparkSpecJson);
@@ -666,6 +703,21 @@ public class ApplicationSubmissionRest extends RestBase {
           }
         }
       }
+
+      // add more information regarding spot timeout
+      String extraSpotTimeoutMessage = "";
+      if (SPOT_TIMEOUT.equals(response.getApplicationState())) {
+        String spotTimeoutMillisLabel =
+            sparkApplication.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
+        long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
+        extraSpotTimeoutMessage =
+            String.format(
+                "(warning: application is configured with spot timeout: %s millis,"
+                    + " and running time has exceed it, please consider kill it and retry "
+                    + "on On-Demand instances by setting spot-instance to False )",
+                spotTimeoutMillisSetting);
+      }
+
       if (extraMessage != null && !extraMessage.isEmpty()) {
         String consolidatedMessage = response.getApplicationErrorMessage();
         if (consolidatedMessage == null) {
@@ -674,9 +726,13 @@ public class ApplicationSubmissionRest extends RestBase {
           consolidatedMessage = consolidatedMessage + " ";
         }
         consolidatedMessage = consolidatedMessage + extraMessage;
+
+        if (extraSpotTimeoutMessage != null && !extraSpotTimeoutMessage.isEmpty()) {
+          consolidatedMessage = consolidatedMessage + extraSpotTimeoutMessage;
+        }
+
         response.setApplicationErrorMessage(consolidatedMessage);
       }
-
       return response;
     }
   }

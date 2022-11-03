@@ -94,12 +94,39 @@ public class RunningApplicationMonitorTest {
   @Test
   public void exceedMaxRunningTime() throws InterruptedException {
     RunningApplicationMonitor.RunningAppInfo runningAppInfo =
-        new RunningApplicationMonitor.RunningAppInfo(System.currentTimeMillis(), 60 * 1000);
+        new RunningApplicationMonitor.RunningAppInfo(
+            System.currentTimeMillis(), 60 * 1000, 60 * 1000);
     Assert.assertFalse(runningAppInfo.exceedMaxRunningTime());
 
-    runningAppInfo = new RunningApplicationMonitor.RunningAppInfo(System.currentTimeMillis(), 1);
+    runningAppInfo = new RunningApplicationMonitor.RunningAppInfo(System.currentTimeMillis(), 1, 1);
     // sleep for a while to make sure the application exceeds max running time
     Thread.sleep(10);
     Assert.assertTrue(runningAppInfo.exceedMaxRunningTime());
+  }
+
+  @Test
+  public void getSpotTimeoutMillis() {
+    SparkApplicationResource sparkApplicationResource = new SparkApplicationResource();
+    Assert.assertEquals(
+        RunningApplicationMonitor.getSpotTimeoutMillis(sparkApplicationResource),
+        12 * 60 * 60 * 1000);
+
+    sparkApplicationResource.getMetadata().setLabels(new HashMap<>());
+    sparkApplicationResource.getMetadata().getLabels().put("spotTimeoutMillis", "123456789");
+    Assert.assertEquals(
+        RunningApplicationMonitor.getSpotTimeoutMillis(sparkApplicationResource), 123456789);
+  }
+
+  @Test
+  public void exceedSpotTimeout() throws InterruptedException {
+    RunningApplicationMonitor.RunningAppInfo runningAppInfo =
+        new RunningApplicationMonitor.RunningAppInfo(
+            System.currentTimeMillis(), 60 * 1000, 60 * 1000);
+    Assert.assertFalse(runningAppInfo.exceedSpotTimeout());
+
+    runningAppInfo = new RunningApplicationMonitor.RunningAppInfo(System.currentTimeMillis(), 1, 1);
+    // sleep for a while to make sure the application exceeds max running time
+    Thread.sleep(10);
+    Assert.assertTrue(runningAppInfo.exceedSpotTimeout());
   }
 }

@@ -19,9 +19,6 @@
 
 package com.apple.spark.api;
 
-import static com.apple.spark.core.SparkConstants.RUNNING_STATE;
-import static com.apple.spark.core.SparkConstants.SUBMITTED_STATE;
-
 import com.apple.spark.core.Constants;
 import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.operator.SparkApplicationStatus;
@@ -54,6 +51,25 @@ public class SubmissionStatus {
         this.setApplicationErrorMessage(status.getApplicationState().getErrorMessage());
       }
     }
+
+    this.setDuration(System.currentTimeMillis() - getCreationTime());
+
+    String spotTimeoutMillisLabel =
+        sparkApplicationResource.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
+    String spotInstanceLabel =
+        sparkApplicationResource.getMetadata().getLabels().get(Constants.SPOT_INSTANCE_LABEL);
+    boolean spotInstanceLabelBool = Boolean.parseBoolean(spotInstanceLabel);
+
+    if (spotInstanceLabelBool
+        && spotTimeoutMillisLabel != null
+        && !spotTimeoutMillisLabel.isEmpty()) {
+      long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
+      // return timeout error only exceed
+      if (spotTimeoutMillisSetting < this.duration) {
+        this.setApplicationState(Constants.SPOT_TIMEOUT);
+      }
+    }
+
     if (this.getApplicationState() == null) {
       this.setApplicationState(Constants.UNKNOWN_STATE);
     }
@@ -108,18 +124,7 @@ public class SubmissionStatus {
   }
 
   public Long getDuration() {
-    Long duration = 0L;
-    if (creationTime != null) {
-      if (terminationTime == null) {
-        if (getApplicationState().equals(RUNNING_STATE)
-            || getApplicationState().equals(SUBMITTED_STATE)) {
-          duration = System.currentTimeMillis() - getCreationTime();
-        }
-      } else {
-        duration = getTerminationTime() - getCreationTime();
-      }
-    }
-    return duration;
+    return this.duration;
   }
 
   public void setDuration(Long duration) {

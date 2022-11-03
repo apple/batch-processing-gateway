@@ -27,6 +27,8 @@ public class SparkConstants {
 
   public static final String COMPLETED_STATE = "COMPLETED";
   public static final String RUNNING_STATE = "RUNNING";
+
+  public static final String SPOT_TIMEOUT_STATE = "SPOT_TIMEOUT";
   public static final String FAILED_STATE = "FAILED";
   public static final String SUBMITTED_STATE = "SUBMITTED";
   public static final String FAILED_SUBMISSION_STATE = "FAILED_SUBMISSION";
