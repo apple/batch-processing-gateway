@@ -481,7 +481,7 @@ public class LogDao {
             "CREATE TABLE IF NOT EXISTS %s.logindex (\n"
                 + "    logs3key VARCHAR(500) NOT NULL PRIMARY KEY,\n"
                 + "    date date NOT NULL,\n"
-                + "    hour SMALLINT NOT NULL,\n"
+                + "    \"hour\" SMALLINT NOT NULL,\n"
                 + "    containerId VARCHAR(60) NOT NULL\n"
                 + ");",
             dbName);

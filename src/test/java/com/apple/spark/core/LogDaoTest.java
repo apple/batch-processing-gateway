@@ -99,9 +99,7 @@ public class LogDaoTest {
       Assert.assertEquals(resultSet.getInt("number_executor"), executorInstances);
       Assert.assertEquals(resultSet.getInt("executor_core"), executorCore);
       Assert.assertEquals(resultSet.getInt("executor_memory_mb"), executorMemoryMb);
-      String requestBody =
-          IOUtils.readStringAndClose(resultSet.getClob("request_body").getCharacterStream(), 0);
-      Assert.assertFalse(requestBody.contains("***"));
+      Assert.assertFalse(resultSet.getString("request_body").contains("***"));
       Assert.assertFalse(resultSet.next());
     }
 
@@ -118,9 +116,7 @@ public class LogDaoTest {
       Assert.assertEquals(resultSet.getInt("number_executor"), executorInstances);
       Assert.assertEquals(resultSet.getInt("executor_core"), executorCore);
       Assert.assertEquals(resultSet.getInt("executor_memory_mb"), executorMemoryMb);
-      String requestBody =
-          IOUtils.readStringAndClose(resultSet.getClob("request_body").getCharacterStream(), 0);
-      Assert.assertFalse(requestBody.contains("***"));
+      Assert.assertFalse(resultSet.getString("request_body").contains("***"));
       Assert.assertFalse(resultSet.next());
     }
 
@@ -224,8 +220,7 @@ public class LogDaoTest {
     try (ResultSet resultSet = logDao.getJobInfoQuery("RUNNING", "all", 200, 7)) {
       Assert.assertTrue(resultSet.next());
       Assert.assertEquals(resultSet.getString("submission_id"), "submission1");
-      String requestBody =
-          IOUtils.readStringAndClose(resultSet.getClob("request_body").getCharacterStream(), 0);
+      String requestBody = resultSet.getString("request_body");
       Assert.assertTrue(requestBody.contains("***"));
       Assert.assertFalse(requestBody.contains("token1"));
       Assert.assertFalse(resultSet.next());
