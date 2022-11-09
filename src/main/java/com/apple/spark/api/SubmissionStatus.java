@@ -54,19 +54,35 @@ public class SubmissionStatus {
 
     this.setDuration(System.currentTimeMillis() - getCreationTime());
 
-    String spotTimeoutMillisLabel =
-        sparkApplicationResource.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
-    String spotInstanceLabel =
-        sparkApplicationResource.getMetadata().getLabels().get(Constants.SPOT_INSTANCE_LABEL);
-    boolean spotInstanceLabelBool = Boolean.parseBoolean(spotInstanceLabel);
+    if (sparkApplicationResource.getMetadata().getLabels() != null) {
+      String spotInstanceLabel = "";
+      if (sparkApplicationResource
+          .getMetadata()
+          .getLabels()
+          .containsKey(Constants.SPOT_INSTANCE_LABEL)) {
+        spotInstanceLabel =
+            sparkApplicationResource.getMetadata().getLabels().get(Constants.SPOT_INSTANCE_LABEL);
+      }
 
-    if (spotInstanceLabelBool
-        && spotTimeoutMillisLabel != null
-        && !spotTimeoutMillisLabel.isEmpty()) {
-      long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
-      // return timeout error only exceed
-      if (spotTimeoutMillisSetting < this.duration) {
-        this.setApplicationState(Constants.SPOT_TIMEOUT);
+      String spotTimeoutMillisLabel = "";
+      if (sparkApplicationResource
+          .getMetadata()
+          .getLabels()
+          .containsKey(Constants.SPOT_TIMEOUT_LABEL)) {
+        spotTimeoutMillisLabel =
+            sparkApplicationResource.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
+      }
+
+      boolean spotInstanceLabelBool = Boolean.parseBoolean(spotInstanceLabel);
+
+      if (spotInstanceLabelBool
+          && spotTimeoutMillisLabel != null
+          && !spotTimeoutMillisLabel.isEmpty()) {
+        long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
+        // return timeout error only exceed
+        if (spotTimeoutMillisSetting < this.duration) {
+          this.setApplicationState(Constants.SPOT_TIMEOUT);
+        }
       }
     }
 
