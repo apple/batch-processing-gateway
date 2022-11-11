@@ -667,11 +667,13 @@ public class ApplicationSubmissionRest extends RestBase {
       response.copyFrom(sparkApplication);
 
       if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())) {
-          if(SparkConstants.RUNNING_STATE.equalsIgnoreCase(response.getApplicationState())) {
-            String url = ConfigUtil.getSparkUIUrl(sparkCluster, submissionId);
-            response.setSparkUIUrl(url);
-          }
-        if(SparkConstants.COMPLETED_STATE.equalsIgnoreCase(response.getApplicationState())
+        if(SparkConstants.RUNNING_STATE.equalsIgnoreCase(response.getApplicationState())) {
+          String url = ConfigUtil.getSparkUIUrl(sparkCluster, submissionId);
+          response.setSparkUIUrl(url);
+        }
+
+        if((SparkConstants.COMPLETED_STATE.equalsIgnoreCase(response.getApplicationState())
+                || SparkConstants.FAILED_STATE.equalsIgnoreCase(response.getApplicationState()))
                 && appConfig.getSparkHistoryDns() != null
                 && response.getSparkApplicationId() != null) {
           String url = ConfigUtil.getSparkHistoryUrl(appConfig.getSparkHistoryDns(), response.getSparkApplicationId());
