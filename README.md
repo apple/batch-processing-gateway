@@ -154,5 +154,13 @@ Batch Processing Gateway was built with (not limit to):
 * [AWS SDK for Java](https://aws.amazon.com/sdk-for-java/) - S3 Upload Support
 
 
+## Public Talks
+
+Public talks at conferences that explain the role of Batch Processing Gateway in a cloud native data platform and best practices:
+
+ - KubeCon North America 2022 - [Beyond Experimental: Spark On Kubernetes](https://www.youtube.com/watch?v=u7htKIiK75c)
+ - KubeCon Europe 2022 - [Spark on Kubernetes - The Elastic Story](https://www.youtube.com/watch?v=n7WeoTJq-40&ab_channel=CNCF%5BCloudNativeComputingFoundation%5D)
+
+
 ## License
 Please see [LICENSE](/LICENSE) for more information.
