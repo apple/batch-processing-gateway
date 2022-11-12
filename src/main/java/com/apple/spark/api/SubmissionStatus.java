@@ -20,6 +20,7 @@
 package com.apple.spark.api;
 
 import com.apple.spark.core.Constants;
+import com.apple.spark.core.SparkConstants;
 import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.operator.SparkApplicationStatus;
 import com.apple.spark.util.DateTimeUtils;
@@ -81,7 +82,9 @@ public class SubmissionStatus {
         long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
         // return timeout error only exceed
         if (spotTimeoutMillisSetting < this.duration) {
-          this.setApplicationState(Constants.SPOT_TIMEOUT);
+          if (SparkConstants.RUNNING_STATE.equalsIgnoreCase(this.getApplicationState())) {
+            this.setApplicationState(Constants.SPOT_TIMEOUT);
+          }
         }
       }
     }
