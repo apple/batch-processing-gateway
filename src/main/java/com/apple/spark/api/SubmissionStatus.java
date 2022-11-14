@@ -83,7 +83,7 @@ public class SubmissionStatus {
         // return timeout error only exceed
         if (spotTimeoutMillisSetting < this.duration) {
           if (SparkConstants.RUNNING_STATE.equalsIgnoreCase(this.getApplicationState())) {
-            this.setApplicationState(Constants.SPOT_TIMEOUT);
+            this.setApplicationState(SparkConstants.SPOT_TIMEOUT_STATE);
           }
         }
       }
