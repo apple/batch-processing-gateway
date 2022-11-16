@@ -667,7 +667,8 @@ public class ApplicationSubmissionRest extends RestBase {
       response.copyFrom(sparkApplication);
 
       if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())) {
-        if(SparkConstants.RUNNING_STATE.equalsIgnoreCase(response.getApplicationState())) {
+        if (SparkConstants.RUNNING_STATE.equalsIgnoreCase(response.getApplicationState())
+                || SparkConstants.SPOT_TIMEOUT_STATE.equalsIgnoreCase(response.getApplicationState())) {
           String url = ConfigUtil.getSparkUIUrl(sparkCluster, submissionId);
           response.setSparkUIUrl(url);
         }

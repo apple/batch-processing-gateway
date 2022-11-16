@@ -91,7 +91,8 @@ public class SubmissionSummary extends SubmissionStatus {
       AppConfig appConfig) {
     this.copyFrom(sparkApplicationResource);
     if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())
-        && SparkConstants.RUNNING_STATE.equalsIgnoreCase(getApplicationState())) {
+        && (SparkConstants.RUNNING_STATE.equalsIgnoreCase(getApplicationState())
+            || SparkConstants.SPOT_TIMEOUT_STATE.equalsIgnoreCase(getApplicationState()))) {
       String url = ConfigUtil.getSparkUIUrl(sparkCluster, submissionId);
       setSparkUIUrl(url);
     } else if (SparkConstants.COMPLETED_STATE.equalsIgnoreCase(getApplicationState())
