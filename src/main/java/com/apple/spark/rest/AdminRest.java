@@ -79,7 +79,7 @@ public class AdminRest extends RestBase {
       tags = {"Admin"})
   @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
   @ApiResponse(responseCode = "500", description = "Internal server error")
-  public Response listSubmissions(
+  public String listSubmissions(
       @Parameter(hidden = true) @DefaultValue("none") @HeaderParam("Client-Version")
           String clientVersion,
       @Parameter(description = "specify this to list only submissions under one application name")
@@ -97,12 +97,10 @@ public class AdminRest extends RestBase {
         clientVersion);
 
     if (applicationName == null || applicationName.isEmpty()) {
-//      return listAllSubmissionsBatch(user);
-      return listAllSubmissions(user);
+      return listAllSubmissionsBatch(user);
     } else {
       applicationName = KubernetesHelper.normalizeLabelValue(applicationName);
-//      return listSubmissionsByApplicationNameBatch(applicationName, user);
-      return listSubmissionsByApplicationName(applicationName, user);
+      return listSubmissionsByApplicationNameBatch(applicationName, user);
     }
   }
 
