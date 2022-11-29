@@ -22,10 +22,12 @@ package com.apple.spark.rest;
 import static com.apple.spark.core.Constants.ADMIN_API_V2;
 
 import com.apple.spark.AppConfig;
+import com.apple.spark.api.SubmissionSummary;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.KubernetesHelper;
 import com.apple.spark.core.RestStreamingOutput;
 import com.apple.spark.core.RestSubmissionsStreamingOutput;
+import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.operator.SparkApplicationResourceList;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ConfigUtil;
@@ -40,7 +42,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+
+import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -72,13 +78,14 @@ public class AdminRest extends RestBase {
       summary = "List submissions from all users",
       tags = {"Admin"})
   @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
+  @ApiResponse(responseCode = "500", description = "Internal server error")
   public Response listSubmissions(
       @Parameter(hidden = true) @DefaultValue("none") @HeaderParam("Client-Version")
           String clientVersion,
       @Parameter(description = "specify this to list only submissions under one application name")
           @QueryParam("name")
           String applicationName,
-      @Parameter(hidden = true) @Auth User user) {
+      @Parameter(hidden = true) @Auth User user) throws IOException {
     requestCounters.increment(
         REQUEST_METRIC_NAME, Tag.of("name", "admin_submissions"), Tag.of("user", user.getName()));
 
@@ -90,11 +97,61 @@ public class AdminRest extends RestBase {
         clientVersion);
 
     if (applicationName == null || applicationName.isEmpty()) {
+//      return listAllSubmissionsBatch(user);
       return listAllSubmissions(user);
     } else {
       applicationName = KubernetesHelper.normalizeLabelValue(applicationName);
+//      return listSubmissionsByApplicationNameBatch(applicationName, user);
       return listSubmissionsByApplicationName(applicationName, user);
     }
+  }
+
+  private String listAllSubmissionsBatch(User user) throws IOException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    StringBuilder submissions = new StringBuilder();
+    for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
+      SparkApplicationResourceList list = getSparkApplicationResources(sparkCluster);
+      List<SparkApplicationResource> sparkApplicationResources = list.getItems();
+      if (sparkApplicationResources == null) {
+        continue;
+      }
+      for (SparkApplicationResource sparkApplicationResource : sparkApplicationResources) {
+        SubmissionSummary submission = new SubmissionSummary();
+        submission.copyFrom(sparkApplicationResource, sparkCluster, appConfig);
+        submissions.append(objectMapper.writeValueAsString(submission));
+        submissions.append(System.lineSeparator());
+      }
+    }
+    logger.info(
+            "Finished fetching all submissions, requested by user {}", user.getName());
+    return submissions.toString();
+  }
+
+  private String listSubmissionsByApplicationNameBatch(
+          String applicationName,
+          User user) throws IOException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    StringBuilder submissions = new StringBuilder();
+    for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
+      SparkApplicationResourceList list =
+              getSparkApplicationResourcesByLabel(sparkCluster, Constants.APPLICATION_NAME_LABEL, applicationName);
+      List<SparkApplicationResource> sparkApplicationResources = list.getItems();
+      if (sparkApplicationResources == null) {
+        continue;
+      }
+      for (SparkApplicationResource sparkApplicationResource : sparkApplicationResources) {
+        SubmissionSummary submission = new SubmissionSummary();
+        submission.copyFrom(sparkApplicationResource, sparkCluster, appConfig);
+        submissions.append(objectMapper.writeValueAsString(submission));
+        submissions.append(System.lineSeparator());
+      }
+    }
+    logger.info(
+            "Finished fetching all submissions, requested by user {}", user.getName());
+    logger.info(
+            "Finished fetching all submissions by application name {}, requested by user {}",
+            applicationName, user.getName());
+    return submissions.toString();
   }
 
   private Response listAllSubmissions(User user) {
