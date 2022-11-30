@@ -33,6 +33,7 @@ import com.apple.spark.security.User;
 import com.apple.spark.util.ConfigUtil;
 import com.apple.spark.util.ExceptionUtils;
 import com.apple.spark.util.VersionInfo;
+import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.auth.Auth;
@@ -45,6 +46,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.security.PermitAll;
@@ -77,6 +79,7 @@ public class AdminRest extends RestBase {
   @Operation(
       summary = "List submissions from all users",
       tags = {"Admin"})
+  @ExceptionMetered(name = "UnknownHostException", cause = UnknownHostException.class)
   @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
   @ApiResponse(responseCode = "500", description = "Internal server error")
   public String listSubmissions(
@@ -105,51 +108,62 @@ public class AdminRest extends RestBase {
   }
 
   private String listAllSubmissionsBatch(User user) throws IOException {
-    ObjectMapper objectMapper = new ObjectMapper();
-    StringBuilder submissions = new StringBuilder();
-    for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
-      SparkApplicationResourceList list = getSparkApplicationResources(sparkCluster);
-      List<SparkApplicationResource> sparkApplicationResources = list.getItems();
-      if (sparkApplicationResources == null) {
-        continue;
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      StringBuilder submissions = new StringBuilder();
+      for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
+        SparkApplicationResourceList list = getSparkApplicationResources(sparkCluster);
+        List<SparkApplicationResource> sparkApplicationResources = list.getItems();
+        if (sparkApplicationResources == null) {
+          continue;
+        }
+        for (SparkApplicationResource sparkApplicationResource : sparkApplicationResources) {
+          SubmissionSummary submission = new SubmissionSummary();
+          submission.copyFrom(sparkApplicationResource, sparkCluster, appConfig);
+          submissions.append(objectMapper.writeValueAsString(submission));
+          submissions.append(System.lineSeparator());
+        }
       }
-      for (SparkApplicationResource sparkApplicationResource : sparkApplicationResources) {
-        SubmissionSummary submission = new SubmissionSummary();
-        submission.copyFrom(sparkApplicationResource, sparkCluster, appConfig);
-        submissions.append(objectMapper.writeValueAsString(submission));
-        submissions.append(System.lineSeparator());
-      }
+      logger.info("Finished listing all submissions, requested by user {}", user.getName());
+      return submissions.toString();
+    } catch (Throwable ex) {
+      logger.warn("Hit exception when listing all submissions, requested by user {}", user.getName());
+      ExceptionUtils.meterException();
+      throw ex;
     }
-    logger.info(
-            "Finished fetching all submissions, requested by user {}", user.getName());
-    return submissions.toString();
   }
 
   private String listSubmissionsByApplicationNameBatch(
           String applicationName,
           User user) throws IOException {
-    ObjectMapper objectMapper = new ObjectMapper();
-    StringBuilder submissions = new StringBuilder();
-    for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
-      SparkApplicationResourceList list =
-              getSparkApplicationResourcesByLabel(sparkCluster, Constants.APPLICATION_NAME_LABEL, applicationName);
-      List<SparkApplicationResource> sparkApplicationResources = list.getItems();
-      if (sparkApplicationResources == null) {
-        continue;
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      StringBuilder submissions = new StringBuilder();
+      for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
+        SparkApplicationResourceList list =
+                getSparkApplicationResourcesByLabel(sparkCluster, Constants.APPLICATION_NAME_LABEL, applicationName);
+        List<SparkApplicationResource> sparkApplicationResources = list.getItems();
+        if (sparkApplicationResources == null) {
+          continue;
+        }
+        for (SparkApplicationResource sparkApplicationResource : sparkApplicationResources) {
+          SubmissionSummary submission = new SubmissionSummary();
+          submission.copyFrom(sparkApplicationResource, sparkCluster, appConfig);
+          submissions.append(objectMapper.writeValueAsString(submission));
+          submissions.append(System.lineSeparator());
+        }
       }
-      for (SparkApplicationResource sparkApplicationResource : sparkApplicationResources) {
-        SubmissionSummary submission = new SubmissionSummary();
-        submission.copyFrom(sparkApplicationResource, sparkCluster, appConfig);
-        submissions.append(objectMapper.writeValueAsString(submission));
-        submissions.append(System.lineSeparator());
-      }
+      logger.info(
+              "Finished listing all submissions by application name {}, requested by user {}",
+              applicationName, user.getName());
+      return submissions.toString();
+    } catch (Throwable ex) {
+      logger.warn(
+              "Hit exception when listing all submissions by application name {}, requested by user {}",
+              applicationName, user.getName());
+      ExceptionUtils.meterException();
+      throw ex;
     }
-    logger.info(
-            "Finished fetching all submissions, requested by user {}", user.getName());
-    logger.info(
-            "Finished fetching all submissions by application name {}, requested by user {}",
-            applicationName, user.getName());
-    return submissions.toString();
   }
 
   private Response listAllSubmissions(User user) {
