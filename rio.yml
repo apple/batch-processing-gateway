@@ -74,6 +74,34 @@ pipelines:
             - name: "SKATE_VERSION"
               value: ${VERSION}
 
+  - name: publish-dev
+    branchRules:
+      includePatterns:
+        - 'dev-[^/]+'
+    timeout: 95
+    machine:
+      env:
+        VERSION: skate-${GIT_BRANCH}.#{}
+        BUILD_TIME: "$(date)"
+    build:
+      template: freestyle:v4:publish
+      steps:
+        - echo "started building step"
+    package:
+      version: ${VERSION}
+      dockerfile:
+        - env:
+            BASE_IMG: docker.apple.com/base-images/ubi9-minimal/java17-runtime:latest
+          dockerfilePath: Dockerfile
+          publish:
+            - repo: docker.apple.com/aiml-di-dpi/skate/dev
+    finally:
+      pipelineChain:
+        - pipeline: dpi-skate-publish-spinnaker-chart
+          buildArguments:
+            - name: "SKATE_VERSION"
+              value: ${VERSION}
+
   - name: dpi-skate-publish-spinnaker-chart
     branchName: release
     timeout: 95
