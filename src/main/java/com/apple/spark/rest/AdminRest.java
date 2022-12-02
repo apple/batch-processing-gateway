@@ -79,7 +79,7 @@ public class AdminRest extends RestBase {
   @Operation(
       summary = "List submissions from all users",
       tags = {"Admin"})
-  @ExceptionMetered(name = "UnknownHostException", cause = UnknownHostException.class)
+  @ExceptionMetered(name = "SparkEKSClusterUnreachable", cause = UnknownHostException.class)
   @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
   @ApiResponse(responseCode = "500", description = "Internal server error")
   public String listSubmissions(
