@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 re="skate-[0-9]+.[0-9]+.[0-9]+"
+dev_re="skate-dev-[0-9]+.[0-9]+.[0-9]+"
 
-if [[ "$1" =~ $re ]]; then
+if [[ "$1" =~ $re ]] || [[ "$1" =~ $dev_re ]]; then
    SKATE_VERSION=$1
 else
    echo "A skate tag must be provided."

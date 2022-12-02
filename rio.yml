@@ -74,34 +74,6 @@ pipelines:
             - name: "SKATE_VERSION"
               value: ${VERSION}
 
-  - name: publish-dev
-    branchRules:
-      includePatterns:
-        - 'dev-[^/]+'
-    timeout: 95
-    machine:
-      env:
-        VERSION: skate-${GIT_BRANCH}.#{}
-        BUILD_TIME: "$(date)"
-    build:
-      template: freestyle:v4:publish
-      steps:
-        - echo "started building step"
-    package:
-      version: ${VERSION}
-      dockerfile:
-        - env:
-            BASE_IMG: docker.apple.com/base-images/ubi9-minimal/java17-runtime:latest
-          dockerfilePath: Dockerfile
-          publish:
-            - repo: docker.apple.com/aiml-di-dpi/skate/dev
-    finally:
-      pipelineChain:
-        - pipeline: dpi-skate-publish-spinnaker-chart
-          buildArguments:
-            - name: "SKATE_VERSION"
-              value: ${VERSION}
-
   - name: dpi-skate-publish-spinnaker-chart
     branchName: release
     timeout: 95
@@ -119,3 +91,51 @@ pipelines:
       freeform:
         - publish:
             - repo: apple-helm-release-local
+
+  - name: publish-dev
+    branchRules:
+      includePatterns:
+        - 'dev-[^/]+'
+    timeout: 95
+    machine:
+      env:
+        APP_VERSION: "1.1"
+        VERSION: skate-dev-${APP_VERSION}.#{}
+        BUILD_TIME: "$(date)"
+    build:
+      template: freestyle:v4:publish
+      steps:
+        - echo "started building step"
+    package:
+      version: ${VERSION}
+      dockerfile:
+        - env:
+            BASE_IMG: docker.apple.com/base-images/ubi9-minimal/java17-runtime:latest
+          dockerfilePath: Dockerfile
+          publish:
+            - repo: docker.apple.com/aiml-di-dpi/skate/dev
+    finally:
+      pipelineChain:
+        - pipeline: dpi-skate-dev-publish-spinnaker-chart
+          buildArguments:
+            - name: "SKATE_VERSION"
+              value: ${VERSION}
+
+  - name: dpi-skate-dev-publish-spinnaker-chart
+    branchName: release
+    timeout: 95
+    trigger:
+      gitPush: false
+    machine:
+      env:
+        HELM_CHART: "./apple-internal/helm/spinnaker-skate"
+        HELM_REPO: "apple-aiml-skate-dev-spinnaker"
+    build:
+      template: freestyle:v4:publish
+      steps:
+        - ./apple-internal/publish_chart.sh ${BUILD_PARAM_SKATE_VERSION} ${HELM_CHART} ${HELM_REPO}
+    package:
+      freeform:
+        - publish:
+            - repo: apple-helm-release-local
+
