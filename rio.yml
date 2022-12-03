@@ -130,10 +130,11 @@ pipelines:
       env:
         HELM_CHART: "./apple-internal/helm/spinnaker-skate"
         HELM_REPO: "apple-aiml-skate-dev-spinnaker"
+        IMG_REPO: "aiml-di-dpi/skate/dev"
     build:
       template: freestyle:v4:publish
       steps:
-        - ./apple-internal/publish_chart.sh ${BUILD_PARAM_SKATE_VERSION} ${HELM_CHART} ${HELM_REPO}
+        - ./apple-internal/publish_chart.sh ${BUILD_PARAM_SKATE_VERSION} ${HELM_CHART} ${HELM_REPO} ${IMG_REPO}
     package:
       freeform:
         - publish:
