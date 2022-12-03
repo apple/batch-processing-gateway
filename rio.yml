@@ -122,7 +122,9 @@ pipelines:
               value: ${VERSION}
 
   - name: dpi-skate-dev-publish-spinnaker-chart
-    branchName: release
+    branchRules:
+      includePatterns:
+        - 'dev-[^/]+'
     timeout: 95
     trigger:
       gitPush: false
