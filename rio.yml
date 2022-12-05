@@ -92,7 +92,7 @@ pipelines:
         - publish:
             - repo: apple-helm-release-local
 
-  - name: publish-dev
+  - group: publish-dev
     branchRules:
       includePatterns:
         - 'dev-[^/]+'
@@ -121,7 +121,7 @@ pipelines:
             - name: "SKATE_VERSION"
               value: ${VERSION}
 
-  - name: dpi-skate-dev-publish-spinnaker-chart
+  - group: dpi-skate-dev-publish-spinnaker-chart
     branchRules:
       includePatterns:
         - 'dev-[^/]+'
