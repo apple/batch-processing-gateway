@@ -287,7 +287,7 @@ public class ApplicationSubmissionRest extends RestBase {
             .extendVolumes(getVolumes(request, sparkCluster));
 
     // Only one of kerberos principal or proxy-user can be passed to spark-submit
-    if ( ! appConfig.getDefaultSparkConf().containsKey("spark.kerberos.keytab")) {
+    if (!appConfig.getDefaultSparkConf().containsKey("spark.kerberos.keytab")) {
         specBuilder.withProxyUser(proxyUser);
     }
 
