@@ -38,6 +38,10 @@ public class AppConfig extends Configuration {
 
   private List<SparkImage> sparkImages;
 
+  private String kerberosAuth="";
+
+  private String kerberosRealm="";
+
   private String s3Bucket;
   private String s3Folder;
 
@@ -231,6 +235,21 @@ public class AppConfig extends Configuration {
     return vCoreSecondCost;
   }
 
+    public String getKerberosAuth() {
+        return kerberosAuth;
+    }
+
+    public void setKerberosAuth(String kerberosAuth) {
+        this.kerberosAuth = kerberosAuth;
+    }
+
+    public String getKerberosRealm() {
+        return kerberosRealm;
+    }
+
+    public void setKerberosRealm(String kerberosRealm) {
+        this.kerberosRealm = kerberosRealm;
+    }
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class SparkCluster {
 

@@ -34,11 +34,7 @@ import com.apple.spark.api.SubmissionSummary;
 import com.apple.spark.api.SubmitApplicationRequest;
 import com.apple.spark.api.SubmitApplicationResponse;
 import com.apple.spark.core.*;
-import com.apple.spark.operator.DriverInfo;
-import com.apple.spark.operator.SparkApplicationResource;
-import com.apple.spark.operator.SparkApplicationResourceDoneable;
-import com.apple.spark.operator.SparkApplicationResourceList;
-import com.apple.spark.operator.SparkApplicationSpec;
+import com.apple.spark.operator.*;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ConfigUtil;
 import com.apple.spark.util.CustomSerDe;
@@ -271,7 +267,6 @@ public class ApplicationSubmissionRest extends RestBase {
         new SparkApplicationSpec.Builder()
             .withMode(SparkConstants.CLUSTER_MODE)
             .withOriginalUser(user.getName())
-            .withProxyUser(proxyUser)
             .withType(type)
             .withSparkVersion(sparkVersion)
             .withMainClass(request.getMainClass())
@@ -290,6 +285,11 @@ public class ApplicationSubmissionRest extends RestBase {
                 getSparkConf(submissionId, request, appConfig.getDefaultSparkConf(), sparkCluster))
             .withSparkUIConfiguration(getSparkUIConfiguration(submissionId, sparkCluster))
             .extendVolumes(getVolumes(request, sparkCluster));
+
+    // Only one of kerberos principal or proxy-user can be passed to spark-submit
+    if ( ! appConfig.getDefaultSparkConf().containsKey("spark.kerberos.keytab")) {
+        specBuilder.withProxyUser(proxyUser);
+    }
 
     // only set scheduler if it's YuniKorn
     String batchScheduler = sparkCluster.getBatchScheduler();
@@ -329,7 +329,7 @@ public class ApplicationSubmissionRest extends RestBase {
 
     logDao.logApplicationSubmission(submissionId, sparkSpec.getProxyUser(), request);
     SubmitApplicationResponse response =
-        submitSparkCRD(sparkCluster, submissionId, sparkSpec, request, queue, parentQueue);
+        submitSparkCRD(sparkCluster, submissionId, sparkSpec, request, queue, parentQueue, proxyUser);
     return response;
   }
 
@@ -339,7 +339,8 @@ public class ApplicationSubmissionRest extends RestBase {
       SparkApplicationSpec sparkSpec,
       SubmitApplicationRequest request,
       String queue,
-      String parentQueue) {
+      String parentQueue,
+      String proxyUser) {
     com.codahale.metrics.Timer timer =
         registry.timer(this.getClass().getSimpleName() + ".submitApplication.k8s-time");
 
@@ -448,6 +449,16 @@ public class ApplicationSubmissionRest extends RestBase {
       } catch (Throwable ex) {
         logger.warn("Failed to serialize SparkApplicationSpec and mask sensitive info", ex);
       }
+
+        // If kerberos is enabled, add kerberos principal
+        if (appConfig.getKerberosAuth() != null) {
+            if (appConfig.getKerberosAuth().equals("true")) {
+                if (appConfig.getKerberosRealm() != null) {
+                    sparkSpec.getSparkConf().put("spark.kerberos.principal", proxyUser + "@" + appConfig.getKerberosRealm());
+                }
+                sparkSpec.getDriver().getAnnotations().put("com.apple.whisper.hydrogen.appleConnectUser", proxyUser);
+            }
+        }
 
       sparkApplicationResource.setSpec(sparkSpec);
       CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
