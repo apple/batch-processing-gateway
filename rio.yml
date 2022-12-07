@@ -117,14 +117,13 @@ pipelines:
     finally:
       pipelineChain:
         - pipeline: dpi-skate-dev-publish-spinnaker-chart
+          upstreamGitRevision: true
           buildArguments:
             - name: "SKATE_VERSION"
               value: ${VERSION}
 
-  - group: dpi-skate-dev-publish-spinnaker-chart
-    branchRules:
-      includePatterns:
-        - 'dev-[^/]+'
+  - name: dpi-skate-dev-publish-spinnaker-chart
+    branchName: release
     timeout: 95
     trigger:
       gitPush: false
