@@ -99,14 +99,14 @@ public class AdminRest extends RestBase {
         clientVersion);
 
     if (applicationName == null || applicationName.isEmpty()) {
-      return listAllSubmissionsBatch(user);
+      return listAllSubmissions(user);
     } else {
       applicationName = KubernetesHelper.normalizeLabelValue(applicationName);
-      return listSubmissionsByApplicationNameBatch(applicationName, user);
+      return listSubmissionsByApplicationName(applicationName, user);
     }
   }
 
-  private String listAllSubmissionsBatch(User user) throws IOException {
+  private String listAllSubmissions(User user) throws IOException {
     try {
       ObjectMapper objectMapper = new ObjectMapper();
       StringBuilder submissions = new StringBuilder();
@@ -132,7 +132,7 @@ public class AdminRest extends RestBase {
     }
   }
 
-  private String listSubmissionsByApplicationNameBatch(
+  private String listSubmissionsByApplicationName(
           String applicationName,
           User user) throws IOException {
     try {
@@ -163,61 +163,6 @@ public class AdminRest extends RestBase {
       ExceptionUtils.meterException();
       throw ex;
     }
-  }
-
-  private Response listAllSubmissions(User user) {
-    return Response.ok(
-            new RestSubmissionsStreamingOutput() {
-              @Override
-              public void write(OutputStream outputStream) throws WebApplicationException {
-                try {
-                  for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
-                    SparkApplicationResourceList list = getSparkApplicationResources(sparkCluster);
-                    writeSubmissions(outputStream, list, sparkCluster, getAppConfig());
-                  }
-                  logger.info(
-                      "Finished streaming all submissions, requested by user {}", user.getName());
-                } catch (Throwable ex) {
-                  logger.warn(
-                      String.format(
-                          "Hit exception when streaming all submissions, requested by user %s",
-                          user.getName()),
-                      ex);
-                  ExceptionUtils.meterException();
-                }
-              }
-            })
-        .build();
-  }
-
-  private Response listSubmissionsByApplicationName(String applicationName, User user) {
-    return Response.ok(
-            new RestSubmissionsStreamingOutput() {
-              @Override
-              public void write(OutputStream outputStream) throws WebApplicationException {
-                try {
-                  for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
-                    SparkApplicationResourceList list =
-                        getSparkApplicationResourcesByLabel(
-                            sparkCluster, Constants.APPLICATION_NAME_LABEL, applicationName);
-                    writeSubmissions(outputStream, list, sparkCluster, getAppConfig());
-                  }
-                  logger.info(
-                      "Finished streaming all submissions by application name,"
-                          + " requested by user {}",
-                      user.getName());
-                } catch (Throwable ex) {
-                  logger.warn(
-                      String.format(
-                          "Hit exception when streaming all submissions by application name,"
-                              + " requested by user %s",
-                          user.getName()),
-                      ex);
-                  ExceptionUtils.meterException();
-                }
-              }
-            })
-        .build();
   }
 
   @GET
