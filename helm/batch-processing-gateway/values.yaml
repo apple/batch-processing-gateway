@@ -25,6 +25,72 @@ ingress:
 encodedConfig:
 
 plainConfig:
+  defaultSparkConf:
+    spark.kubernetes.submission.connectionTimeout: 30000
+    spark.kubernetes.submission.requestTimeout: 30000
+    spark.kubernetes.driver.connectionTimeout: 30000
+    spark.kubernetes.driver.requestTimeout: 30000
+    spark.sql.debug.maxToStringFields: 75
+  sparkImages:
+    - name: ghcr.io/datapunchorg/spark:pyspark-3.1-1643212945
+      types:
+        - Python
+      version: "3.1"
+    - name: ghcr.io/datapunchorg/spark:spark-3.1-1643212945
+      types:
+        - Java
+        - Scala
+      version: "3.1"
+    - name: ghcr.io/datapunchorg/spark:pyspark-3.2.1-1643336295
+      types:
+        - Python
+      version: "3.2"
+    - name: ghcr.io/datapunchorg/spark:spark-3.2.1-1643336295
+      types:
+        - Java
+        - Scala
+      version: "3.2"
+  s3Bucket: s3-bucket-artifacts
+  s3Folder: uploaded
+  sparkLogS3Bucket: datapunch-public-01
+  sparkLogIndex: index/index.txt
+  batchFileLimit: 2016
+  sparkHistoryDns: sparkhistory.host.com
+  gatewayDns: gateway.host.com
+  sparkHistoryUrl: https://sparkhistory.host.com
+  memoryMbSecondCost: 0.000000000372
+  vCoreSecondCost: 0.000003
+  allowedUsers:
+    - '*'
+  blockedUsers:
+    - blocked_user_1
+  queues:
+    - name: poc
+      driverNodeLabelKey: "node_group_category"
+      driverNodeLabelValues:
+        - "spark_driver"
+      executorNodeLabelKey: "node_group_category"
+      executorNodeLabelValues:
+        - "spark_executor"
+    - name: vip
+      secure: true
+  queueTokenSOPS:
+    secrets:
+      - secret$$$1
+  dbStorageSOPS:
+    connectionString: jdbc:mysql://localhost:3306/skate?useUnicode=yes&characterEncoding=UTF-8&useLegacyDatetimeCode=false&connectTimeout=10000&socketTimeout=30000
+    user: root
+    password: Pass1word
+    dbName: skate
+  server:
+    applicationConnectors:
+      - type: http
+        port: 8080
+  logging:
+    level: INFO
+    loggers:
+      com.apple.spark: INFO
+
 
 # For Swagger UI which visualizes API specs.
 swagger:
