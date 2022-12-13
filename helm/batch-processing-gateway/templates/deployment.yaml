@@ -45,11 +45,11 @@ spec:
               mountPath: "/app/"
               readOnly: true
             {{- end }}
-            { { - if not (empty .Values.plainConfig) } }
+            {{- if not (empty .Values.plainConfig) }}
             - name: configuration
               mountPath: "/etc/app_config/"
               readOnly: true
-            { { - end } }
+            {{- end }}
           env:
             - name: MAX_HEAP_SIZE
               value: "-Xmx20G"
