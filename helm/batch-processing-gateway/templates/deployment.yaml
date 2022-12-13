@@ -20,6 +20,7 @@ spec:
       containers:
         - name: bpg
           image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
+          imagePullPolicy: Always
           command: ["/opt/entrypoint.sh"]
           resources:
             requests:
