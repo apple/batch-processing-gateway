@@ -38,7 +38,7 @@ plainConfig:
       masterUrl: https://34.134.183.114
       caCertDataSOPS:
       userName: spark-operator-api-user
-      userTokenSOPS: 
+      userTokenSOPS:
       sparkApplicationNamespace: spark-applications
       sparkServiceAccount: spark
       sparkVersions:
