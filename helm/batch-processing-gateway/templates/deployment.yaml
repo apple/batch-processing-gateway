@@ -70,5 +70,5 @@ spec:
             name: 'bpg-plain-config'
             items:
               - key: 'plain-config-yaml'
-                path: 'app-config'
+                path: 'app-config.yaml'
           {{- end }}
