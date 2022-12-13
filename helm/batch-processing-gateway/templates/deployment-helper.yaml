@@ -40,9 +40,16 @@ spec:
             failureThreshold: 3
             periodSeconds: 15
           volumeMounts:
+            {{- if not (empty .Values.encodedConfig) }}
             - name: configuration
               mountPath: "/app/"
               readOnly: true
+            {{- end }}
+            {{- if not (empty .Values.plainConfig) }}
+            - name: configuration
+              mountPath: "/etc/app_config/"
+              readOnly: true
+            {{- end }}
           env:
             - name: MAX_HEAP_SIZE
               value: "-Xmx20G"
