@@ -1,7 +1,7 @@
 image:
   registry: ghcr.io/hiboyang
   repository: batch-processing-gateway
-  tag: bo-test-1
+  tag: bo-test-2
 
 replicas: 1
 
