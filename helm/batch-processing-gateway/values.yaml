@@ -1,19 +1,19 @@
 image:
-  registry: ''
-  repository: ''
-  tag: ''
+  registry: ghcr.io/hiboyang
+  repository: batch-processing-gateway
+  tag: main
 
-replicas: 3
+replicas: 1
 
 namespace: bpg
 
 resources:
   requests:
-    memory: '16G'
-    cpu: 4
+    memory: '4G'
+    cpu: 1
   limits:
-    memory: '16G'
-    cpu: 4
+    memory: '4G'
+    cpu: 1
 
 
 ingress:
