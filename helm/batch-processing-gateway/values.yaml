@@ -22,7 +22,9 @@ ingress:
 
 # Config is provided as a base64-encoded,
 # compressed content which will be projected into pods as /app/app-config.gz.
-encodedConfig: ''
+encodedConfig:
+
+plainConfig:
 
 # For Swagger UI which visualizes API specs.
 swagger:

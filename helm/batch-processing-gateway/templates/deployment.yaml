@@ -58,8 +58,17 @@ spec:
               value: "8125"
       volumes:
         - name: configuration
+          {{- if not (empty .Values.encodedConfig) }}
           configMap:
-            name: 'bpg'
+            name: 'bpg-encoded-config'
             items:
               - key: 'encoded-config-yaml'
                 path: 'app-config.gz'
+          {{- end }}
+          {{- if not (empty .Values.plainConfig) }}
+          configMap:
+            name: 'bpg-plain-config'
+            items:
+              - key: 'plain-config-yaml'
+                path: 'app-config'
+          {{- end }}
