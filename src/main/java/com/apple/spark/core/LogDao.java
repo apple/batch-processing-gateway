@@ -190,8 +190,8 @@ public class LogDao {
       String submissionId, String user, SubmitApplicationRequest submission, String requestBody) {
     String sql =
         String.format(
-            "INSERT INTO %s.application_submission(submission_id, \"user\", spark_version,"
-                + " request_body,queue) VALUES (?, ?, ?, ?,?) ON DUPLICATE KEY UPDATE \"user\"=?,"
+            "INSERT INTO %s.application_submission(submission_id, `user`, spark_version,"
+                + " request_body,queue) VALUES (?, ?, ?, ?,?) ON DUPLICATE KEY UPDATE `user`=?,"
                 + " spark_version=?, request_body=?, queue=?",
             dbName);
 
@@ -447,7 +447,7 @@ public class LogDao {
         String.format(
             "CREATE TABLE IF NOT EXISTS %s.application_submission (\n"
                 + "    submission_id VARCHAR(255) NOT NULL PRIMARY KEY,\n"
-                + "    \"user\" VARCHAR(255) NULL,\n"
+                + "    `user` VARCHAR(255) NULL,\n"
                 + "    app_name VARCHAR(255) NULL,\n"
                 + "    dag_name VARCHAR(255) NULL,\n"
                 + "    task_name VARCHAR(255) NULL,\n"
@@ -536,7 +536,7 @@ public class LogDao {
               String.format(
                   "SELECT *, TIMESTAMPDIFF(second,created_time,NOW()) AS duration FROM"
                       + " %s.application_submission WHERE created_time > (NOW() + CAST(? AS"
-                      + " INTEGER) * INTERVAL '1' DAY) AND status = ? AND \"user\" = ? ORDER BY"
+                      + " INTEGER) * INTERVAL '1' DAY) AND status = ? AND `user` = ? ORDER BY"
                       + " created_time DESC LIMIT ?",
                   dbName);
         } else {
@@ -544,7 +544,7 @@ public class LogDao {
               String.format(
                   "SELECT *, TIMESTAMPDIFF(second,created_time,finished_time) AS duration FROM"
                       + " %s.application_submission WHERE created_time > (NOW() + CAST(? AS"
-                      + " INTEGER) * INTERVAL '1' DAY) AND status = ? AND \"user\" = ? ORDER BY"
+                      + " INTEGER) * INTERVAL '1' DAY) AND status = ? AND `user` = ? ORDER BY"
                       + " created_time DESC LIMIT ?",
                   dbName);
         }
