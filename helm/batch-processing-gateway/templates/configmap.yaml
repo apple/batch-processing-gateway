@@ -11,4 +11,5 @@ kind: ConfigMap
 metadata:
   name: bpg-plain-config
 data:
-  plain-config-yaml: {{- .Values.plainConfig | toYaml | trim | nindent 4 }}
+  plain-config-yaml: |
+    {{- .Values.plainConfig | toYaml | trim | nindent 4 }}
