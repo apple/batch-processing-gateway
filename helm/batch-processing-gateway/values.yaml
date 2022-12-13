@@ -31,6 +31,59 @@ plainConfig:
     spark.kubernetes.driver.connectionTimeout: 30000
     spark.kubernetes.driver.requestTimeout: 30000
     spark.sql.debug.maxToStringFields: 75
+  sparkClusters:
+    - weight: 100
+      id: c0101
+      eksCluster: cluster-1
+      masterUrl: https://34.134.183.114
+      caCertDataSOPS:
+      userName: spark-operator-api-user
+      userTokenSOPS: 
+      sparkApplicationNamespace: spark-applications
+      sparkServiceAccount: spark
+      sparkVersions:
+        - 3.2
+        - 3.1
+      queues:
+        - gcp
+      ttlSeconds: 86400  # 1 day TTL for terminated spark application
+      timeoutMillis: 180000
+      sparkUIUrl: https://sparkui.example.host.com
+      batchScheduler: default
+      sparkConf:
+        spark.kubernetes.executor.podNamePrefix: '{spark-application-resource-name}'
+        spark.eventLog.enabled: "true"
+        spark.kubernetes.allocation.batch.size: 2000
+        spark.kubernetes.allocation.batch.delay: 1s
+        spark.eventLog.dir: s3a://datapunch-public-01/eventlog
+        spark.history.fs.logDirectory: s3a://datapunch-public-01/eventlog
+        spark.hadoop.fs.s3a.aws.credentials.provider: com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+        spark.hadoop.hive.metastore.uris: thrift://hms.endpoint.com:9083
+        spark.sql.warehouse.dir: s3a://datapunch-public-01/warehouse
+        spark.sql.catalogImplementation: hive
+      sparkUIOptions:
+        ServicePort: 4040
+        ingressAnnotations:
+          nginx.ingress.kubernetes.io/rewrite-target: /$2
+          nginx.ingress.kubernetes.io/proxy-redirect-from: http://$host/
+          nginx.ingress.kubernetes.io/proxy-redirect-to: /spark-applications/{spark-application-resource-name}/
+          kubernetes.io/ingress.class: nginx
+          nginx.ingress.kubernetes.io/configuration-snippet: |
+            proxy_set_header Accept-Encoding ""; # disable compression
+            sub_filter_last_modified off;
+            sub_filter '<head>' '<head> <base href="/spark-applications/{spark-application-resource-name}/">'; # add base url
+            sub_filter 'href="/' 'href="'; # remove absolute URL path so base url applies
+            sub_filter 'src="/' 'src="'; # remove absolute URL path so base url applies
+            
+            sub_filter '/{{num}}/jobs/' '/jobs/';
+            
+            sub_filter "setUIRoot('')" "setUIRoot('/spark-applications/{spark-application-resource-name}/')"; # Set UI root for JS scripts
+            sub_filter "document.baseURI.split" "document.documentURI.split"; # Executors page issue fix
+            sub_filter_once off;
+        ingressTLS:
+          - hosts:
+              - sparkui.example.host.com
+            secretName: sparkui.example.host.com-tls-secret
   sparkImages:
     - name: ghcr.io/datapunchorg/spark:pyspark-3.1-1643212945
       types:
