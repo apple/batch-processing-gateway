@@ -39,6 +39,8 @@ import com.apple.spark.security.UserUnauthorizedHandler;
 import com.apple.spark.util.CounterMetricContainer;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
@@ -65,6 +67,7 @@ public class BPGApplication extends Application<AppConfig> {
 
   private static final Logger logger = LoggerFactory.getLogger(BPGApplication.class);
 
+  private static final String PRINT_CONFIG_SYSTEM_PROPERTY_NAME = "printConfig"; // note: may leak credential information when print config
   private static final String MONITOR_APPLICATION_SYSTEM_PROPERTY_NAME = "monitorApplication";
 
   private final boolean monitorApplication;
@@ -97,6 +100,17 @@ public class BPGApplication extends Application<AppConfig> {
 
   @Override
   public void run(final AppConfig configuration, final Environment environment) {
+
+    String value = System.getProperty(PRINT_CONFIG_SYSTEM_PROPERTY_NAME);
+    boolean printConfig = value != null && value.equalsIgnoreCase("true");
+    if (printConfig) {
+      try {
+        String str = new ObjectMapper().writeValueAsString(configuration);
+        logger.info("Application configuration: {}", str);
+      } catch (JsonProcessingException e) {
+        logger.warn("Failed to serialize and print configuration", e);
+      }
+    }
 
     // Get the application's metric registry
     MetricRegistry registry = environment.metrics();
