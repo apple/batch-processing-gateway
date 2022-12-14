@@ -26,7 +26,6 @@ import com.apple.spark.api.SubmissionSummary;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.KubernetesHelper;
 import com.apple.spark.core.RestStreamingOutput;
-import com.apple.spark.core.RestSubmissionsStreamingOutput;
 import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.operator.SparkApplicationResourceList;
 import com.apple.spark.security.User;
@@ -43,7 +42,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.UnknownHostException;
@@ -87,7 +85,8 @@ public class AdminRest extends RestBase {
       @Parameter(description = "specify this to list only submissions under one application name")
           @QueryParam("name")
           String applicationName,
-      @Parameter(hidden = true) @Auth User user) throws IOException {
+      @Parameter(hidden = true) @Auth User user)
+      throws IOException {
     requestCounters.increment(
         REQUEST_METRIC_NAME, Tag.of("name", "admin_submissions"), Tag.of("user", user.getName()));
 
@@ -126,21 +125,22 @@ public class AdminRest extends RestBase {
       logger.info("Finished listing all submissions, requested by user {}", user.getName());
       return submissions.toString();
     } catch (Throwable ex) {
-      logger.warn("Hit exception when listing all submissions, requested by user {}", user.getName());
+      logger.warn(
+          "Hit exception when listing all submissions, requested by user {}", user.getName());
       ExceptionUtils.meterException();
       throw ex;
     }
   }
 
-  private String listSubmissionsByApplicationName(
-          String applicationName,
-          User user) throws IOException {
+  private String listSubmissionsByApplicationName(String applicationName, User user)
+      throws IOException {
     try {
       ObjectMapper objectMapper = new ObjectMapper();
       StringBuilder submissions = new StringBuilder();
       for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
         SparkApplicationResourceList list =
-                getSparkApplicationResourcesByLabel(sparkCluster, Constants.APPLICATION_NAME_LABEL, applicationName);
+            getSparkApplicationResourcesByLabel(
+                sparkCluster, Constants.APPLICATION_NAME_LABEL, applicationName);
         List<SparkApplicationResource> sparkApplicationResources = list.getItems();
         if (sparkApplicationResources == null) {
           continue;
@@ -153,13 +153,15 @@ public class AdminRest extends RestBase {
         }
       }
       logger.info(
-              "Finished listing all submissions by application name {}, requested by user {}",
-              applicationName, user.getName());
+          "Finished listing all submissions by application name {}, requested by user {}",
+          applicationName,
+          user.getName());
       return submissions.toString();
     } catch (Throwable ex) {
       logger.warn(
-              "Hit exception when listing all submissions by application name {}, requested by user {}",
-              applicationName, user.getName());
+          "Hit exception when listing all submissions by application name {}, requested by user {}",
+          applicationName,
+          user.getName());
       ExceptionUtils.meterException();
       throw ex;
     }
