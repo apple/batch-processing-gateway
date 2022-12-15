@@ -231,7 +231,7 @@
                         }
                       }
                     ],
-                    "image": "docker.apple.com/ad_bindra/automation-agent:0.2.10-pre.7",
+                    "image": "docker.apple.com/skate-stage/automation-agent:0.2.10-pre.19",
                     "imagePullPolicy": "Always",
                     "name": "automation-agent"
                   }
@@ -372,7 +372,7 @@
                         "value": "lx2Q0LIzhtJi5Hl0tvIY5ccWjllKLNl1"
                       }
                     ],
-                    "image": "docker.apple.com/ad_bindra/automation-agent-test:1.0.5",
+                    "image": "docker.apple.com/ad_bindra/automation-agent-test:1.0.6",
                     "imagePullPolicy": "Always",
                     "name": "automation-agent-test"
                   }
