@@ -288,7 +288,7 @@ public class ApplicationSubmissionRest extends RestBase {
 
     // Only one of kerberos principal or proxy-user can be passed to spark-submit
     if (!appConfig.getDefaultSparkConf().containsKey("spark.kerberos.keytab")) {
-        specBuilder.withProxyUser(proxyUser);
+      specBuilder.withProxyUser(proxyUser);
     }
 
     // only set scheduler if it's YuniKorn
@@ -329,7 +329,8 @@ public class ApplicationSubmissionRest extends RestBase {
 
     logDao.logApplicationSubmission(submissionId, sparkSpec.getProxyUser(), request);
     SubmitApplicationResponse response =
-        submitSparkCRD(sparkCluster, submissionId, sparkSpec, request, queue, parentQueue, proxyUser);
+        submitSparkCRD(
+            sparkCluster, submissionId, sparkSpec, request, queue, parentQueue, proxyUser);
     return response;
   }
 
@@ -450,15 +451,20 @@ public class ApplicationSubmissionRest extends RestBase {
         logger.warn("Failed to serialize SparkApplicationSpec and mask sensitive info", ex);
       }
 
-        // If kerberos is enabled, add kerberos principal
-        if (appConfig.getKerberosAuth() != null) {
-            if (appConfig.getKerberosAuth().equals("true")) {
-                if (appConfig.getKerberosRealm() != null) {
-                    sparkSpec.getSparkConf().put("spark.kerberos.principal", proxyUser + "@" + appConfig.getKerberosRealm());
-                }
-                sparkSpec.getDriver().getAnnotations().put("com.apple.whisper.hydrogen.appleConnectUser", proxyUser);
-            }
+      // If kerberos is enabled, add kerberos principal
+      if (appConfig.getKerberosAuth() != null) {
+        if (appConfig.getKerberosAuth().equals("true")) {
+          if (appConfig.getKerberosRealm() != null) {
+            sparkSpec
+                .getSparkConf()
+                .put("spark.kerberos.principal", proxyUser + "@" + appConfig.getKerberosRealm());
+          }
+          sparkSpec
+              .getDriver()
+              .getAnnotations()
+              .put("com.apple.whisper.hydrogen.appleConnectUser", proxyUser);
         }
+      }
 
       sparkApplicationResource.setSpec(sparkSpec);
       CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
@@ -679,16 +685,18 @@ public class ApplicationSubmissionRest extends RestBase {
 
       if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())) {
         if (SparkConstants.RUNNING_STATE.equalsIgnoreCase(response.getApplicationState())
-                || SparkConstants.SPOT_TIMEOUT_STATE.equalsIgnoreCase(response.getApplicationState())) {
+            || SparkConstants.SPOT_TIMEOUT_STATE.equalsIgnoreCase(response.getApplicationState())) {
           String url = ConfigUtil.getSparkUIUrl(sparkCluster, submissionId);
           response.setSparkUIUrl(url);
         }
 
-        if((SparkConstants.COMPLETED_STATE.equalsIgnoreCase(response.getApplicationState())
+        if ((SparkConstants.COMPLETED_STATE.equalsIgnoreCase(response.getApplicationState())
                 || SparkConstants.FAILED_STATE.equalsIgnoreCase(response.getApplicationState()))
-                && appConfig.getSparkHistoryDns() != null
-                && response.getSparkApplicationId() != null) {
-          String url = ConfigUtil.getSparkHistoryUrl(appConfig.getSparkHistoryDns(), response.getSparkApplicationId());
+            && appConfig.getSparkHistoryDns() != null
+            && response.getSparkApplicationId() != null) {
+          String url =
+              ConfigUtil.getSparkHistoryUrl(
+                  appConfig.getSparkHistoryDns(), response.getSparkApplicationId());
           response.setSparkUIUrl(url);
         }
       }
