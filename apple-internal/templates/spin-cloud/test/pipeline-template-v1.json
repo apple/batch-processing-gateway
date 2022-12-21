@@ -153,6 +153,20 @@
         ],
         "pinned": false,
         "required": false
+      },
+      {
+        "default": "${ templateVariables.AutomationAgentDefaultVersion }",
+        "description": "The latest stable version of the automation agent. Please get this value from an automation team member.",
+        "hasOptions": false,
+        "label": "Automation Agent Version",
+        "name": "automation_agent_version",
+        "options": [
+          {
+            "value": ""
+          }
+        ],
+        "pinned": true,
+        "required": true
       }
     ],
     "spelEvaluator": "v4",
@@ -372,7 +386,7 @@
                         "value": "lx2Q0LIzhtJi5Hl0tvIY5ccWjllKLNl1"
                       }
                     ],
-                    "image": "docker.apple.com/ad_bindra/automation-agent-test:1.0.6",
+                    "image": "docker.apple.com/ad_bindra/automation-agent-test:1.0.5",
                     "imagePullPolicy": "Always",
                     "name": "automation-agent-test"
                   }
@@ -438,6 +452,12 @@
       "defaultValue": "1.1.258",
       "description": "HelmChartVersion",
       "name": "HelmChartVersion"
+    },
+    {
+      "type": "string",
+      "defaultValue": "docker.apple.com/skate-stage/automation-agent:0.2.10-pre.19",
+      "description": "automation agent image",
+      "name": "AutomationAgentDefaultVersion"
     },
     {
       "type": "string",
