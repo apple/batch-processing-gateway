@@ -457,7 +457,7 @@
       "type": "string",
       "defaultValue": "docker.apple.com/skate-stage/automation-agent:0.2.10-pre.19",
       "description": "automation agent image",
-      "name": "automation_agent_version"
+      "name": "AutomationAgentDefaultVersion"
     },
     {
       "type": "string",
