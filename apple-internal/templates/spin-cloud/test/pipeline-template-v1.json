@@ -362,7 +362,7 @@
                   {
                     "command": [
                       "python",
-                      "/automation/skate/python/skate_smoke_test.py"
+                      "/automation/test/skate_smoke_test.py"
                     ],
                     "env": [
                       {
@@ -386,7 +386,7 @@
                         "value": "lx2Q0LIzhtJi5Hl0tvIY5ccWjllKLNl1"
                       }
                     ],
-                    "image": "docker.apple.com/skate-stage/automation-agent:0.2.10-pre.19",
+                    "image": "docker.apple.com/ad_bindra/automation-agent-test:1.0.5",
                     "imagePullPolicy": "Always",
                     "name": "automation-agent-test"
                   }
