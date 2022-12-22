@@ -245,7 +245,7 @@
                         }
                       }
                     ],
-                    "image": "docker.apple.com/skate-stage/automation-agent:0.2.10-pre.19",
+                    "image": "${execution.trigger.parameters.automation_agent_version}",
                     "imagePullPolicy": "Always",
                     "name": "automation-agent"
                   }
