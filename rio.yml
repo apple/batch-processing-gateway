@@ -27,10 +27,10 @@ pipelines:
         - rpm -i sops-3.7.3-1.x86_64.rpm
         - export SOPS_AGE_KEY_FILE=${BUILD_SECRETS_PATH}/skate-test-config-age-key
         - sops -d ./apple-internal/int-test-config.enc.yml > config.yml
-        - curl https://downloads.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz -o apache-maven-3.8.6-bin.tar.gz
-        - tar xzvf apache-maven-3.8.6-bin.tar.gz
-        - rm apache-maven-3.8.6-bin.tar.gz
-        - apache-maven-3.8.6/bin/mvn clean verify
+        - curl https://downloads.apache.org/maven/maven-3/3.8.7/binaries/apache-maven-3.8.7-bin.tar.gz -o apache-maven-3.8.7-bin.tar.gz
+        - tar xzvf apache-maven-3.8.7-bin.tar.gz
+        - rm apache-maven-3.8.7-bin.tar.gz
+        - apache-maven-3.8.7/bin/mvn clean verify
 
   - name: pr-check-dev
     branchName: dev
@@ -42,10 +42,10 @@ pipelines:
         - rpm -i sops-3.7.3-1.x86_64.rpm
         - export SOPS_AGE_KEY_FILE=${BUILD_SECRETS_PATH}/skate-test-config-age-key
         - sops -d ./apple-internal/int-test-config.enc.yml > config.yml
-        - curl https://downloads.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz -o apache-maven-3.8.6-bin.tar.gz
-        - tar xzvf apache-maven-3.8.6-bin.tar.gz
-        - rm apache-maven-3.8.6-bin.tar.gz
-        - apache-maven-3.8.6/bin/mvn clean verify
+        - curl https://downloads.apache.org/maven/maven-3/3.8.7/binaries/apache-maven-3.8.7-bin.tar.gz -o apache-maven-3.8.7-bin.tar.gz
+        - tar xzvf apache-maven-3.8.7-bin.tar.gz
+        - rm apache-maven-3.8.7-bin.tar.gz
+        - apache-maven-3.8.7/bin/mvn clean verify
 
   - name: publish-release
     branchName: release
