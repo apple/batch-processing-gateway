@@ -28,6 +28,8 @@ public class SecurityContext {
 
   private Boolean privileged;
   private Long runAsUser;
+  private Long runAsGroup;
+  private Long fsGroup;
   private Boolean allowPrivilegeEscalation;
 
   public Boolean getPrivileged() {
@@ -52,5 +54,21 @@ public class SecurityContext {
 
   public void setAllowPrivilegeEscalation(Boolean allowPrivilegeEscalation) {
     this.allowPrivilegeEscalation = allowPrivilegeEscalation;
+  }
+
+  public Long getRunAsGroup() {
+    return runAsGroup;
+  }
+
+  public void setRunAsGroup(Long runAsGroup) {
+    this.runAsGroup = runAsGroup;
+  }
+
+  public Long getFsGroup() {
+    return fsGroup;
+  }
+
+  public void setFsGroup(Long fsGroup) {
+    this.fsGroup = fsGroup;
   }
 }

@@ -52,6 +52,7 @@ public class SparkApplicationSpec {
   @Hidden private BatchSchedulerConfiguration batchSchedulerOptions;
 
   @Hidden private List<Volume> volumes;
+  @Hidden private List<VolumeMount> volumeMounts;
 
   private DriverSpec driver;
   private ExecutorSpec executor;
@@ -180,6 +181,14 @@ public class SparkApplicationSpec {
 
   public void setVolumes(List<Volume> volumes) {
     this.volumes = volumes;
+  }
+
+  public List<VolumeMount> getVolumeMounts() {
+    return volumeMounts;
+  }
+
+  public void setVolumeMounts(List<VolumeMount> volumeMounts) {
+    this.volumeMounts = volumeMounts;
   }
 
   public String getBatchScheduler() {
@@ -409,6 +418,19 @@ public class SparkApplicationSpec {
       }
 
       this.sparkApplicationSpec.volumes.addAll(volumes);
+      return this;
+    }
+
+    public Builder extendVolumeMounts(List<VolumeMount> volumeMounts) {
+      if (volumeMounts == null || volumeMounts.size() == 0) {
+        return this;
+      }
+
+      if (this.sparkApplicationSpec.volumeMounts == null) {
+        this.sparkApplicationSpec.volumeMounts = new ArrayList<>();
+      }
+
+      this.sparkApplicationSpec.volumeMounts.addAll(volumeMounts);
       return this;
     }
 

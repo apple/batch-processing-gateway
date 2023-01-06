@@ -19,10 +19,7 @@
 
 package com.apple.spark;
 
-import com.apple.spark.operator.DriverSpec;
-import com.apple.spark.operator.ExecutorSpec;
-import com.apple.spark.operator.SparkUIConfiguration;
-import com.apple.spark.operator.Volume;
+import com.apple.spark.operator.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.dropwizard.Configuration;
 import java.util.List;
@@ -38,9 +35,7 @@ public class AppConfig extends Configuration {
 
   private List<SparkImage> sparkImages;
 
-  private String kerberosAuth = "";
-
-  private String kerberosRealm = "";
+  private List<InitContainer> driverInitContainers;
 
   private String s3Bucket;
   private String s3Folder;
@@ -235,20 +230,12 @@ public class AppConfig extends Configuration {
     return vCoreSecondCost;
   }
 
-  public String getKerberosAuth() {
-    return kerberosAuth;
+  public List<InitContainer> getDriverInitContainers() {
+    return driverInitContainers;
   }
 
-  public void setKerberosAuth(String kerberosAuth) {
-    this.kerberosAuth = kerberosAuth;
-  }
-
-  public String getKerberosRealm() {
-    return kerberosRealm;
-  }
-
-  public void setKerberosRealm(String kerberosRealm) {
-    this.kerberosRealm = kerberosRealm;
+  public void setDriverInitContainers(List<InitContainer> driverInitContainers) {
+    this.driverInitContainers = driverInitContainers;
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
@@ -273,6 +260,7 @@ public class AppConfig extends Configuration {
     private SparkUIConfiguration sparkUIOptions;
 
     private List<Volume> volumes;
+    private List<VolumeMount> volumeMounts;
     private DriverSpec driver;
     private ExecutorSpec executor;
 
@@ -443,6 +431,14 @@ public class AppConfig extends Configuration {
 
     public void setEksCluster(String eksCluster) {
       this.eksCluster = eksCluster;
+    }
+
+    public List<VolumeMount> getVolumeMounts() {
+      return volumeMounts;
+    }
+
+    public void setVolumeMounts(List<VolumeMount> volumeMounts) {
+      this.volumeMounts = volumeMounts;
     }
   }
 

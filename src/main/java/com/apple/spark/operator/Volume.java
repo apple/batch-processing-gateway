@@ -21,6 +21,8 @@ package com.apple.spark.operator;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.fabric8.kubernetes.api.model.CSIVolumeSource;
+import io.fabric8.kubernetes.api.model.EmptyDirVolumeSource;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -29,12 +31,30 @@ public class Volume {
   private String name;
   private HostPathVolumeSource hostPath;
   private ConfigMapVolumeSource configMap;
+  private CSIVolumeSource csi;
+  private EmptyDirVolumeSource emptyDir;
 
-  public Volume() {}
+  public Volume() {
+  }
 
   public Volume(String name, HostPathVolumeSource hostPath) {
     this.name = name;
     this.hostPath = hostPath;
+  }
+
+  public Volume(String name, ConfigMapVolumeSource configMap) {
+    this.name = name;
+    this.configMap = configMap;
+  }
+
+  public Volume(String name, CSIVolumeSource csi) {
+    this.name = name;
+    this.csi = csi;
+  }
+
+  public Volume(String name, EmptyDirVolumeSource emptyDir) {
+    this.name = name;
+    this.emptyDir = emptyDir;
   }
 
   public String getName() {
@@ -59,5 +79,21 @@ public class Volume {
 
   public void setConfigMap(ConfigMapVolumeSource configMap) {
     this.configMap = configMap;
+  }
+
+  public CSIVolumeSource getCsi() {
+    return csi;
+  }
+
+  public void setCsi(CSIVolumeSource csi) {
+    this.csi = csi;
+  }
+
+  public EmptyDirVolumeSource getEmptyDir() {
+    return emptyDir;
+  }
+
+  public void setEmptyDir(EmptyDirVolumeSource emptyDir) {
+    this.emptyDir = emptyDir;
   }
 }

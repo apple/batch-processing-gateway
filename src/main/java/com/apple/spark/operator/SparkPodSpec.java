@@ -43,6 +43,7 @@ public class SparkPodSpec {
   @Hidden private Long terminationGracePeriodSeconds;
   @Hidden private String serviceAccount;
   @Hidden private List<VolumeMount> volumeMounts;
+  @Hidden private List<InitContainer> initContainers;
 
   @Hidden private SecurityContext securityContext;
 
@@ -223,5 +224,13 @@ public class SparkPodSpec {
 
   public void setJavaOptions(String javaOptions) {
     this.javaOptions = javaOptions;
+  }
+
+  public List<InitContainer> getInitContainers() {
+    return initContainers;
+  }
+
+  public void setInitContainers(List<InitContainer> initContainers) {
+    this.initContainers = initContainers;
   }
 }

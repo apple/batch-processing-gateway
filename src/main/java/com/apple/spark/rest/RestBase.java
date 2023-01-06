@@ -68,6 +68,8 @@ public class RestBase {
       String.format("statsd.%s.request", Constants.SERVICE_ABBR);
   protected static final String REQUEST_LATENCY_METRIC_NAME =
       String.format("statsd.%s.request_latency", Constants.SERVICE_ABBR);
+  public static final String LDAP_SEARCH_LATENCY_METRIC_NAME =
+      String.format("statsd.%s.ldap_search_latency", Constants.SERVICE_ABBR);
   protected static final int PERMITS_PER_SECOND_LIST_SUBMISSIONS = 20;
   private static final Logger logger = LoggerFactory.getLogger(RestBase.class);
   protected final AppConfig appConfig;

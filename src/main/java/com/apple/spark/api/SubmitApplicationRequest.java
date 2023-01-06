@@ -19,11 +19,7 @@
 
 package com.apple.spark.api;
 
-import com.apple.spark.operator.Dependencies;
-import com.apple.spark.operator.DriverSpec;
-import com.apple.spark.operator.ExecutorSpec;
-import com.apple.spark.operator.RestartPolicy;
-import com.apple.spark.operator.Volume;
+import com.apple.spark.operator.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -88,6 +84,7 @@ public class SubmitApplicationRequest {
 
   private Map<String, String> sparkConf;
   @Hidden private List<Volume> volumes;
+  @Hidden private List<VolumeMount> volumeMounts;
 
   @Schema(required = true)
   private DriverSpec driver;
@@ -311,5 +308,13 @@ public class SubmitApplicationRequest {
 
   public void setQueueToken(String queueToken) {
     this.queueToken = queueToken;
+  }
+
+  public List<VolumeMount> getVolumeMounts() {
+    return volumeMounts;
+  }
+
+  public void setVolumeMounts(List<VolumeMount> volumeMounts) {
+    this.volumeMounts = volumeMounts;
   }
 }

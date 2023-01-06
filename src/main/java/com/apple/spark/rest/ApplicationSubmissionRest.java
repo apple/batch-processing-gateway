@@ -33,6 +33,7 @@ import com.apple.spark.api.GetSubmissionStatusResponse;
 import com.apple.spark.api.SubmissionSummary;
 import com.apple.spark.api.SubmitApplicationRequest;
 import com.apple.spark.api.SubmitApplicationResponse;
+import com.apple.spark.appleinternal.AppleKerberosUtil;
 import com.apple.spark.core.*;
 import com.apple.spark.operator.*;
 import com.apple.spark.security.User;
@@ -52,10 +53,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.dropwizard.auth.Auth;
-import io.fabric8.kubernetes.api.model.Event;
-import io.fabric8.kubernetes.api.model.EventList;
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.PodStatus;
+import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -69,12 +67,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.security.PermitAll;
@@ -268,6 +261,7 @@ public class ApplicationSubmissionRest extends RestBase {
             .withMode(SparkConstants.CLUSTER_MODE)
             .withOriginalUser(user.getName())
             .withType(type)
+            .withProxyUser(proxyUser)
             .withSparkVersion(sparkVersion)
             .withMainClass(request.getMainClass())
             .withMainApplicationFile(request.getMainApplicationFile())
@@ -284,12 +278,8 @@ public class ApplicationSubmissionRest extends RestBase {
             .extendSparkConf(
                 getSparkConf(submissionId, request, appConfig.getDefaultSparkConf(), sparkCluster))
             .withSparkUIConfiguration(getSparkUIConfiguration(submissionId, sparkCluster))
-            .extendVolumes(getVolumes(request, sparkCluster));
-
-    // Only one of kerberos principal or proxy-user can be passed to spark-submit
-    if (!appConfig.getDefaultSparkConf().containsKey("spark.kerberos.keytab")) {
-      specBuilder.withProxyUser(proxyUser);
-    }
+            .extendVolumes(getVolumes(request, sparkCluster))
+            .extendVolumeMounts(getVolumeMounts(request, sparkCluster));
 
     // only set scheduler if it's YuniKorn
     String batchScheduler = sparkCluster.getBatchScheduler();
@@ -451,20 +441,9 @@ public class ApplicationSubmissionRest extends RestBase {
         logger.warn("Failed to serialize SparkApplicationSpec and mask sensitive info", ex);
       }
 
-      // If kerberos is enabled, add kerberos principal
-      if (appConfig.getKerberosAuth() != null) {
-        if (appConfig.getKerberosAuth().equals("true")) {
-          if (appConfig.getKerberosRealm() != null) {
-            sparkSpec
-                .getSparkConf()
-                .put("spark.kerberos.principal", proxyUser + "@" + appConfig.getKerberosRealm());
-          }
-          sparkSpec
-              .getDriver()
-              .getAnnotations()
-              .put("com.apple.whisper.hydrogen.appleConnectUser", proxyUser);
-        }
-      }
+      // The following line is for Apple only, and should be excluded from Open Source Upstream
+      AppleKerberosUtil.enableKerberosSupport(
+          sparkSpec, request, appConfig, proxyUser, timerMetrics);
 
       sparkApplicationResource.setSpec(sparkSpec);
       CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();

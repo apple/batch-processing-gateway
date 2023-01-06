@@ -119,4 +119,6 @@ public class Constants {
   public static final String HEALTH_CHECK_API_V2 = "/skatev2/healthcheck";
   public static final String ADMIN_API_V2 = "/skatev2/admin";
   public static final String LOG_API_V2 = "/skatev2/log";
+  public static final String HIVE_METASTORE_SASL_ENABLED = "spark.hadoop.hive.metastore.sasl.enabled";
+  public static final String LDAP_ENDPOINT = "ldaps://nod.apple.com:636/";
 }

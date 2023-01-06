@@ -32,18 +32,7 @@ import static com.apple.spark.core.SparkConstants.EXECUTOR_MEM_BUFFER_RATIO;
 import com.apple.spark.AppConfig;
 import com.apple.spark.AppConfig.SparkCluster;
 import com.apple.spark.api.SubmitApplicationRequest;
-import com.apple.spark.operator.Affinity;
-import com.apple.spark.operator.BatchSchedulerConfiguration;
-import com.apple.spark.operator.DriverSpec;
-import com.apple.spark.operator.ExecutorSpec;
-import com.apple.spark.operator.NodeAffinity;
-import com.apple.spark.operator.NodeSelectorOperator;
-import com.apple.spark.operator.NodeSelectorRequirement;
-import com.apple.spark.operator.NodeSelectorTerm;
-import com.apple.spark.operator.RequiredDuringSchedulingIgnoredDuringExecutionTerm;
-import com.apple.spark.operator.SparkApplicationSpec;
-import com.apple.spark.operator.SparkUIConfiguration;
-import com.apple.spark.operator.Volume;
+import com.apple.spark.operator.*;
 import com.apple.spark.util.ExceptionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -248,6 +237,22 @@ public class ApplicationSubmissionHelper {
     // if there are volumes in the spark cluster, use that to populate spark spec
     if (sparkCluster.getVolumes() != null && !sparkCluster.getVolumes().isEmpty()) {
       return sparkCluster.getVolumes();
+    }
+
+    return null;
+  }
+
+  public static List<VolumeMount> getVolumeMounts(
+          SubmitApplicationRequest request, AppConfig.SparkCluster sparkCluster) {
+
+    // if there are volume mounts in the request, use that to populate spark spec
+    if (request.getVolumeMounts() != null && !request.getVolumeMounts().isEmpty()) {
+      return request.getVolumeMounts();
+    }
+
+    // if there are volume mounts in the spark cluster, use that to populate spark spec
+    if (sparkCluster.getVolumeMounts() != null && !sparkCluster.getVolumeMounts().isEmpty()) {
+      return sparkCluster.getVolumeMounts();
     }
 
     return null;
