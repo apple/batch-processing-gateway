@@ -21,3 +21,4 @@ See [CONTRIBUTING](/CONTRIBUTING.md) for general contribution guidelines.
 - Tianqi Tong (tianqi_tong@apple.com)
 - Weiwei Yang (weiwei_yang2@apple.com)
 - Xingyuan Lin (xingyuan_lin@apple.com)
+- Bo Yang (bo_yang6@apple.com)
