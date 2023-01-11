@@ -10,6 +10,7 @@ See [CONTRIBUTING](/CONTRIBUTING.md) for general contribution guidelines.
 (In alphabetical order)
 
 - Amarinder Singh Bindra (amarindersingh_bindra@apple.com)
+- Bo Yang (bo_yang6@apple.com)
 - Bowen Li (bowenli@apple.com)
 - Chaoran Yu (chaoran_yu@apple.com)
 - Divya Ramadugu (d_ramadugu@apple.com)
