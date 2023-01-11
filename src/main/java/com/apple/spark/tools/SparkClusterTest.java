@@ -29,43 +29,56 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient;
  * This tool is to check a given Spark Cluster
  */
 public class SparkClusterTest {
-    public static void main(String[] args) {
-        String apiServer = "";
-        String user = "";
-        String token = "";
-        String caCert = "";
-        String namespace = "";
+  public static void main(String[] args) {
+    String apiServer = "";
+    String user = "";
+    String token = "";
+    String caCert = "";
+    String httpProxy = null;
+    String httpsProxy = null;
+    String namespace = "";
 
-        for (int i = 0; i < args.length; ) {
-            String argName = args[i++];
-            if (argName.equalsIgnoreCase("-api-server")) {
-                apiServer = args[i++];
-            } else if (argName.equalsIgnoreCase("-user")) {
-                user = args[i++];
-            } else if (argName.equalsIgnoreCase("-token")) {
-                token = args[i++];
-            } else if (argName.equalsIgnoreCase("-ca-cert")) {
-                caCert = args[i++];
-            } else if (argName.equalsIgnoreCase("-namespace")) {
-                namespace = args[i++];
-            }  else {
-                throw new RuntimeException(String.format("Unsupported argument: %s", argName));
-            }
-        }
-
-        AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
-        sparkCluster.setMasterUrl(apiServer);
-        sparkCluster.setUserName(user);
-        sparkCluster.setUserTokenSOPS(token);
-        sparkCluster.setCaCertDataSOPS(caCert);
-        sparkCluster.setSparkApplicationNamespace(namespace);
-
-        System.out.println(String.format("Listing pods in cluster %s namespace %s", sparkCluster.getMasterUrl(), sparkCluster.getSparkApplicationNamespace()));
-        try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster)) {
-            PodList podList = client.pods().inNamespace(sparkCluster.getSparkApplicationNamespace()).list();
-            for (Pod pod: podList.getItems()) {
-                System.out.println(String.format("Pod %s %s", pod.getMetadata().getName(), pod.getStatus().getPhase()));
-            }
-        }
+    for (int i = 0; i < args.length; ) {
+      String argName = args[i++];
+      if (argName.equalsIgnoreCase("-api-server")) {
+        apiServer = args[i++];
+      } else if (argName.equalsIgnoreCase("-user")) {
+        user = args[i++];
+      } else if (argName.equalsIgnoreCase("-token")) {
+        token = args[i++];
+      } else if (argName.equalsIgnoreCase("-ca-cert")) {
+        caCert = args[i++];
+      } else if (argName.equalsIgnoreCase("-http-proxy")) {
+        httpProxy = args[i++];
+      } else if (argName.equalsIgnoreCase("-https-proxy")) {
+        httpsProxy = args[i++];
+      } else if (argName.equalsIgnoreCase("-namespace")) {
+        namespace = args[i++];
+      } else {
+        throw new RuntimeException(String.format("Unsupported argument: %s", argName));
+      }
     }
+
+    AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
+    sparkCluster.setMasterUrl(apiServer);
+    sparkCluster.setUserName(user);
+    sparkCluster.setUserTokenSOPS(token);
+    sparkCluster.setCaCertDataSOPS(caCert);
+    sparkCluster.setHttpProxy(httpProxy);
+    sparkCluster.setHttpsProxy(httpsProxy);
+    sparkCluster.setSparkApplicationNamespace(namespace);
+
+    System.out.println(
+        String.format(
+            "Listing pods in cluster %s namespace %s",
+            sparkCluster.getMasterUrl(), sparkCluster.getSparkApplicationNamespace()));
+    try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster)) {
+      PodList podList =
+          client.pods().inNamespace(sparkCluster.getSparkApplicationNamespace()).list();
+      for (Pod pod : podList.getItems()) {
+        System.out.println(
+            String.format("Pod %s %s", pod.getMetadata().getName(), pod.getStatus().getPhase()));
+      }
+    }
+  }
 }
