@@ -142,7 +142,7 @@ In production, typically the Spark apps are run on different Spark K8s clusters,
 The deployment of BPG on Kubernetes can be managed by a [Helm chart](/helm/batch-processing-gateway).
 
 ## Troubleshoot Spark Cluster
-Sometime if there is issue for Batch Processing Gateway connecting to the underlying Spark Cluster, you could use this tool `SparkClusterTest`
+Sometimes if there is issue for Batch Processing Gateway connecting to the underlying Spark Cluster, you could use this tool `SparkClusterTest`
 to double-check whether you could connect to the Kubernetes API Server in the Spark Cluster. e.g.
 ```
 java -cp target/bpg-release.jar com.apple.spark.tools.SparkClusterTest -api-server https://xxx -namespace spark-operator -user spark-operator-api-user -token xxx
