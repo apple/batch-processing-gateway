@@ -34,6 +34,7 @@ public class SparkPodSpec {
 
   private Integer cores;
   private String coreLimit;
+  private String coreRequest;
   private String memory;
   private String memoryOverhead;
   @Hidden private String image;
@@ -50,7 +51,6 @@ public class SparkPodSpec {
   @Hidden private Affinity affinity;
   @Hidden private PodDNSConfig dnsConfig;
 
-  @Hidden private String coreRequest;
   @Hidden private String javaOptions;
 
   protected void copyFrom(SparkPodSpec another) {
@@ -59,6 +59,9 @@ public class SparkPodSpec {
     }
     if (another.coreLimit != null) {
       this.coreLimit = another.coreLimit;
+    }
+    if (another.coreRequest != null) {
+      this.coreRequest = another.coreRequest;
     }
     if (another.memory != null) {
       this.memory = another.memory;
@@ -94,7 +97,6 @@ public class SparkPodSpec {
     this.securityContext = another.securityContext;
     this.affinity = another.affinity;
 
-    this.coreRequest = another.coreRequest;
     this.javaOptions = another.javaOptions;
   }
 

@@ -45,6 +45,7 @@ public class SparkConstants {
   public static final Double OVERHEAD_FACTOR_DEFAULT = 0.1;
   public static final Double OVERHEAD_FACTOR_PYSPARK_DEFAULT = 0.4;
   public static final Integer CORE_LIMIT_RATIO = 1000;
+  public static final Integer CORE_REQUEST_RATIO = 1000;
   public static final Integer NUM_EXECUTORS_DEFAULT = 1;
   public static final Integer DRIVER_CORE_DEFAULT = 1;
   public static final String DRIVER_MEM_DEFAULT = "1g";

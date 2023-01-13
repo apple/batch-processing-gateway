@@ -23,11 +23,7 @@ import static com.apple.spark.core.BatchSchedulerConstants.PLACEHOLDER_TIMEOUT_I
 import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_ROOT_QUEUE;
 import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_SPARK_DEFAULT_QUEUE;
 import static com.apple.spark.core.Constants.*;
-import static com.apple.spark.core.SparkConstants.CORE_LIMIT_RATIO;
-import static com.apple.spark.core.SparkConstants.DRIVER_CPU_BUFFER_RATIO;
-import static com.apple.spark.core.SparkConstants.DRIVER_MEM_BUFFER_RATIO;
-import static com.apple.spark.core.SparkConstants.EXECUTOR_CPU_BUFFER_RATIO;
-import static com.apple.spark.core.SparkConstants.EXECUTOR_MEM_BUFFER_RATIO;
+import static com.apple.spark.core.SparkConstants.*;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.AppConfig.SparkCluster;
@@ -466,18 +462,41 @@ public class ApplicationSubmissionHelper {
       driverSpec.setCoreLimit(
           String.format(
               "%sm",
-              Math.ceil(driverSpec.getCores() * CORE_LIMIT_RATIO * driverCpuBufferRatioQueue)));
+              (int)Math.ceil(driverSpec.getCores() * CORE_LIMIT_RATIO * driverCpuBufferRatioQueue)));
     } else {
-      long originalDriverCoreLimit = Long.parseLong(driverSpec.getCoreLimit());
-      long adjustedDriverCoreLimit =
+      double originalDriverCoreLimit = getNumFromRequestStr(driverSpec.getCoreLimit());
+      String driverCoreLimitUnit = getUnitFromRequestStr(driverSpec.getCoreLimit());
+      double adjustedDriverCoreLimit =
           Math.round(originalDriverCoreLimit * driverCpuBufferRatioQueue);
-      driverSpec.setCoreLimit(String.valueOf(adjustedDriverCoreLimit));
-      logger.info("Setting driver core limits to {}", adjustedDriverCoreLimit);
+      if (driverCoreLimitUnit.equals("m")){
+        driverSpec.setCoreLimit((long)adjustedDriverCoreLimit + driverCoreLimitUnit);
+      }else {
+        driverSpec.setCoreLimit(adjustedDriverCoreLimit + driverCoreLimitUnit);
+      }
+      logger.info("Setting driver core limits to {}", adjustedDriverCoreLimit + driverCoreLimitUnit);
     }
 
-    long originalDriverMem = getMemNumFromRequestStr(driverSpec.getMemory());
+    if (driverSpec.getCoreRequest() == null || driverSpec.getCoreRequest().isEmpty()) {
+      driverSpec.setCoreRequest(
+              String.format
+                      ("%sm",
+                      (int) Math.ceil(driverSpec.getCores() * CORE_REQUEST_RATIO *  driverCpuBufferRatioQueue)));
+    } else {
+      double originalDriverCoreRequest = getNumFromRequestStr(driverSpec.getCoreRequest());
+      String driverCoreRequestUnit = getUnitFromRequestStr(driverSpec.getCoreRequest());
+      double adjustedDriverCoreRequest =
+              Math.round(originalDriverCoreRequest * driverCpuBufferRatioQueue);
+      if (driverCoreRequestUnit.equals("m")){
+        driverSpec.setCoreRequest((long)adjustedDriverCoreRequest + driverCoreRequestUnit);
+      }else {
+        driverSpec.setCoreRequest(adjustedDriverCoreRequest + driverCoreRequestUnit);
+      }
+      logger.info("Setting driver core request to {}", adjustedDriverCoreRequest + driverCoreRequestUnit);
+    }
+
+    long originalDriverMem = (long) getNumFromRequestStr(driverSpec.getMemory());
     long adjustedDriverMem = (long) Math.ceil(originalDriverMem * driverMemBufferRatioQueue);
-    String memUnit = getMemUnitFromRequestStr(driverSpec.getMemory());
+    String memUnit = getUnitFromRequestStr(driverSpec.getMemory());
     driverSpec.setMemory(adjustedDriverMem + memUnit);
     logger.info("Setting driver memory to {}{}", adjustedDriverMem, memUnit);
 
@@ -640,26 +659,27 @@ public class ApplicationSubmissionHelper {
     return res;
   }
 
-  private static long getMemNumFromRequestStr(String memStr) {
-    int unitIndex = getMemUnitIndexFromRequestStr(memStr);
-    String memNumStr = memStr.substring(0, unitIndex);
-    return (long) Double.parseDouble(memNumStr);
+  private static double getNumFromRequestStr(String resourcesStr) {
+    int unitIndex = getUnitIndexFromRequestStr(resourcesStr);
+    String numStr = resourcesStr.substring(0, unitIndex);
+    if (numStr.length() == 0) return 0.0;
+    return Double.parseDouble(numStr);
   }
 
-  private static String getMemUnitFromRequestStr(String memStr) {
-    int unitIndex = getMemUnitIndexFromRequestStr(memStr);
-    return memStr.substring(unitIndex);
+  private static String getUnitFromRequestStr(String resourcesStr) {
+    int unitIndex = getUnitIndexFromRequestStr(resourcesStr);
+    return resourcesStr.substring(unitIndex);
   }
 
-  private static int getMemUnitIndexFromRequestStr(String memStr) {
+  private static int getUnitIndexFromRequestStr(String resourcesStr) {
     int unitIndex = -1;
-    for (int i = 0; i < memStr.length(); i++) {
-      if (!Character.isDigit(memStr.charAt(i)) && memStr.charAt(i) != '.') {
+    for (int i = 0; i < resourcesStr.length(); i++) {
+      if (!Character.isDigit(resourcesStr.charAt(i)) && resourcesStr.charAt(i) != '.') {
         unitIndex = i;
         break;
       }
     }
-    return unitIndex;
+    return unitIndex == -1 ? resourcesStr.length() : unitIndex;
   }
 
   public static ExecutorSpec getExecutorSpec(
@@ -714,18 +734,42 @@ public class ApplicationSubmissionHelper {
       executorSpec.setCoreLimit(
           String.format(
               "%sm",
-              Math.ceil(executorSpec.getCores() * CORE_LIMIT_RATIO * executorCpuBufferRatioQueue)));
+               (int)Math.ceil(executorSpec.getCores() * CORE_LIMIT_RATIO * executorCpuBufferRatioQueue)));
     } else {
-      long originalExecutorCoreLimit = Long.parseLong(executorSpec.getCoreLimit());
-      long adjustedExecutorCoreLimit =
+      double originalExecutorCoreLimit = getNumFromRequestStr(executorSpec.getCoreLimit());
+      String executorCoreLimitUnit = getUnitFromRequestStr(executorSpec.getCoreLimit());
+      double adjustedExecutorCoreLimit =
           Math.round(originalExecutorCoreLimit * executorCpuBufferRatioQueue);
-      executorSpec.setCoreLimit(String.valueOf(adjustedExecutorCoreLimit));
-      logger.info("Setting executor core limits to {}", adjustedExecutorCoreLimit);
+      if (executorCoreLimitUnit.equals("m")){
+        executorSpec.setCoreLimit((long)adjustedExecutorCoreLimit + executorCoreLimitUnit);
+      }else {
+        executorSpec.setCoreLimit(adjustedExecutorCoreLimit + executorCoreLimitUnit);
+      }
+      logger.info("Setting executor core limits to {}", adjustedExecutorCoreLimit + executorCoreLimitUnit);
     }
 
-    long originalExecutorMem = getMemNumFromRequestStr(executorSpec.getMemory());
+    if (executorSpec.getCoreRequest() == null || executorSpec.getCoreRequest().isEmpty()) {
+      executorSpec.setCoreRequest(
+              String.format(
+                      "%sm",
+                      (int)Math.ceil(executorSpec.getCores() * CORE_REQUEST_RATIO * executorCpuBufferRatioQueue)));
+    } else {
+
+      double originalExecutorCoreRequest = getNumFromRequestStr(executorSpec.getCoreRequest());
+      String executorCoreRequestUnit = getUnitFromRequestStr(executorSpec.getCoreRequest());
+      double adjustedExecutorCoreRequest =
+              Math.round(originalExecutorCoreRequest * executorCpuBufferRatioQueue);
+      if (executorCoreRequestUnit.equals("m")){
+        executorSpec.setCoreRequest((long)adjustedExecutorCoreRequest + executorCoreRequestUnit);
+      }else {
+        executorSpec.setCoreRequest(adjustedExecutorCoreRequest + executorCoreRequestUnit);
+      }
+      logger.info("Setting executor core request to {}", adjustedExecutorCoreRequest + executorCoreRequestUnit);
+    }
+
+    long originalExecutorMem =(long) getNumFromRequestStr(executorSpec.getMemory());
     long adjustedExecutorMem = (long) Math.ceil(originalExecutorMem * executorMemBufferRatioQueue);
-    String memUnit = getMemUnitFromRequestStr(executorSpec.getMemory());
+    String memUnit = getUnitFromRequestStr(executorSpec.getMemory());
     executorSpec.setMemory(adjustedExecutorMem + memUnit);
     logger.info("Setting executor memory to {}{}", adjustedExecutorMem, memUnit);
 
