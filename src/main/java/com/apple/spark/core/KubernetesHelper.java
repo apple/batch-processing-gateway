@@ -150,7 +150,7 @@ public class KubernetesHelper {
     if (timeoutMillis == null) {
       timeoutMillis = DEFAULT_TIMEOUT_MILLIS;
     }
-    Config config =
+    ConfigBuilder configBuilder =
         new ConfigBuilder()
             .withApiVersion("v1")
             .withMasterUrl(sparkCluster.getMasterUrl())
@@ -161,8 +161,14 @@ public class KubernetesHelper {
             .withConnectionTimeout(timeoutMillis.intValue())
             .withRequestTimeout(timeoutMillis.intValue())
             .withWebsocketTimeout(timeoutMillis)
-            .withUserAgent(Constants.KUBERNETES_USER_AGENT)
-            .build();
+            .withUserAgent(Constants.KUBERNETES_USER_AGENT);
+    if (sparkCluster.getHttpProxy() != null && !sparkCluster.getHttpProxy().isEmpty()) {
+      configBuilder = configBuilder.withHttpProxy(sparkCluster.getHttpProxy());
+    }
+    if (sparkCluster.getHttpsProxy() != null && !sparkCluster.getHttpsProxy().isEmpty()) {
+      configBuilder = configBuilder.withHttpsProxy(sparkCluster.getHttpsProxy());
+    }
+    Config config = configBuilder.build();
     logger.debug(String.format("Spark cluster userName %s", sparkCluster.getUserName()));
     logger.debug(
         String.format(

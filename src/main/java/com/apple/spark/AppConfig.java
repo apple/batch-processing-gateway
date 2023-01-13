@@ -242,6 +242,9 @@ public class AppConfig extends Configuration {
     private String userName;
     private String userTokenSOPS;
     private Long timeoutMillis;
+    private String httpProxy;
+    private String httpsProxy;
+
     private String sparkApplicationNamespace;
     private String sparkServiceAccount;
     private String batchScheduler;
@@ -318,6 +321,22 @@ public class AppConfig extends Configuration {
 
     public void setTimeoutMillis(Long timeoutMillis) {
       this.timeoutMillis = timeoutMillis;
+    }
+
+    public String getHttpProxy() {
+      return httpProxy;
+    }
+
+    public void setHttpProxy(String httpProxy) {
+      this.httpProxy = httpProxy;
+    }
+
+    public String getHttpsProxy() {
+      return httpsProxy;
+    }
+
+    public void setHttpsProxy(String httpsProxy) {
+      this.httpsProxy = httpsProxy;
     }
 
     public String getSparkApplicationNamespace() {
