@@ -19,38 +19,81 @@
 
 package com.apple.spark.tools;
 
-import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.Protocol;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
-import com.amazonaws.services.securitytoken.model.Credentials;
-import com.amazonaws.services.securitytoken.model.GetSessionTokenRequest;
-import com.amazonaws.services.securitytoken.model.GetSessionTokenResult;
+import com.amazonaws.services.securitytoken.model.*;
 
 /***
  * This tool is to demo how to connect to AWS STS and get token
  */
 public class AwsStsTest {
   public static void main(String[] args) {
+    String stsEndpoint = "sts.amazonaws.com";
     String region = "us-west-2";
+    String assumeRoleArn = null;
+    String proxyHost = null;
+    int proxyPort = 0;
+    String proxyProtocol = null;
 
     for (int i = 0; i < args.length; ) {
       String argName = args[i++];
-      if (argName.equalsIgnoreCase("-region")) {
+      if (argName.equalsIgnoreCase("-sts-endpoint")) {
+        stsEndpoint = args[i++];
+      } else if (argName.equalsIgnoreCase("-region")) {
         region = args[i++];
+      } else if (argName.equalsIgnoreCase("-assume-role-arn")) {
+        assumeRoleArn = args[i++];
+      } else if (argName.equalsIgnoreCase("-proxy-host")) {
+        proxyHost = args[i++];
+      } else if (argName.equalsIgnoreCase("-proxy-port")) {
+        proxyPort = Integer.parseInt(args[i++]);
+      } else if (argName.equalsIgnoreCase("-proxy-protocol")) {
+        proxyProtocol = args[i++];
       } else {
         throw new RuntimeException(String.format("Unsupported argument: %s", argName));
       }
     }
 
+    ClientConfiguration clientConfiguration = new ClientConfiguration();
+    if (proxyHost != null && !proxyHost.isEmpty()) {
+      clientConfiguration.setProxyHost(proxyHost);
+      clientConfiguration.setProxyPort(proxyPort);
+      if ("http".equalsIgnoreCase(proxyProtocol)) {
+        clientConfiguration.setProxyProtocol(Protocol.HTTP);
+      } else if ("https".equalsIgnoreCase(proxyProtocol)) {
+        clientConfiguration.setProxyProtocol(Protocol.HTTPS);
+      } else {
+        throw new RuntimeException(String.format("Unsupported http protocol: %s", proxyProtocol));
+      }
+    }
+
     AWSSecurityTokenService stsClient =
         AWSSecurityTokenServiceClientBuilder.standard()
-            .withEndpointConfiguration(
-                new AwsClientBuilder.EndpointConfiguration("sts-endpoint.amazonaws.com", region))
+            .withRegion(region)
+            // .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(stsEndpoint,
+            // region))
+            .withClientConfiguration(clientConfiguration)
             .build();
-    GetSessionTokenRequest session_token_request = new GetSessionTokenRequest();
-    session_token_request.setDurationSeconds(12 * 60 * 60);
-    GetSessionTokenResult sessionTokenResult = stsClient.getSessionToken(session_token_request);
-    Credentials credentials = sessionTokenResult.getCredentials();
-    System.out.println(String.format("Access key id: %s", credentials.getAccessKeyId()));
+
+    GetCallerIdentityRequest getCallerIdentityRequest = new GetCallerIdentityRequest();
+    GetCallerIdentityResult getCallerIdentityResult =
+        stsClient.getCallerIdentity(getCallerIdentityRequest);
+    System.out.println(String.format("Current Account: %s", getCallerIdentityResult.getAccount()));
+    System.out.println(String.format("Current UserId: %s", getCallerIdentityResult.getUserId()));
+    System.out.println(String.format("Current ARN: %s", getCallerIdentityResult.getArn()));
+
+    if (assumeRoleArn != null && !assumeRoleArn.isEmpty()) {
+      AssumeRoleRequest assumeRoleRequest = new AssumeRoleRequest();
+      assumeRoleRequest.setRoleSessionName("test_assume_role_session_bpg");
+      assumeRoleRequest.setRoleArn(assumeRoleArn);
+      assumeRoleRequest.setDurationSeconds(6 * 60 * 60);
+      AssumeRoleResult assumeRoleResult = stsClient.assumeRole(assumeRoleRequest);
+      Credentials credentials = assumeRoleResult.getCredentials();
+      System.out.println(String.format("AccessKeyId: %s", credentials.getAccessKeyId()));
+      System.out.println(String.format("SecretAccessKey: %s", credentials.getSecretAccessKey()));
+      System.out.println(String.format("SessionToken: %s", credentials.getSessionToken()));
+    }
   }
 }
