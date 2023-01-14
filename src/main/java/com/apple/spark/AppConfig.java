@@ -29,6 +29,7 @@ import java.util.Optional;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AppConfig extends Configuration {
 
+  private String applicationContextPath;
   private Map<String, String> defaultSparkConf;
 
   private List<SparkCluster> sparkClusters;
@@ -64,6 +65,14 @@ public class AppConfig extends Configuration {
   private Long statusCacheExpireMillis;
 
   public AppConfig() {}
+
+  public String getApplicationContextPath() {
+    return applicationContextPath;
+  }
+
+  public void setApplicationContextPath(String applicationContextPath) {
+    this.applicationContextPath = applicationContextPath;
+  }
 
   public Map<String, String> getDefaultSparkConf() {
     return defaultSparkConf;

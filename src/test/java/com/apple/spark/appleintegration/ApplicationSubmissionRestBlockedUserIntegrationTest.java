@@ -1,5 +1,6 @@
 package com.apple.spark.appleintegration;
 
+import com.apple.spark.core.Constants;
 import java.io.IOException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -25,7 +26,10 @@ public class ApplicationSubmissionRestBlockedUserIntegrationTest {
   @BeforeClass
   public void beforeClass() throws Exception {
     testSupport.before();
-    serviceRootUrl = String.format("http://localhost:%s/skatev2", testSupport.getLocalPort());
+    serviceRootUrl =
+        String.format(
+            "http://localhost:%s%s",
+            testSupport.getLocalPort(), Constants.DEFAULT_APPLICATION_CONTEXT_PATH);
   }
 
   @AfterClass

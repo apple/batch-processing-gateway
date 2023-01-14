@@ -2,6 +2,7 @@ package com.apple.spark.appleintegration;
 
 import static com.apple.spark.core.Constants.DEFAULT_DB_NAME;
 
+import com.apple.spark.core.Constants;
 import com.apple.spark.core.DBConnection;
 import com.apple.spark.core.QueueTokenVerifier;
 import com.apple.spark.core.SparkConstants;
@@ -50,7 +51,10 @@ public class ApplicationSubmissionRestIntegrationTest {
   @BeforeClass
   public void beforeClass() throws Exception {
     testSupport.before();
-    serviceRootUrl = String.format("http://localhost:%s/skatev2", testSupport.getLocalPort());
+    serviceRootUrl =
+        String.format(
+            "http://localhost:%s%s",
+            testSupport.getLocalPort(), Constants.DEFAULT_APPLICATION_CONTEXT_PATH);
   }
 
   @AfterClass

@@ -1,5 +1,6 @@
 package com.apple.spark.appleintegration;
 
+import com.apple.spark.core.Constants;
 import com.apple.spark.util.HttpUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -15,7 +16,10 @@ public class HealthcheckRestIntegrationTest {
   @BeforeMethod
   public void setUp() throws Exception {
     testSupport.before();
-    serviceRootUrl = String.format("http://localhost:%s/skatev2", testSupport.getLocalPort());
+    serviceRootUrl =
+        String.format(
+            "http://localhost:%s%s",
+            testSupport.getLocalPort(), Constants.DEFAULT_APPLICATION_CONTEXT_PATH);
   }
 
   @AfterMethod
