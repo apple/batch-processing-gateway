@@ -15,10 +15,10 @@ spec:
         paths:
           - backend:
               service:
-                name: bpg
+                name: bpg-authed
                 port:
                   number: 80
-            path: /apiv2/(.*)
+            path: /apiv2-gcp/(.*)
             pathType: ImplementationSpecific
   tls:
     - hosts:

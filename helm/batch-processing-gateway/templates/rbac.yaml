@@ -1,0 +1,109 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Values.rbac.clusterRole }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs: ["create","delete","get","list","patch","update","watch"]
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - configmaps
+      - endpoints
+      - secrets
+      - persistentvolumes
+      - persistentvolumeclaims
+    verbs:
+      - create
+      - get
+      - delete
+      - update
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs:
+      - create
+      - get
+      - delete
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - resourcequotas
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - create
+      - get
+      - update
+      - delete
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+      - validatingwebhookconfigurations
+    verbs:
+      - create
+      - get
+      - update
+      - delete
+  - apiGroups:
+      - batch
+    resources:
+      - jobs
+    verbs:
+      - create
+      - get
+      - update
+      - delete
+  - apiGroups:
+      - extensions
+      - "networking.k8s.io" # k8s 1.14+
+    resources:
+      - ingresses/status
+    verbs:
+      - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Values.rbac.clusterRoleBinding }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.serviceAccounts.batchProcessingGateway.name }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ .Values.rbac.clusterRoleEdit }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

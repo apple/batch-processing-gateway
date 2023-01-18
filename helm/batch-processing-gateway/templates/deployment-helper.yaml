@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: bpg-helper
-  namespace: {{ .Values.namespace }}
   labels:
     app: bpg-helper
   annotations:
@@ -17,6 +16,7 @@ spec:
       labels:
         app: bpg-helper
     spec:
+      serviceAccountName: {{ .Values.serviceAccounts.batchProcessingGateway.name }}
       containers:
         - name: bpg-helper
           image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
@@ -40,9 +40,16 @@ spec:
             failureThreshold: 3
             periodSeconds: 15
           volumeMounts:
+            {{- if not (empty .Values.encodedConfig) }}
             - name: configuration
               mountPath: "/app/"
               readOnly: true
+            {{- end }}
+            {{- if not (empty .Values.plainConfig) }}
+            - name: configuration
+              mountPath: "/etc/app_config/"
+              readOnly: true
+            {{- end }}
           env:
             - name: MAX_HEAP_SIZE
               value: "-Xmx20G"
@@ -58,10 +65,22 @@ spec:
                   fieldPath: status.hostIP
             - name: STATSD_SERVER_PORT
               value: "8125"
+          envFrom:
+            - secretRef:
+                name: batch-processing-gateway-secret
       volumes:
         - name: configuration
+          {{- if not (empty .Values.encodedConfig) }}
           configMap:
-            name: 'bpg'
+            name: 'bpg-encoded-config'
             items:
               - key: 'encoded-config-yaml'
                 path: 'app-config.gz'
+          {{- end }}
+          {{- if not (empty .Values.plainConfig) }}
+          configMap:
+            name: 'bpg-plain-config'
+            items:
+              - key: 'plain-config-yaml'
+                path: 'app-config.yaml'
+          {{- end }}

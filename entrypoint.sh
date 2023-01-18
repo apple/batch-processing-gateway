@@ -10,8 +10,10 @@ monitor_app_property="-DmonitorApplication=true"
 dir=$(dirname $config_file_path)
 mkdir -p ${dir}
 
-# Uncompress /app/app-config.gz to /etc/app_config/app-config.yaml
-gunzip -c $gz_file_path > $config_file_path
+# Uncompress /app/app-config.gz to /etc/app_config/app-config.yaml if the gz file exists
+if [ -f $gz_file_path ]; then
+  gunzip -c $gz_file_path > $config_file_path
+fi
 
 JAVA_OPT="${max_heap_size} \
 -Dkubernetes.auth.tryServiceAccount=false \

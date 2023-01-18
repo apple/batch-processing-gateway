@@ -51,3 +51,8 @@ At this point you'd need to manually create BPG configs, but you may use the tem
 - `config.yaml.j2`: A template that can be used by tools to generate BPG configs.
 - `spark-config.yaml.j2`: A template for the Spark cluster part of the `config.yaml.j2` template.
 - `config.example.yaml`: An example of BPG config with dummy values. You may adapt this file with your config values.
+
+# TODO
+
+1. ingress-swagger-ui.yaml was deleted, need to add back
+2. deployment-swagger-ui.yaml was deleted, need to add back

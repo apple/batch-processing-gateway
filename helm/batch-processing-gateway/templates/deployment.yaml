@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: bpg
-  namespace: {{ .Values.namespace }}
   labels:
     app: bpg
   annotations:
@@ -17,9 +16,11 @@ spec:
       labels:
         app: bpg
     spec:
+      serviceAccountName: {{ .Values.serviceAccounts.batchProcessingGateway.name }}
       containers:
         - name: bpg
           image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
+          imagePullPolicy: IfNotPresent
           command: ["/opt/entrypoint.sh"]
           resources:
             requests:
@@ -40,9 +41,16 @@ spec:
             failureThreshold: 3
             periodSeconds: 15
           volumeMounts:
+            {{- if not (empty .Values.encodedConfig) }}
             - name: configuration
               mountPath: "/app/"
               readOnly: true
+            {{- end }}
+            {{- if not (empty .Values.plainConfig) }}
+            - name: configuration
+              mountPath: "/etc/app_config/"
+              readOnly: true
+            {{- end }}
           env:
             - name: MAX_HEAP_SIZE
               value: "-Xmx20G"
@@ -56,10 +64,56 @@ spec:
                   fieldPath: status.hostIP
             - name: STATSD_SERVER_PORT
               value: "8125"
+          envFrom:
+            - secretRef:
+                name: batch-processing-gateway-secret
+{{- if .Values.appleAuth }}
+        - name: bgp-auth
+          image: docker.apple.com/isdteam/appleconnect-proxy:1.2.134.fcd551d
+          imagePullPolicy: IfNotPresent
+          args:
+            - -e=http://localhost:8080
+            - --idms-a3-lookup-account
+            - -p=9090
+          env:
+            - name: APC_APP_ID
+              value: "181606"
+            - name: APC_COOKIE_NAME
+              value: acack
+            - name: APC_LOGIN_URL
+              value: https://idmsac.corp.apple.com/IDMSWebAuth/login
+            - name: APC_VALIDATE_URL
+              value: https://idmsac.corp.apple.com/IDMSWebAuth/validate
+          envFrom:
+            - secretRef:
+                name: apple-connect-secret
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /__health
+              port: 9090
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 30
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+          resources: {}
+{{- end }}
       volumes:
         - name: configuration
+          {{- if not (empty .Values.encodedConfig) }}
           configMap:
-            name: 'bpg'
+            name: 'bpg-encoded-config'
             items:
               - key: 'encoded-config-yaml'
                 path: 'app-config.gz'
+          {{- end }}
+          {{- if not (empty .Values.plainConfig) }}
+          configMap:
+            name: 'bpg-plain-config'
+            items:
+              - key: 'plain-config-yaml'
+                path: 'app-config.yaml'
+          {{- end }}
