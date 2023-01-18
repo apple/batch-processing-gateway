@@ -27,6 +27,7 @@ serviceAccounts:
     eksServiceAccountArn: "arn:aws:iam::xxxxxxxxx:role/xxx"
 
 ingress:
+  urlRootPath: /apiv2-gcp
   endpoint: batch-gateway-test-02.aws.ocean.g.apple.com
   tlsSecretName: 'batch-gateway-test-02.aws.ocean.g.apple.com-tls-secret-2022-04-15'
 
@@ -36,7 +37,6 @@ encodedConfig: ''
 
 plainConfig:
   applicationContextPath: /apiv2-gcp
-  userPasswords:
   defaultSparkConf:
     spark.kubernetes.submission.connectionTimeout: 30000
     spark.kubernetes.submission.requestTimeout: 30000

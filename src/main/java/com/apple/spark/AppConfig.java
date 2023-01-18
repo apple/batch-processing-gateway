@@ -19,6 +19,7 @@
 
 package com.apple.spark;
 
+import com.apple.spark.core.ConfigValue;
 import com.apple.spark.operator.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.dropwizard.Configuration;
@@ -681,6 +682,10 @@ public class AppConfig extends Configuration {
 
     public void setDbName(String dbName) {
       this.dbName = dbName;
+    }
+
+    public String getPasswordDecodedValue() {
+      return ConfigValue.tryGetEncodedSecretValue(password);
     }
   }
 }

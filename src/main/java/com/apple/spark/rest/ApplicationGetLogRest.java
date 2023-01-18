@@ -100,7 +100,7 @@ public class ApplicationGetLogRest extends RestBase {
     if (appConfig.getDbStorageSOPS() != null) {
       dbConnectionString = appConfig.getDbStorageSOPS().getConnectionString();
       dbUser = appConfig.getDbStorageSOPS().getUser();
-      dbPassword = appConfig.getDbStorageSOPS().getPassword();
+      dbPassword = appConfig.getDbStorageSOPS().getPasswordDecodedValue();
       dbName = appConfig.getDbStorageSOPS().getDbName();
     }
 

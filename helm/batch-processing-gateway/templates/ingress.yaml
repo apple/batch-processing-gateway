@@ -18,7 +18,7 @@ spec:
                 name: bpg-authed
                 port:
                   number: 80
-            path: /apiv2-gcp/(.*)
+            path: {{ .Values.ingress.urlRootPath }}/(.*)
             pathType: ImplementationSpecific
   tls:
     - hosts:
