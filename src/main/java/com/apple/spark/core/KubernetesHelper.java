@@ -150,13 +150,15 @@ public class KubernetesHelper {
     if (timeoutMillis == null) {
       timeoutMillis = DEFAULT_TIMEOUT_MILLIS;
     }
+    String userToken = sparkCluster.getUserTokenSOPSDecoded();
+    String caCertData = sparkCluster.getCaCertDataSOPSDecoded();
     ConfigBuilder configBuilder =
         new ConfigBuilder()
             .withApiVersion("v1")
             .withMasterUrl(sparkCluster.getMasterUrl())
             .withUsername(sparkCluster.getUserName())
-            .withOauthToken(sparkCluster.getUserTokenSOPS())
-            .withCaCertData(sparkCluster.getCaCertDataSOPS())
+            .withOauthToken(userToken)
+            .withCaCertData(caCertData)
             .withNamespace(sparkCluster.getSparkApplicationNamespace())
             .withConnectionTimeout(timeoutMillis.intValue())
             .withRequestTimeout(timeoutMillis.intValue())
@@ -171,15 +173,9 @@ public class KubernetesHelper {
     Config config = configBuilder.build();
     logger.debug(String.format("Spark cluster userName %s", sparkCluster.getUserName()));
     logger.debug(
-        String.format(
-            "Spark cluster userToken first 10 char %s",
-            sparkCluster.getUserTokenSOPS().substring(0, 10)));
-    logger.debug(
-        String.format(
-            "Spark cluster userToken length %s", sparkCluster.getUserTokenSOPS().length()));
-    logger.debug(
-        String.format(
-            "Spark cluster caCertData length %s", sparkCluster.getCaCertDataSOPS().length()));
+        String.format("Spark cluster userToken first 10 char %s", userToken.substring(0, 10)));
+    logger.debug(String.format("Spark cluster userToken length %s", userToken.length()));
+    logger.debug(String.format("Spark cluster caCertData length %s", caCertData.length()));
     return config;
   }
 

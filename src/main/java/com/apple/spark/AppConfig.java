@@ -469,6 +469,14 @@ public class AppConfig extends Configuration {
     public void setVolumeMounts(List<VolumeMount> volumeMounts) {
       this.volumeMounts = volumeMounts;
     }
+
+    public String getCaCertDataSOPSDecoded() {
+      return ConfigValue.tryGetEncodedSecretValue(caCertDataSOPS);
+    }
+
+    public String getUserTokenSOPSDecoded() {
+      return ConfigValue.tryGetEncodedSecretValue(userTokenSOPS);
+    }
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
