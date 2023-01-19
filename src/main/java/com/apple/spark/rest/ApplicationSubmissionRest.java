@@ -445,6 +445,8 @@ public class ApplicationSubmissionRest extends RestBase {
       AppleKerberosUtil.enableKerberosSupport(
           sparkSpec, request, appConfig, proxyUser, timerMetrics);
 
+      AwsCredentialSparkConfigProvider.addAwsCredentialSparkConfig(sparkSpec);
+
       sparkApplicationResource.setSpec(sparkSpec);
       CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
       client

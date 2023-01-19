@@ -58,6 +58,14 @@ public class SparkConstants {
 
   public static final String SPARK_CONF_EXECUTOR_INSTANCES = "spark.executor.instances";
 
+  public static final String SPARK_CONF_S3A_AWS_CREDENTIALS_PROVIDER =
+      "spark.hadoop.fs.s3a.aws.credentials.provider";
+  public static final String SPARK_CONF_S3A_TEMPORARY_AWS_CREDENTIALS_PROVIDER =
+      "org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider";
+  public static final String SPARK_CONF_S3A_ACCESS_KEY = "spark.hadoop.fs.s3a.access.key";
+  public static final String SPARK_CONF_S3A_SECRET_KEY = "spark.hadoop.fs.s3a.secret.key";
+  public static final String SPARK_CONF_S3A_SESSION_TOKEN = "spark.hadoop.fs.s3a.session.token";
+
   public static boolean isApplicationStopped(String state) {
     return COMPLETED_STATE.equalsIgnoreCase(state)
         || FAILED_STATE.equalsIgnoreCase(state)

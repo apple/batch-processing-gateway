@@ -24,6 +24,7 @@ import com.amazonaws.Protocol;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenService;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.*;
+import com.apple.spark.core.AwsCredentialSparkConfigProvider;
 
 /***
  * This tool is to demo how to connect to AWS STS and get token
@@ -33,6 +34,8 @@ public class AwsStsTest {
     String stsEndpoint = "sts.amazonaws.com";
     String region = "us-west-2";
     String assumeRoleArn = null;
+    boolean useWebIdentity = true;
+    int tokenDurationSeconds = 1 * 60 * 60;
     String proxyHost = null;
     int proxyPort = 0;
     String proxyProtocol = null;
@@ -45,6 +48,10 @@ public class AwsStsTest {
         region = args[i++];
       } else if (argName.equalsIgnoreCase("-assume-role-arn")) {
         assumeRoleArn = args[i++];
+      } else if (argName.equalsIgnoreCase("-use-web-identity")) {
+        useWebIdentity = Boolean.parseBoolean(args[i++]);
+      } else if (argName.equalsIgnoreCase("-token-duration-seconds")) {
+        tokenDurationSeconds = Integer.parseInt(args[i++]);
       } else if (argName.equalsIgnoreCase("-proxy-host")) {
         proxyHost = args[i++];
       } else if (argName.equalsIgnoreCase("-proxy-port")) {
@@ -85,15 +92,32 @@ public class AwsStsTest {
     System.out.println(String.format("Current ARN: %s", getCallerIdentityResult.getArn()));
 
     if (assumeRoleArn != null && !assumeRoleArn.isEmpty()) {
-      AssumeRoleRequest assumeRoleRequest = new AssumeRoleRequest();
-      assumeRoleRequest.setRoleSessionName("test_assume_role_session_bpg");
-      assumeRoleRequest.setRoleArn(assumeRoleArn);
-      assumeRoleRequest.setDurationSeconds(6 * 60 * 60);
-      AssumeRoleResult assumeRoleResult = stsClient.assumeRole(assumeRoleRequest);
-      Credentials credentials = assumeRoleResult.getCredentials();
-      System.out.println(String.format("AccessKeyId: %s", credentials.getAccessKeyId()));
-      System.out.println(String.format("SecretAccessKey: %s", credentials.getSecretAccessKey()));
-      System.out.println(String.format("SessionToken: %s", credentials.getSessionToken()));
+      if (useWebIdentity) {
+        String webIdentityToken =
+            AwsCredentialSparkConfigProvider.getLocalWebIdentityToken(
+                AwsCredentialSparkConfigProvider.WEB_IDENTITY_TOKEN_FILE_ENV_VAR_NAME);
+        AssumeRoleWithWebIdentityRequest assumeRoleRequest = new AssumeRoleWithWebIdentityRequest();
+        assumeRoleRequest.setRoleSessionName("test_assume_role_session_bpg");
+        assumeRoleRequest.setRoleArn(assumeRoleArn);
+        assumeRoleRequest.setDurationSeconds(tokenDurationSeconds);
+        assumeRoleRequest.setWebIdentityToken(webIdentityToken);
+        AssumeRoleWithWebIdentityResult assumeRoleResult =
+            stsClient.assumeRoleWithWebIdentity(assumeRoleRequest);
+        Credentials credentials = assumeRoleResult.getCredentials();
+        System.out.println(String.format("AccessKeyId: %s", credentials.getAccessKeyId()));
+        System.out.println(String.format("SecretAccessKey: %s", credentials.getSecretAccessKey()));
+        System.out.println(String.format("SessionToken: %s", credentials.getSessionToken()));
+      } else {
+        AssumeRoleRequest assumeRoleRequest = new AssumeRoleRequest();
+        assumeRoleRequest.setRoleSessionName("test_assume_role_session_bpg");
+        assumeRoleRequest.setRoleArn(assumeRoleArn);
+        assumeRoleRequest.setDurationSeconds(tokenDurationSeconds);
+        AssumeRoleResult assumeRoleResult = stsClient.assumeRole(assumeRoleRequest);
+        Credentials credentials = assumeRoleResult.getCredentials();
+        System.out.println(String.format("AccessKeyId: %s", credentials.getAccessKeyId()));
+        System.out.println(String.format("SecretAccessKey: %s", credentials.getSecretAccessKey()));
+        System.out.println(String.format("SessionToken: %s", credentials.getSessionToken()));
+      }
     }
   }
 }

@@ -124,4 +124,11 @@ public class Constants {
   public static final String HIVE_METASTORE_SASL_ENABLED =
       "spark.hadoop.hive.metastore.sasl.enabled";
   public static final String LDAP_ENDPOINT = "ldaps://nod.apple.com:636/";
+
+  public static final String ASSUME_ROLE_WITH_WEB_IDENTITY_ROLE_ARN =
+      "spark.batchProcessingGateway.assumeRoleWithWebIdentity.roleArn";
+  public static final String ASSUME_ROLE_WITH_WEB_IDENTITY_DURATION_SECONDS =
+      "spark.batchProcessingGateway.assumeRoleWithWebIdentity.durationSeconds";
+  public static final String ASSUME_ROLE_WITH_WEB_IDENTITY_WEB_IDENTITY_ENV_VAR_NAME =
+      "spark.batchProcessingGateway.assumeRoleWithWebIdentity.webIdentityEnvVarName";
 }
