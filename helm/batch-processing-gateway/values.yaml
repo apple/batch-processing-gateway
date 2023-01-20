@@ -46,12 +46,12 @@ plainConfig:
   sparkClusters:
     - weight: 100
       id: c0101
-      eksCluster: cluster-1
-      masterUrl: https://34.105.39.183
+      eksCluster: cluster1
+      masterUrl: https://xxx
       caCertDataSOPS:
       userName: spark-operator-api-user
       userTokenSOPS:
-      httpsProxy: http://proxy.config.pcp.local:3128
+      httpsProxy:
       sparkApplicationNamespace: oss-spark-operator-applications
       sparkServiceAccount: spark
       sparkVersions:
@@ -64,7 +64,7 @@ plainConfig:
       batchScheduler: default
       sparkConf:
         spark.kubernetes.executor.podNamePrefix: '{spark-application-resource-name}'
-        spark.eventLog.enabled: "true"
+        spark.eventLog.enabled: "false"
         spark.kubernetes.allocation.batch.size: 2000
         spark.kubernetes.allocation.batch.delay: 1s
         spark.eventLog.dir: s3a://xxxyyyzzz-public-01/eventlog

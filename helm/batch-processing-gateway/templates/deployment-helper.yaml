@@ -68,6 +68,8 @@ spec:
           envFrom:
             - secretRef:
                 name: batch-processing-gateway-secret
+            - secretRef:
+                name: spark-cluster-secret-gke-1
       volumes:
         - name: configuration
           {{- if not (empty .Values.encodedConfig) }}
