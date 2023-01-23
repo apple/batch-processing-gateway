@@ -65,11 +65,6 @@ spec:
                   fieldPath: status.hostIP
             - name: STATSD_SERVER_PORT
               value: "8125"
-          envFrom:
-            - secretRef:
-                name: batch-processing-gateway-secret
-            - secretRef:
-                name: spark-cluster-secret-gke-1
       volumes:
         - name: configuration
           {{- if not (empty .Values.encodedConfig) }}

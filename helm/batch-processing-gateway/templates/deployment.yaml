@@ -64,11 +64,6 @@ spec:
                   fieldPath: status.hostIP
             - name: STATSD_SERVER_PORT
               value: "8125"
-          envFrom:
-            - secretRef:
-                name: batch-processing-gateway-secret
-            - secretRef:
-                name: spark-cluster-secret-gke-1
 {{- if .Values.appleAuth }}
         - name: bgp-auth
           image: docker.apple.com/isdteam/appleconnect-proxy:1.2.134.fcd551d

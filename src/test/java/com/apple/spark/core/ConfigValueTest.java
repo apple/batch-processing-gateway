@@ -41,11 +41,15 @@ public class ConfigValueTest {
     value =
         ConfigValue.tryGetEncodedSecretValue(
             "localhost:env:not_existing_env_variable_b50dd229-00a8-410e-a279-a22e6bad0a4c");
-    Assert.assertEquals(value, "");
+    Assert.assertEquals(
+        value, "localhost:env:not_existing_env_variable_b50dd229-00a8-410e-a279-a22e6bad0a4c");
 
     String envVariableNameForTest = System.getenv().keySet().stream().findFirst().get();
     String envVariableValueForTest = System.getenv(envVariableNameForTest);
     value = ConfigValue.tryGetEncodedSecretValue("localhost:env:" + envVariableNameForTest);
     Assert.assertEquals(value, envVariableValueForTest);
+
+    value = ConfigValue.tryGetEncodedSecretValue("k8s:secret:invalid_value");
+    Assert.assertEquals(value, "k8s:secret:invalid_value");
   }
 }
