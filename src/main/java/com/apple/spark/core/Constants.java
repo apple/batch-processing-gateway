@@ -131,4 +131,8 @@ public class Constants {
       "spark.batchProcessingGateway.assumeRoleWithWebIdentity.durationSeconds";
   public static final String ASSUME_ROLE_WITH_WEB_IDENTITY_WEB_IDENTITY_ENV_VAR_NAME =
       "spark.batchProcessingGateway.assumeRoleWithWebIdentity.webIdentityEnvVarName";
+
+  // If this is true, do not set proxy user on spark application, to avoid error on GCS:
+  // PartialGroupNameException The user name 'xxx' is not found. id: ‘xxx’: no such user
+  public static final String DISABLE_PROXY_USER = "spark.batchProcessingGateway.disableProxyUser";
 }

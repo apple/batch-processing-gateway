@@ -300,6 +300,13 @@ public class ApplicationSubmissionRest extends RestBase {
     // Set environment variables
     ApplicationSubmissionHelper.populateEnv(sparkSpec, request, sparkCluster);
 
+    if (sparkSpec.getSparkConf() != null) {
+      String disableProxyUserConfValue = sparkSpec.getSparkConf().get(Constants.DISABLE_PROXY_USER);
+      if (disableProxyUserConfValue != null && disableProxyUserConfValue.equalsIgnoreCase("true")) {
+        sparkSpec.setProxyUser(null);
+      }
+    }
+
     requestCounters.increment(
         REQUEST_METRIC_NAME,
         Tag.of("name", "submit_application"),
@@ -317,7 +324,7 @@ public class ApplicationSubmissionRest extends RestBase {
       applyQueryListenerSparkConf(sparkSpec);
     }
 
-    logDao.logApplicationSubmission(submissionId, sparkSpec.getProxyUser(), request);
+    logDao.logApplicationSubmission(submissionId, proxyUser, request);
     SubmitApplicationResponse response =
         submitSparkCRD(
             sparkCluster, submissionId, sparkSpec, request, queue, parentQueue, proxyUser);
@@ -348,11 +355,8 @@ public class ApplicationSubmissionRest extends RestBase {
       if (sparkApplicationResource.getMetadata().getLabels() == null) {
         sparkApplicationResource.getMetadata().setLabels(new HashMap<>());
       }
-      if (sparkSpec.getProxyUser() != null) {
-        sparkApplicationResource
-            .getMetadata()
-            .getLabels()
-            .put(PROXY_USER_LABEL, sparkSpec.getProxyUser());
+      if (proxyUser != null) {
+        sparkApplicationResource.getMetadata().getLabels().put(PROXY_USER_LABEL, proxyUser);
       }
       if (request.getApplicationName() != null) {
         String applicationNameLabelValue =
