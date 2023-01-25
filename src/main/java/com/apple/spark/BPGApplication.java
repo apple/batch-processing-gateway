@@ -19,19 +19,12 @@
 
 package com.apple.spark;
 
-import static com.apple.spark.core.Constants.QUEUE_INFO;
-import static com.apple.spark.core.Constants.SERVICE_ABBR;
-
 import com.apple.spark.core.ApplicationMonitor;
 import com.apple.spark.core.BPGStatsdConfig;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.ThrowableExceptionMapper;
 import com.apple.spark.health.BPGHealthCheck;
-import com.apple.spark.rest.AdminRest;
-import com.apple.spark.rest.ApplicationGetLogRest;
-import com.apple.spark.rest.ApplicationSubmissionRest;
-import com.apple.spark.rest.HealthcheckRest;
-import com.apple.spark.rest.S3Rest;
+import com.apple.spark.rest.*;
 import com.apple.spark.security.User;
 import com.apple.spark.security.UserNameAuthFilter;
 import com.apple.spark.security.UserNameBasicAuthenticator;
@@ -39,8 +32,6 @@ import com.apple.spark.security.UserUnauthorizedHandler;
 import com.apple.spark.util.CounterMetricContainer;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.Application;
 import io.dropwizard.auth.AuthDynamicFeature;
 import io.dropwizard.auth.AuthValueFactoryProvider;
@@ -54,18 +45,13 @@ import io.micrometer.core.instrument.Tag;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import io.swagger.v3.oas.integration.SwaggerConfiguration;
 import io.swagger.v3.oas.models.OpenAPI;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+
+import static com.apple.spark.core.Constants.QUEUE_INFO;
+import static com.apple.spark.core.Constants.SERVICE_ABBR;
 
 public class BPGApplication extends Application<AppConfig> {
 
