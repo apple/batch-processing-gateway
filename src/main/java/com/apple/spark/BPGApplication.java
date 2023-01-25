@@ -52,6 +52,7 @@ import io.micrometer.core.instrument.Tag;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import io.swagger.v3.oas.integration.SwaggerConfiguration;
 import io.swagger.v3.oas.models.OpenAPI;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;

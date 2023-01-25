@@ -1,7 +1,15 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: bpg
+  name: bpg-encoded-config
 binaryData:
   # Config is stored as a base64 encoded string
   encoded-config-yaml: '{{ .Values.encodedConfig }}'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bpg-plain-config
+data:
+  plain-config-yaml: |
+    {{- .Values.plainConfig | toYaml | trim | nindent 4 }}

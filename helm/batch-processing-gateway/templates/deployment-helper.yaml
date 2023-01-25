@@ -40,9 +40,16 @@ spec:
             failureThreshold: 3
             periodSeconds: 15
           volumeMounts:
+            {{- if not (empty .Values.encodedConfig) }}
             - name: configuration
               mountPath: "/app/"
               readOnly: true
+            {{- end }}
+            {{- if not (empty .Values.plainConfig) }}
+            - name: configuration
+              mountPath: "/etc/app_config/"
+              readOnly: true
+            {{- end }}
           env:
             - name: MAX_HEAP_SIZE
               value: "-Xmx20G"
@@ -60,8 +67,17 @@ spec:
               value: "8125"
       volumes:
         - name: configuration
+          {{- if not (empty .Values.encodedConfig) }}
           configMap:
-            name: 'bpg'
+            name: 'bpg-encoded-config'
             items:
               - key: 'encoded-config-yaml'
                 path: 'app-config.gz'
+          {{- end }}
+          {{- if not (empty .Values.plainConfig) }}
+          configMap:
+            name: 'bpg-plain-config'
+            items:
+              - key: 'plain-config-yaml'
+                path: 'app-config.yaml'
+          {{- end }}

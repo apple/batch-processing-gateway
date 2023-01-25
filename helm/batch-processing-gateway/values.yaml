@@ -1,19 +1,19 @@
 image:
-  registry: ''
-  repository: ''
-  tag: ''
+  registry: ghcr.io/hiboyang
+  repository: batch-processing-gateway
+  tag: bo-test-2
 
-replicas: 3
+replicas: 1
 
 namespace: bpg
 
 resources:
   requests:
-    memory: '16G'
-    cpu: 4
+    memory: '2G'
+    cpu: "0.5"
   limits:
-    memory: '16G'
-    cpu: 4
+    memory: '2G'
+    cpu: "0.5"
 
 
 ingress:
@@ -22,7 +22,128 @@ ingress:
 
 # Config is provided as a base64-encoded,
 # compressed content which will be projected into pods as /app/app-config.gz.
-encodedConfig: ''
+encodedConfig:
+
+plainConfig:
+  defaultSparkConf:
+    spark.kubernetes.submission.connectionTimeout: 30000
+    spark.kubernetes.submission.requestTimeout: 30000
+    spark.kubernetes.driver.connectionTimeout: 30000
+    spark.kubernetes.driver.requestTimeout: 30000
+    spark.sql.debug.maxToStringFields: 75
+  sparkClusters:
+    - weight: 100
+      id: c0101
+      eksCluster: cluster-1
+      masterUrl: https://k8s.api.server
+      caCertDataSOPS:
+      userName: spark-operator-api-user
+      userTokenSOPS:
+      sparkApplicationNamespace: spark-applications
+      sparkServiceAccount: spark
+      sparkVersions:
+        - 3.2
+        - 3.1
+      queues:
+        - gcp
+      ttlSeconds: 86400  # 1 day TTL for terminated spark application
+      timeoutMillis: 180000
+      sparkUIUrl: https://sparkui.example.host.com
+      batchScheduler: default
+      sparkConf:
+        spark.kubernetes.executor.podNamePrefix: '{spark-application-resource-name}'
+        spark.eventLog.enabled: "false"
+        spark.kubernetes.allocation.batch.size: 2000
+        spark.kubernetes.allocation.batch.delay: 1s
+        spark.eventLog.dir: s3a://xxx/eventlog
+        spark.history.fs.logDirectory: s3a://xxx/eventlog
+        spark.hadoop.fs.s3a.aws.credentials.provider: com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+        spark.hadoop.hive.metastore.uris: thrift://hms.endpoint.com:9083
+        spark.sql.warehouse.dir: s3a://xxx/warehouse
+        spark.sql.catalogImplementation: hive
+      sparkUIOptions:
+        ServicePort: 4040
+        ingressAnnotations:
+          nginx.ingress.kubernetes.io/rewrite-target: /$2
+          nginx.ingress.kubernetes.io/proxy-redirect-from: http://$host/
+          nginx.ingress.kubernetes.io/proxy-redirect-to: /spark-applications/{spark-application-resource-name}/
+          kubernetes.io/ingress.class: nginx
+          nginx.ingress.kubernetes.io/configuration-snippet: |
+            proxy_set_header Accept-Encoding ""; # disable compression
+            sub_filter_last_modified off;
+            sub_filter '<head>' '<head> <base href="/spark-applications/{spark-application-resource-name}/">'; # add base url
+            sub_filter 'href="/' 'href="'; # remove absolute URL path so base url applies
+            sub_filter 'src="/' 'src="'; # remove absolute URL path so base url applies
+            
+            sub_filter '/{{num}}/jobs/' '/jobs/';
+            
+            sub_filter "setUIRoot('')" "setUIRoot('/spark-applications/{spark-application-resource-name}/')"; # Set UI root for JS scripts
+            sub_filter "document.baseURI.split" "document.documentURI.split"; # Executors page issue fix
+            sub_filter_once off;
+        ingressTLS:
+          - hosts:
+              - sparkui.example.host.com
+            secretName: sparkui.example.host.com-tls-secret
+  sparkImages:
+    - name: apache/spark:v3.1.3
+      types:
+        - Python
+      version: "3.1"
+    - name: apache/spark:v3.1.3
+      types:
+        - Java
+        - Scala
+      version: "3.1"
+    - name: apache/spark:v3.2.3
+      types:
+        - Python
+      version: "3.2"
+    - name: apache/spark:v3.2.3
+      types:
+        - Java
+        - Scala
+      version: "3.2"
+  s3Bucket: s3-bucket-artifacts
+  s3Folder: uploaded
+  sparkLogS3Bucket: xxx
+  sparkLogIndex: index/index.txt
+  batchFileLimit: 2016
+  sparkHistoryDns: sparkhistory.host.com
+  gatewayDns: gateway.host.com
+  sparkHistoryUrl: https://sparkhistory.host.com
+  memoryMbSecondCost: 0.000000000372
+  vCoreSecondCost: 0.000003
+  allowedUsers:
+    - '*'
+  blockedUsers:
+    - blocked_user_1
+  queues:
+    - name: poc
+      driverNodeLabelKey: "node_group_category"
+      driverNodeLabelValues:
+        - "spark_driver"
+      executorNodeLabelKey: "node_group_category"
+      executorNodeLabelValues:
+        - "spark_executor"
+    - name: vip
+      secure: true
+  queueTokenSOPS:
+    secrets:
+      - secret$$$1
+  dbStorageSOPS:
+    connectionString: jdbc:mysql://localhost:3306/bpg?useUnicode=yes&characterEncoding=UTF-8&useLegacyDatetimeCode=false&connectTimeout=10000&socketTimeout=30000
+    user: root
+    password: my_password
+    dbName: bpg
+  server:
+    applicationConnectors:
+      - type: http
+        port: 8080
+  logging:
+    level: INFO
+    loggers:
+      com.apple.spark: INFO
+
 
 # For Swagger UI which visualizes API specs.
 swagger:
