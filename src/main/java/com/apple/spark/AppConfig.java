@@ -19,6 +19,7 @@
 
 package com.apple.spark;
 
+import com.apple.spark.core.ConfigValue;
 import com.apple.spark.operator.DriverSpec;
 import com.apple.spark.operator.ExecutorSpec;
 import com.apple.spark.operator.SparkUIConfiguration;
@@ -443,6 +444,14 @@ public class AppConfig extends Configuration {
     public void setEksCluster(String eksCluster) {
       this.eksCluster = eksCluster;
     }
+
+    public String getCaCertDataSOPSDecoded() {
+      return ConfigValue.tryGetEncodedSecretValue(caCertDataSOPS);
+    }
+
+    public String getUserTokenSOPSDecoded() {
+      return ConfigValue.tryGetEncodedSecretValue(userTokenSOPS);
+    }
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
@@ -656,6 +665,10 @@ public class AppConfig extends Configuration {
 
     public void setDbName(String dbName) {
       this.dbName = dbName;
+    }
+
+    public String getPasswordDecodedValue() {
+      return ConfigValue.tryGetEncodedSecretValue(password);
     }
   }
 }
