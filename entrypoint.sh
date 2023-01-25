@@ -1,6 +1,5 @@
 #!/bin/bash
 
-print_config=${PRINT_CONFIG:-false}
 max_heap_size=${MAX_HEAP_SIZE:--Xmx20G}
 config_file_path=${CONFIG_FILE_PATH:-/etc/app_config/app-config.yaml}
 gz_file_path=${GZ_FILE_PATH:-/app/app-config.gz}
@@ -31,4 +30,4 @@ if [ "${app_monitor_enabled,,}" == "true" ]; then
 fi
 
 # Start Application
-java $JAVA_OPT -DprintConfig={print_config} -cp target/bpg-release.jar com.apple.spark.BPGApplication server $config_file_path
+java $JAVA_OPT -cp target/bpg-release.jar com.apple.spark.BPGApplication server $config_file_path

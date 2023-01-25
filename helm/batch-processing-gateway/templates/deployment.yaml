@@ -20,7 +20,7 @@ spec:
       containers:
         - name: bpg
           image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command: ["/opt/entrypoint.sh"]
           resources:
             requests:
@@ -52,8 +52,6 @@ spec:
               readOnly: true
             {{- end }}
           env:
-            - name: PRINT_CONFIG
-              value: "true"
             - name: MAX_HEAP_SIZE
               value: "-Xmx20G"
             - name: CONFIG_FILE_PATH
