@@ -35,7 +35,7 @@ plainConfig:
     - weight: 100
       id: c0101
       eksCluster: cluster-1
-      masterUrl: https://34.134.183.114
+      masterUrl: https://k8s.api.server
       caCertDataSOPS:
       userName: spark-operator-api-user
       userTokenSOPS:
@@ -131,10 +131,10 @@ plainConfig:
     secrets:
       - secret$$$1
   dbStorageSOPS:
-    connectionString: jdbc:mysql://localhost:3306/skate?useUnicode=yes&characterEncoding=UTF-8&useLegacyDatetimeCode=false&connectTimeout=10000&socketTimeout=30000
+    connectionString: jdbc:mysql://localhost:3306/bpg?useUnicode=yes&characterEncoding=UTF-8&useLegacyDatetimeCode=false&connectTimeout=10000&socketTimeout=30000
     user: root
-    password: Pass1word
-    dbName: skate
+    password: my_password
+    dbName: bpg
   server:
     applicationConnectors:
       - type: http
