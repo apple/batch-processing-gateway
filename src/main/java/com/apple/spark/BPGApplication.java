@@ -98,7 +98,7 @@ public class BPGApplication extends Application<AppConfig> {
 
   @Override
   public void run(final AppConfig configuration, final Environment environment) {
-comm
+
     // Get the application's metric registry
     MetricRegistry registry = environment.metrics();
     SharedMetricRegistries.add(Constants.DEFAULT_METRIC_REGISTRY, registry);
