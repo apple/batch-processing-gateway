@@ -86,17 +86,6 @@ public class BPGApplication extends Application<AppConfig> {
   public static void main(final String[] args) throws Exception {
     logger.info(
         "Starting server, version: {}, revision: {}", BuildInfo.Version, BuildInfo.Revision);
-    for (int i = 0; i < args.length; i++) {
-      String arg = args[i];
-      logger.info("Arg: {}", arg);
-      if (i == 1) {
-        Path path = Paths.get(arg);
-        if (Files.exists(path)) { // TODO not safe here, may lead credential
-          String str = Files.readString(path);
-          logger.info("File content: {}", str);
-        }
-      }
-    }
 
     String value = System.getProperty(MONITOR_APPLICATION_SYSTEM_PROPERTY_NAME);
     boolean monitorApplication = value != null && value.equalsIgnoreCase("true");
