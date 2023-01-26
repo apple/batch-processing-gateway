@@ -29,12 +29,25 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.dsl.LogWatch;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import java.io.Closeable;
-import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class KubernetesHelper {
+
+  // https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/
+  public static final String SERVICE_ACCOUNT_FOLDER =
+      "/var/run/secrets/kubernetes.io/serviceaccount";
+  public static final String SERVICE_ACCOUNT_NAMESPACE_FILE = "namespace";
+  public static final String SERVICE_ACCOUNT_CA_CERT_FILE = "ca.crt";
+  public static final String SERVICE_ACCOUNT_TOKEN_FILE = "token";
+
+  public static final String LOCAL_API_SERVER_URL = "https://kubernetes.default.svc";
 
   // https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
   public static final int MAX_LABEL_VALUE_LENGTH = 63;
@@ -42,6 +55,70 @@ public class KubernetesHelper {
   private static final Logger logger = LoggerFactory.getLogger(KubernetesHelper.class);
 
   private static final long DEFAULT_TIMEOUT_MILLIS = 30000;
+
+  public static String tryGetServiceAccountNamespace() {
+    ConfigBuilder configBuilder = new ConfigBuilder(Config.autoConfigure(null));
+    String namespace = configBuilder.getNamespace();
+    if (namespace != null && !namespace.isEmpty()) {
+      return namespace;
+    }
+    Path path = Paths.get(SERVICE_ACCOUNT_FOLDER, SERVICE_ACCOUNT_NAMESPACE_FILE);
+    try {
+      return Files.readString(path);
+    } catch (Throwable e) {
+      return "";
+    }
+  }
+
+  public static String tryGetServiceAccountCACertFile() {
+    Path path = Paths.get(SERVICE_ACCOUNT_FOLDER, SERVICE_ACCOUNT_CA_CERT_FILE).toAbsolutePath();
+    if (Files.exists(path)) {
+      return path.toString();
+    } else {
+      return "";
+    }
+  }
+
+  public static String tryGetServiceAccountToken() {
+    Path path = Paths.get(SERVICE_ACCOUNT_FOLDER, SERVICE_ACCOUNT_TOKEN_FILE);
+    try {
+      return Files.readString(path);
+    } catch (Throwable e) {
+      return "";
+    }
+  }
+
+  // Note: the client returned by this method may not last for long time, since its credential may
+  // expire. Caller of this method should do retry in case the credential expires.
+  public static DefaultKubernetesClient getLocalK8sClient() {
+    Long timeoutMillis = DEFAULT_TIMEOUT_MILLIS;
+    ConfigBuilder configBuilder =
+        new ConfigBuilder(Config.autoConfigure(null))
+            .withApiVersion("v1")
+            .withTrustCerts(false)
+            .withConnectionTimeout(timeoutMillis.intValue())
+            .withRequestTimeout(timeoutMillis.intValue())
+            .withWebsocketTimeout(timeoutMillis)
+            .withUserAgent(Constants.KUBERNETES_USER_AGENT);
+    if (configBuilder.getMasterUrl() == null || configBuilder.getMasterUrl().isEmpty()) {
+      configBuilder = configBuilder.withMasterUrl(LOCAL_API_SERVER_URL);
+    }
+    if ((configBuilder.getCaCertFile() == null || configBuilder.getCaCertFile().isEmpty())
+        && (configBuilder.getCaCertData() == null || configBuilder.getCaCertData().isEmpty())) {
+      String caCertFile = tryGetServiceAccountCACertFile();
+      if (caCertFile != null && !caCertFile.isEmpty()) {
+        configBuilder = configBuilder.withCaCertFile(caCertFile);
+      }
+    }
+    if (configBuilder.getOauthToken() == null || configBuilder.getOauthToken().isEmpty()) {
+      String token = tryGetServiceAccountToken();
+      if (token != null && !token.isEmpty()) {
+        configBuilder = configBuilder.withOauthToken(token);
+      }
+    }
+    Config config = configBuilder.build();
+    return new DefaultKubernetesClient(config);
+  }
 
   public static DefaultKubernetesClient getK8sClient(AppConfig.SparkCluster sparkCluster) {
     return new DefaultKubernetesClient(getK8sConfig(sparkCluster));
@@ -150,13 +227,15 @@ public class KubernetesHelper {
     if (timeoutMillis == null) {
       timeoutMillis = DEFAULT_TIMEOUT_MILLIS;
     }
+    String userToken = sparkCluster.getUserTokenSOPSDecoded();
+    String caCertData = sparkCluster.getCaCertDataSOPSDecoded();
     ConfigBuilder configBuilder =
         new ConfigBuilder()
             .withApiVersion("v1")
             .withMasterUrl(sparkCluster.getMasterUrl())
             .withUsername(sparkCluster.getUserName())
-            .withOauthToken(sparkCluster.getUserTokenSOPS())
-            .withCaCertData(sparkCluster.getCaCertDataSOPS())
+            .withOauthToken(userToken)
+            .withCaCertData(caCertData)
             .withNamespace(sparkCluster.getSparkApplicationNamespace())
             .withConnectionTimeout(timeoutMillis.intValue())
             .withRequestTimeout(timeoutMillis.intValue())
@@ -171,15 +250,9 @@ public class KubernetesHelper {
     Config config = configBuilder.build();
     logger.debug(String.format("Spark cluster userName %s", sparkCluster.getUserName()));
     logger.debug(
-        String.format(
-            "Spark cluster userToken first 10 char %s",
-            sparkCluster.getUserTokenSOPS().substring(0, 10)));
-    logger.debug(
-        String.format(
-            "Spark cluster userToken length %s", sparkCluster.getUserTokenSOPS().length()));
-    logger.debug(
-        String.format(
-            "Spark cluster caCertData length %s", sparkCluster.getCaCertDataSOPS().length()));
+        String.format("Spark cluster userToken first 10 char %s", userToken.substring(0, 10)));
+    logger.debug(String.format("Spark cluster userToken length %s", userToken.length()));
+    logger.debug(String.format("Spark cluster caCertData length %s", caCertData.length()));
     return config;
   }
 

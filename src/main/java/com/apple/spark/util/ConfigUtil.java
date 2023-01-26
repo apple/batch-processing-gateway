@@ -78,7 +78,7 @@ public class ConfigUtil {
     AppConfig.DBStorage dbconf = config.getDbStorageSOPS();
     String connectionString = dbconf.getConnectionString();
     String userId = dbconf.getUser();
-    String password = dbconf.getPassword();
+    String password = dbconf.getPasswordDecodedValue();
     String queryConf = "SELECT cid, conf FROM config";
 
     DBConnection dbConnection = new DBConnection(connectionString, userId, password);
