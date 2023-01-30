@@ -122,8 +122,6 @@ plainConfig:
     - blocked_user_1
   queues:
     - name: example_queue_1
-    - name: gcp
-    - name: gcp2
   queueTokenSOPS:
     secrets:
       - secret$$$1
