@@ -44,6 +44,7 @@ public class AppConfig extends Configuration {
 
   private String sparkLogS3Bucket;
   private String sparkLogIndex;
+  private String gatewayNamespace;
   private final int batchFileLimit = 2016;
   private String sparkHistoryDns;
   private String gatewayDns;
@@ -197,6 +198,14 @@ public class AppConfig extends Configuration {
 
   public void setStatusCacheExpireMillis(Long statusCacheExpireMillis) {
     this.statusCacheExpireMillis = statusCacheExpireMillis;
+  }
+
+  public String getGatewayNamespace() {
+    return gatewayNamespace;
+  }
+
+  public void setGatewayNamespace(String namespace) {
+    this.gatewayNamespace = namespace;
   }
 
   public Optional<SparkImage> resolveImage(String type, String version) {
