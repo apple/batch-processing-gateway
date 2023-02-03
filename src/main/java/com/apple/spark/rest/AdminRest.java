@@ -26,6 +26,7 @@ import com.apple.spark.api.SubmissionSummary;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.KubernetesHelper;
 import com.apple.spark.core.RestStreamingOutput;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.operator.SparkApplicationResourceList;
 import com.apple.spark.security.User;
@@ -109,7 +110,7 @@ public class AdminRest extends RestBase {
     try {
       ObjectMapper objectMapper = new ObjectMapper();
       StringBuilder submissions = new StringBuilder();
-      for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
+      for (VirtualSparkClusterSpec sparkCluster : getSparkClusters()) {
         SparkApplicationResourceList list = getSparkApplicationResources(sparkCluster);
         List<SparkApplicationResource> sparkApplicationResources = list.getItems();
         if (sparkApplicationResources == null) {
@@ -137,7 +138,7 @@ public class AdminRest extends RestBase {
     try {
       ObjectMapper objectMapper = new ObjectMapper();
       StringBuilder submissions = new StringBuilder();
-      for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
+      for (VirtualSparkClusterSpec sparkCluster : getSparkClusters()) {
         SparkApplicationResourceList list =
             getSparkApplicationResourcesByLabel(
                 sparkCluster, Constants.APPLICATION_NAME_LABEL, applicationName);

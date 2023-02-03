@@ -19,7 +19,7 @@
 
 package com.apple.spark.core;
 
-import com.apple.spark.AppConfig;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.util.EndAwareInputStream;
 import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -119,7 +119,7 @@ public class KubernetesHelper {
     return new DefaultKubernetesClient(config);
   }
 
-  public static DefaultKubernetesClient getK8sClient(AppConfig.SparkCluster sparkCluster) {
+  public static DefaultKubernetesClient getK8sClient(VirtualSparkClusterSpec sparkCluster) {
     return new DefaultKubernetesClient(getK8sConfig(sparkCluster));
   }
 
@@ -221,7 +221,7 @@ public class KubernetesHelper {
     return labelValue;
   }
 
-  private static Config getK8sConfig(AppConfig.SparkCluster sparkCluster) {
+  private static Config getK8sConfig(VirtualSparkClusterSpec sparkCluster) {
     Long timeoutMillis = sparkCluster.getTimeoutMillis();
     if (timeoutMillis == null) {
       timeoutMillis = DEFAULT_TIMEOUT_MILLIS;

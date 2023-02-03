@@ -34,6 +34,7 @@ import com.apple.spark.clients.sparkhistory.GetJobEnvironmentResponse;
 import com.apple.spark.core.KubernetesHelper;
 import com.apple.spark.core.LogDao;
 import com.apple.spark.core.RestStreamingOutput;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ExceptionUtils;
@@ -306,7 +307,7 @@ public class ApplicationGetLogRest extends RestBase {
       return null;
     }
     String submissionId = sparkApplication.getMetadata().getName();
-    AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
+    VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
     DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
     String podName = "";
     try {

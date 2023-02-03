@@ -20,8 +20,8 @@
 package com.apple.spark.core;
 
 import com.apple.spark.AppConfig;
-import com.apple.spark.AppConfig.SparkCluster;
 import com.apple.spark.api.SubmitApplicationRequest;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -87,12 +87,12 @@ public class SparkClusterHelper {
 
   For some examples of how sampling works, refer to the test chooseSparkCluster_weighting in SparkClusterHelperTest
    */
-  public static SparkCluster chooseSparkCluster(
+  public static VirtualSparkClusterSpec chooseSparkCluster(
       AppConfig appConfig, SubmitApplicationRequest request, String user) {
     // If a user provided a specific cluster id to execute request on, return that cluster if it
     // exists and has the required version of Spark
     if (!StringUtils.isEmpty(request.getClusterId())) {
-      Optional<SparkCluster> sparkClusterOptional;
+      Optional<VirtualSparkClusterSpec> sparkClusterOptional;
       sparkClusterOptional =
           appConfig.getSparkClusters().stream()
               .filter(t -> StringUtils.equals(t.getId(), request.getClusterId()))
@@ -113,7 +113,7 @@ public class SparkClusterHelper {
     }
 
     // Filter clusters by spark version
-    List<SparkCluster> sparkClusters =
+    List<VirtualSparkClusterSpec> sparkClusters =
         appConfig.getSparkClusters().stream()
             .filter(t -> t.getWeight() > 0 && t.matchSparkVersion(request.getSparkVersion()))
             .collect(Collectors.toList());
@@ -145,16 +145,20 @@ public class SparkClusterHelper {
 
     if (sparkClusters.size() > 1) {
       // Use weight of each spark cluster to determine which cluster to use
-      List<Pair<SparkCluster, Double>> clusterWeightPairs =
+      List<Pair<VirtualSparkClusterSpec, Double>> clusterWeightPairs =
           sparkClusters.stream()
               .map(cluster -> new Pair<>(cluster, (double) cluster.getWeight()))
               .collect(Collectors.toList());
-      EnumeratedDistribution<SparkCluster> weightedDistribution =
+      EnumeratedDistribution<VirtualSparkClusterSpec> weightedDistribution =
           new EnumeratedDistribution<>(clusterWeightPairs);
       return weightedDistribution.sample();
     }
     return sparkClusters.get(0);
   }
+
+  //  public static List<SparkCluster> concatenateSparkClusters(AppConfig appConfig, ) {
+  //
+  //  }
 
   public static String normalizeQueue(String queue) {
     // replace repeating dots with single dot

@@ -15,6 +15,7 @@ import java.util.Map;
 public class VirtualSparkClusterSpec {
 
   private int weight;
+  private String id;
   private String eksCluster;
   private String masterUrl;
   private String caCertDataSOPS;
@@ -44,6 +45,14 @@ public class VirtualSparkClusterSpec {
 
   public void setWeight(int weight) {
     this.weight = weight;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
   }
 
   public String getBatchScheduler() {

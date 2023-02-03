@@ -20,6 +20,7 @@
 package com.apple.spark;
 
 import com.apple.spark.core.ConfigValue;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.dropwizard.Configuration;
@@ -33,7 +34,7 @@ public class AppConfig extends Configuration {
   private String applicationContextPath;
   private Map<String, String> defaultSparkConf;
 
-  private List<SparkCluster> sparkClusters;
+  private List<VirtualSparkClusterSpec> sparkClusters;
 
   private List<SparkImage> sparkImages;
 
@@ -84,11 +85,11 @@ public class AppConfig extends Configuration {
     this.defaultSparkConf = defaultSparkConf;
   }
 
-  public List<SparkCluster> getSparkClusters() {
+  public List<VirtualSparkClusterSpec> getSparkClusters() {
     return sparkClusters;
   }
 
-  public void setSparkClusters(List<SparkCluster> sparkClusters) {
+  public void setSparkClusters(List<VirtualSparkClusterSpec> sparkClusters) {
     this.sparkClusters = sparkClusters;
   }
 

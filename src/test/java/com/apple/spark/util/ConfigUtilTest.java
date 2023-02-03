@@ -19,8 +19,7 @@
 
 package com.apple.spark.util;
 
-import static com.apple.spark.AppConfig.SparkCluster;
-
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,18 +30,18 @@ import org.testng.annotations.Test;
 
 public class ConfigUtilTest {
 
-  private final SparkCluster c1 = new SparkCluster();
-  private final SparkCluster c2 = new SparkCluster();
-  private final SparkCluster c3 = new SparkCluster();
-  private final SparkCluster c4 = new SparkCluster();
-  private final List<SparkCluster> clustersCM = new ArrayList<>();
-  private final List<SparkCluster> clustersDB = new ArrayList<>();
+  private final VirtualSparkClusterSpec c1 = new VirtualSparkClusterSpec();
+  private final VirtualSparkClusterSpec c2 = new VirtualSparkClusterSpec();
+  private final VirtualSparkClusterSpec c3 = new VirtualSparkClusterSpec();
+  private final VirtualSparkClusterSpec c4 = new VirtualSparkClusterSpec();
+  private final List<VirtualSparkClusterSpec> clustersCM = new ArrayList<>();
+  private final List<VirtualSparkClusterSpec> clustersDB = new ArrayList<>();
 
   @Test
   public void merge() {
     // case 1: config map does not have spark cluster conf, all conf is in DB.
     clustersDB.addAll(Arrays.asList(c1, c2, c3));
-    List<SparkCluster> combinedClusters = ConfigUtil.merge(null, clustersDB);
+    List<VirtualSparkClusterSpec> combinedClusters = ConfigUtil.merge(null, clustersDB);
     Assert.assertEquals(combinedClusters.size(), 3);
     reset();
 

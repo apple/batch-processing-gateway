@@ -25,7 +25,6 @@ import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_SCHEDULER;
 import static com.apple.spark.core.Constants.*;
 
 import com.apple.spark.AppConfig;
-import com.apple.spark.AppConfig.SparkCluster;
 import com.apple.spark.api.DeleteSubmissionResponse;
 import com.apple.spark.api.GetDriverInfoResponse;
 import com.apple.spark.api.GetMySubmissionsResponse;
@@ -35,6 +34,7 @@ import com.apple.spark.api.SubmitApplicationRequest;
 import com.apple.spark.api.SubmitApplicationResponse;
 import com.apple.spark.appleinternal.AppleKerberosUtil;
 import com.apple.spark.core.*;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.*;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ConfigUtil;
@@ -132,7 +132,7 @@ public class ApplicationSubmissionRest extends RestBase {
           @Override
           public GetSubmissionStatusResponseCacheValue load(String submissionId) {
             requestCounters.increment(STATUS_CACHE_LOAD);
-            AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
+            VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
             try {
               GetSubmissionStatusResponse response =
                   getStatusImplWithoutCache(submissionId, sparkCluster);
@@ -233,7 +233,7 @@ public class ApplicationSubmissionRest extends RestBase {
     validateSubmissionRequest(request);
 
     // choose Spark cluster to submit the job to
-    AppConfig.SparkCluster sparkCluster =
+    VirtualSparkClusterSpec sparkCluster =
         SparkClusterHelper.chooseSparkCluster(appConfig, request, user.getName());
 
     String sparkVersionTagValue =
@@ -332,7 +332,7 @@ public class ApplicationSubmissionRest extends RestBase {
   }
 
   private SubmitApplicationResponse submitSparkCRD(
-      SparkCluster sparkCluster,
+      VirtualSparkClusterSpec sparkCluster,
       String submissionId,
       SparkApplicationSpec sparkSpec,
       SubmitApplicationRequest request,
@@ -501,7 +501,7 @@ public class ApplicationSubmissionRest extends RestBase {
     requestCounters.increment(
         REQUEST_METRIC_NAME, Tag.of("name", "delete_submission"), Tag.of("user", user.getName()));
 
-    AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
+    VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
     com.codahale.metrics.Timer timer =
         registry.timer(this.getClass().getSimpleName() + ".deleteSubmission.k8s-time");
     try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
@@ -599,13 +599,13 @@ public class ApplicationSubmissionRest extends RestBase {
       requestCounters.increment(
           STATUS_CACHE_GET_FAILURE, Tag.of("exception", ex.getClass().getSimpleName()));
       logger.warn(String.format("Failed to get status from cache for %s", submissionId), ex);
-      AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
+      VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
       return getStatusImplWithoutCache(submissionId, sparkCluster);
     }
 
     if (cacheValue == null) {
       logger.warn("Got null status cache value for {}", submissionId);
-      AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
+      VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
       return getStatusImplWithoutCache(submissionId, sparkCluster);
     }
 
@@ -616,7 +616,7 @@ public class ApplicationSubmissionRest extends RestBase {
     if (cacheElapsedTime > statusCacheExpireMillis * 2) {
       logger.warn(
           "Got expired status cache value ({} millis) for {}", cacheElapsedTime, submissionId);
-      AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
+      VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
       return getStatusImplWithoutCache(submissionId, sparkCluster);
     }
 
@@ -642,7 +642,7 @@ public class ApplicationSubmissionRest extends RestBase {
   }
 
   private GetSubmissionStatusResponse getStatusImplWithoutCache(
-      String submissionId, AppConfig.SparkCluster sparkCluster) {
+      String submissionId, VirtualSparkClusterSpec sparkCluster) {
     com.codahale.metrics.Timer timer =
         registry.timer(this.getClass().getSimpleName() + ".getStatus.k8s-time");
     try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
@@ -785,7 +785,7 @@ public class ApplicationSubmissionRest extends RestBase {
     requestCounters.increment(
         REQUEST_METRIC_NAME, Tag.of("name", "get_driver"), Tag.of("user", user.getName()));
 
-    AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
+    VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
     SparkApplicationResource sparkApplicationResource = getSparkApplicationResource(submissionId);
     if (sparkApplicationResource.getStatus() == null
         || sparkApplicationResource.getStatus().getDriverInfo() == null) {
@@ -859,7 +859,7 @@ public class ApplicationSubmissionRest extends RestBase {
     }
     final String sparkApplicationSpecYaml = yaml;
 
-    AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
+    VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
     List<Event> sparkApplicationEvents = getEvents(sparkCluster, submissionId);
 
     String driverName = String.format("%s-driver", submissionId);
@@ -929,7 +929,7 @@ public class ApplicationSubmissionRest extends RestBase {
     checkRateForListSubmissions("mySubmissions");
 
     List<SubmissionSummary> submissionList = new ArrayList<>();
-    for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
+    for (VirtualSparkClusterSpec sparkCluster : getSparkClusters()) {
       SparkApplicationResourceList list =
           getSparkApplicationResourcesByUser(sparkCluster, user.getName());
       List<SparkApplicationResource> sparkApplicationResources = list.getItems();
@@ -946,7 +946,7 @@ public class ApplicationSubmissionRest extends RestBase {
     return response;
   }
 
-  protected List<Event> getEvents(AppConfig.SparkCluster sparkCluster, String objectName) {
+  protected List<Event> getEvents(VirtualSparkClusterSpec sparkCluster, String objectName) {
     Map<String, String> fields = new HashMap<>();
     fields.put("involvedObject.name", objectName);
     com.codahale.metrics.Timer timer =

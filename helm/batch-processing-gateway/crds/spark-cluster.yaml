@@ -32,6 +32,8 @@ spec:
               properties:
                 weight:
                   type: integer
+                id:
+                  type: string
                 eksCluster:
                   type: string
                 masterUrl:
@@ -164,8 +166,6 @@ spec:
               type: object
             status:
               properties:
-                sparkClusterId:
-                  type: string
                 state:
                   type: string
               required:

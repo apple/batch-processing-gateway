@@ -22,6 +22,7 @@ package com.apple.spark.core;
 import static com.apple.spark.core.Constants.*;
 
 import com.apple.spark.AppConfig;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.DriverSpec;
 import com.apple.spark.operator.ExecutorSpec;
 import com.apple.spark.operator.SparkApplicationResource;
@@ -160,8 +161,8 @@ public class ApplicationMonitor implements AutoCloseable {
         SparkApplicationResource.class);
 
     if (appConfig.getSparkClusters() != null) {
-      Map<KubernetesClusterAndNamespace, AppConfig.SparkCluster> uniqueClusters = new HashMap<>();
-      for (AppConfig.SparkCluster sparkCluster : appConfig.getSparkClusters()) {
+      Map<KubernetesClusterAndNamespace, VirtualSparkClusterSpec> uniqueClusters = new HashMap<>();
+      for (VirtualSparkClusterSpec sparkCluster : appConfig.getSparkClusters()) {
         if (sparkCluster.getWeight() > 0) {
           KubernetesClusterAndNamespace kubernetesClusterAndNamespace =
               new KubernetesClusterAndNamespace(
@@ -174,7 +175,7 @@ public class ApplicationMonitor implements AutoCloseable {
       // For each Spark cluster, start a RunningApplicationMonitor instance, and register a CRD
       // informer to listen to CRD updates.
       Timer timer = new Timer(true);
-      for (AppConfig.SparkCluster sparkCluster : uniqueClusters.values()) {
+      for (VirtualSparkClusterSpec sparkCluster : uniqueClusters.values()) {
         start(sparkCluster, timer);
       }
     }
@@ -188,7 +189,7 @@ public class ApplicationMonitor implements AutoCloseable {
    * @param sparkCluster Spark cluster
    * @param timer timer to set up runningApplicationMonitor
    */
-  private void start(AppConfig.SparkCluster sparkCluster, Timer timer) {
+  private void start(VirtualSparkClusterSpec sparkCluster, Timer timer) {
     logger.info(
         "Creating informer for spark cluster {}, EKS: {}, namespace: {}",
         sparkCluster.getId(),
@@ -284,7 +285,7 @@ public class ApplicationMonitor implements AutoCloseable {
    * @param currCRDState the new resource object
    */
   private void onUpdateImpl_logApplication(
-      AppConfig.SparkCluster sparkCluster,
+      VirtualSparkClusterSpec sparkCluster,
       SparkApplicationResource prevCRDState,
       SparkApplicationResource currCRDState) {
     String submissionId = currCRDState.getMetadata().getName();

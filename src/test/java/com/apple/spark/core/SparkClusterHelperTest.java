@@ -21,6 +21,7 @@ package com.apple.spark.core;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmitApplicationRequest;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import java.util.Arrays;
 import java.util.Collections;
 import javax.ws.rs.WebApplicationException;
@@ -34,31 +35,31 @@ public class SparkClusterHelperTest {
   public void chooseSparkCluster_weighting() {
     AppConfig appConfig = new AppConfig();
 
-    AppConfig.SparkCluster sparkCluster1 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster1 = new VirtualSparkClusterSpec();
     sparkCluster1.setId("c01");
     sparkCluster1.setWeight(10);
     sparkCluster1.setSparkVersions(Collections.singletonList("3.1"));
     sparkCluster1.setQueues(Collections.singletonList(SparkClusterHelper.DEFAULT_QUEUE));
 
-    AppConfig.SparkCluster sparkCluster2 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster2 = new VirtualSparkClusterSpec();
     sparkCluster2.setId("c02");
     sparkCluster2.setWeight(10);
     sparkCluster2.setSparkVersions(Collections.singletonList("3.1"));
     sparkCluster2.setQueues(Collections.singletonList(SparkClusterHelper.DEFAULT_QUEUE));
 
-    AppConfig.SparkCluster sparkCluster3 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster3 = new VirtualSparkClusterSpec();
     sparkCluster3.setId("c03");
     sparkCluster3.setWeight(80);
     sparkCluster3.setSparkVersions(Collections.singletonList("3.1"));
     sparkCluster3.setQueues(Collections.singletonList(SparkClusterHelper.DEFAULT_QUEUE));
 
-    AppConfig.SparkCluster sparkCluster4 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster4 = new VirtualSparkClusterSpec();
     sparkCluster4.setId("c04");
     sparkCluster4.setWeight(0);
     sparkCluster4.setSparkVersions(Collections.singletonList("3.1"));
     sparkCluster4.setQueues(Collections.singletonList(SparkClusterHelper.DEFAULT_QUEUE));
 
-    AppConfig.SparkCluster sparkCluster5 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster5 = new VirtualSparkClusterSpec();
     sparkCluster5.setId("c05");
     sparkCluster5.setWeight(80);
     sparkCluster5.setSparkVersions(Collections.singletonList("2.4"));
@@ -72,7 +73,7 @@ public class SparkClusterHelperTest {
     for (int i = 0; i < totalSubmissions; ++i) {
       SubmitApplicationRequest submitApplicationRequest = new SubmitApplicationRequest();
       submitApplicationRequest.setSparkVersion("3.1");
-      AppConfig.SparkCluster chosenCluster =
+      VirtualSparkClusterSpec chosenCluster =
           SparkClusterHelper.chooseSparkCluster(appConfig, submitApplicationRequest, "user1");
       switch (chosenCluster.getId()) {
         case "c01":
@@ -104,12 +105,12 @@ public class SparkClusterHelperTest {
   public void chooseSparkCluster_clusterHasDefaultQueue_requestHasNoQueue() {
     AppConfig appConfig = new AppConfig();
 
-    AppConfig.SparkCluster sparkCluster1 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster1 = new VirtualSparkClusterSpec();
     sparkCluster1.setId("c01");
     sparkCluster1.setWeight(100);
     sparkCluster1.setSparkVersions(Arrays.asList("2.4", "3.0"));
 
-    AppConfig.SparkCluster sparkCluster2 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster2 = new VirtualSparkClusterSpec();
     sparkCluster2.setId("c02");
     sparkCluster2.setWeight(100);
     sparkCluster2.setSparkVersions(Arrays.asList("3.0", "3.1"));
@@ -119,7 +120,7 @@ public class SparkClusterHelperTest {
 
     SubmitApplicationRequest submitApplicationRequest = new SubmitApplicationRequest();
     submitApplicationRequest.setSparkVersion("3.0");
-    AppConfig.SparkCluster chosenCluster =
+    VirtualSparkClusterSpec chosenCluster =
         SparkClusterHelper.chooseSparkCluster(appConfig, submitApplicationRequest, "user1");
     Assert.assertEquals(chosenCluster.getId(), "c02");
   }
@@ -128,12 +129,12 @@ public class SparkClusterHelperTest {
   public void chooseSparkCluster_clusterHasNoDefaultQueue_requestHasNoQueue() {
     AppConfig appConfig = new AppConfig();
 
-    AppConfig.SparkCluster sparkCluster1 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster1 = new VirtualSparkClusterSpec();
     sparkCluster1.setId("c01");
     sparkCluster1.setWeight(100);
     sparkCluster1.setSparkVersions(Arrays.asList("2.4", "3.0"));
 
-    AppConfig.SparkCluster sparkCluster2 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster2 = new VirtualSparkClusterSpec();
     sparkCluster2.setId("c02");
     sparkCluster2.setWeight(100);
     sparkCluster2.setSparkVersions(Arrays.asList("3.0", "3.1"));
@@ -149,12 +150,12 @@ public class SparkClusterHelperTest {
   public void chooseSparkCluster_clusterIdInSubmission() {
     AppConfig appConfig = new AppConfig();
 
-    AppConfig.SparkCluster sparkCluster1 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster1 = new VirtualSparkClusterSpec();
     sparkCluster1.setId("c01");
     sparkCluster1.setWeight(100);
     sparkCluster1.setSparkVersions(Arrays.asList("2.4", "3.0"));
 
-    AppConfig.SparkCluster sparkCluster2 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster2 = new VirtualSparkClusterSpec();
     sparkCluster2.setId("c02");
     sparkCluster2.setWeight(100);
     sparkCluster2.setSparkVersions(Arrays.asList("3.0", "3.1"));
@@ -164,7 +165,7 @@ public class SparkClusterHelperTest {
     SubmitApplicationRequest submitApplicationRequest = new SubmitApplicationRequest();
     submitApplicationRequest.setSparkVersion("3.0");
     submitApplicationRequest.setClusterId("c02");
-    AppConfig.SparkCluster chosenCluster =
+    VirtualSparkClusterSpec chosenCluster =
         SparkClusterHelper.chooseSparkCluster(appConfig, submitApplicationRequest, "user1");
     Assert.assertEquals(chosenCluster.getId(), "c02");
   }
@@ -173,13 +174,13 @@ public class SparkClusterHelperTest {
   public void chooseSparkCluster_explicitQueueInSubmission() {
     AppConfig appConfig = new AppConfig();
 
-    AppConfig.SparkCluster sparkCluster1 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster1 = new VirtualSparkClusterSpec();
     sparkCluster1.setId("c01");
     sparkCluster1.setWeight(100);
     sparkCluster1.setSparkVersions(Arrays.asList("2.4", "3.0"));
     sparkCluster1.setQueues(Arrays.asList("q1", "q2"));
 
-    AppConfig.SparkCluster sparkCluster2 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster2 = new VirtualSparkClusterSpec();
     sparkCluster2.setId("c02");
     sparkCluster2.setWeight(100);
     sparkCluster2.setSparkVersions(Collections.singletonList("3.1"));
@@ -190,7 +191,7 @@ public class SparkClusterHelperTest {
     SubmitApplicationRequest submitApplicationRequest = new SubmitApplicationRequest();
     submitApplicationRequest.setSparkVersion("3.0");
     submitApplicationRequest.setQueue("q2");
-    AppConfig.SparkCluster chosenCluster =
+    VirtualSparkClusterSpec chosenCluster =
         SparkClusterHelper.chooseSparkCluster(appConfig, submitApplicationRequest, "user1");
     Assert.assertEquals(chosenCluster.getId(), "c01");
 
@@ -205,13 +206,13 @@ public class SparkClusterHelperTest {
   public void chooseSparkCluster_queueByMatchingUser() {
     AppConfig appConfig = new AppConfig();
 
-    AppConfig.SparkCluster sparkCluster1 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster1 = new VirtualSparkClusterSpec();
     sparkCluster1.setId("c01");
     sparkCluster1.setWeight(100);
     sparkCluster1.setSparkVersions(Arrays.asList("2.4", "3.0"));
     sparkCluster1.setQueues(Arrays.asList("q1", "q2", SparkClusterHelper.DEFAULT_QUEUE));
 
-    AppConfig.SparkCluster sparkCluster2 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster2 = new VirtualSparkClusterSpec();
     sparkCluster2.setId("c02");
     sparkCluster2.setWeight(100);
     sparkCluster2.setSparkVersions(Collections.singletonList("3.1"));
@@ -226,7 +227,7 @@ public class SparkClusterHelperTest {
 
     SubmitApplicationRequest submitApplicationRequest = new SubmitApplicationRequest();
     submitApplicationRequest.setSparkVersion("3.0");
-    AppConfig.SparkCluster chosenCluster =
+    VirtualSparkClusterSpec chosenCluster =
         SparkClusterHelper.chooseSparkCluster(appConfig, submitApplicationRequest, "user1");
     Assert.assertEquals(chosenCluster.getId(), "c01");
     chosenCluster =
@@ -252,12 +253,12 @@ public class SparkClusterHelperTest {
   public void chooseSparkCluster_unsupportedSparkVersion() {
     AppConfig appConfig = new AppConfig();
 
-    AppConfig.SparkCluster sparkCluster1 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster1 = new VirtualSparkClusterSpec();
     sparkCluster1.setId("c01");
     sparkCluster1.setWeight(100);
     sparkCluster1.setSparkVersions(Arrays.asList("2.4", "3.0"));
 
-    AppConfig.SparkCluster sparkCluster2 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster2 = new VirtualSparkClusterSpec();
     sparkCluster2.setId("c02");
     sparkCluster2.setWeight(100);
     sparkCluster2.setSparkVersions(Collections.singletonList("3.1"));
@@ -273,13 +274,13 @@ public class SparkClusterHelperTest {
   public void chooseSparkCluster_noQueueSupportedWithRequestedSparkVersion() {
     AppConfig appConfig = new AppConfig();
 
-    AppConfig.SparkCluster sparkCluster1 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster1 = new VirtualSparkClusterSpec();
     sparkCluster1.setId("c01");
     sparkCluster1.setWeight(100);
     sparkCluster1.setSparkVersions(Arrays.asList("2.4", "3.0"));
     sparkCluster1.setQueues(Arrays.asList("q1", "q2"));
 
-    AppConfig.SparkCluster sparkCluster2 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster2 = new VirtualSparkClusterSpec();
     sparkCluster2.setId("c02");
     sparkCluster2.setWeight(100);
     sparkCluster2.setSparkVersions(Collections.singletonList("3.1"));
@@ -296,13 +297,13 @@ public class SparkClusterHelperTest {
   public void chooseSparkCluster_userMappedToNotSupportedQueue() {
     AppConfig appConfig = new AppConfig();
 
-    AppConfig.SparkCluster sparkCluster1 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster1 = new VirtualSparkClusterSpec();
     sparkCluster1.setId("c01");
     sparkCluster1.setWeight(100);
     sparkCluster1.setSparkVersions(Arrays.asList("2.4", "3.0"));
     sparkCluster1.setQueues(Arrays.asList("q1", "q2"));
 
-    AppConfig.SparkCluster sparkCluster2 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster2 = new VirtualSparkClusterSpec();
     sparkCluster2.setId("c02");
     sparkCluster2.setWeight(100);
     sparkCluster2.setSparkVersions(Collections.singletonList("3.1"));
@@ -323,13 +324,13 @@ public class SparkClusterHelperTest {
   public void chooseSparkCluster_multipleQueuesSupported() {
     AppConfig appConfig = new AppConfig();
 
-    AppConfig.SparkCluster sparkCluster1 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster1 = new VirtualSparkClusterSpec();
     sparkCluster1.setId("c01");
     sparkCluster1.setWeight(100);
     sparkCluster1.setSparkVersions(Arrays.asList("2.4", "3.0"));
     sparkCluster1.setQueues(Arrays.asList("q1", "q2"));
 
-    AppConfig.SparkCluster sparkCluster2 = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster2 = new VirtualSparkClusterSpec();
     sparkCluster2.setId("c02");
     sparkCluster2.setWeight(100);
     sparkCluster2.setSparkVersions(Collections.singletonList("3.0"));
@@ -344,7 +345,7 @@ public class SparkClusterHelperTest {
 
     SubmitApplicationRequest submitApplicationRequest = new SubmitApplicationRequest();
     submitApplicationRequest.setSparkVersion("3.0");
-    AppConfig.SparkCluster sparkCluster =
+    VirtualSparkClusterSpec sparkCluster =
         SparkClusterHelper.chooseSparkCluster(appConfig, submitApplicationRequest, "user1");
     Assert.assertTrue(sparkCluster.getId().equals("c01") || sparkCluster.getId().equals("c02"));
   }

@@ -24,6 +24,7 @@ import static org.apache.spark.network.util.JavaUtils.byteStringAsGb;
 import com.apple.spark.AppConfig;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.SparkConstants;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.operator.SparkApplicationSpec;
 import com.apple.spark.util.ConfigUtil;
@@ -87,7 +88,7 @@ public class SubmissionSummary extends SubmissionStatus {
 
   public void copyFrom(
       SparkApplicationResource sparkApplicationResource,
-      AppConfig.SparkCluster sparkCluster,
+      VirtualSparkClusterSpec sparkCluster,
       AppConfig appConfig) {
     this.copyFrom(sparkApplicationResource);
     if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())

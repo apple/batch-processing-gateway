@@ -19,10 +19,9 @@
 
 package com.apple.spark.util;
 
-import static com.apple.spark.AppConfig.SparkCluster;
-
 import com.apple.spark.AppConfig;
 import com.apple.spark.core.DBConnection;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.InputStream;
@@ -41,13 +40,13 @@ public class ConfigUtil {
   private static final Logger logger = LoggerFactory.getLogger(ConfigUtil.class);
 
   public static void mergeConfig(AppConfig config) {
-    List<SparkCluster> clustersFromDB = getConfFromDB(config);
-    List<SparkCluster> clustersFromCM = config.getSparkClusters();
-    List<SparkCluster> combinedSparkClusters = merge(clustersFromCM, clustersFromDB);
+    List<VirtualSparkClusterSpec> clustersFromDB = getConfFromDB(config);
+    List<VirtualSparkClusterSpec> clustersFromCM = config.getSparkClusters();
+    List<VirtualSparkClusterSpec> combinedSparkClusters = merge(clustersFromCM, clustersFromDB);
     config.setSparkClusters(combinedSparkClusters);
   }
 
-  public static String getSparkUIUrl(SparkCluster cluster, String submissionId) {
+  public static String getSparkUIUrl(VirtualSparkClusterSpec cluster, String submissionId) {
     return String.format(
         "%s/%s/%s", cluster.getSparkUIUrl(), cluster.getSparkApplicationNamespace(), submissionId);
   }
@@ -56,15 +55,17 @@ public class ConfigUtil {
     return String.format("https://%s/history/%s", sparkHistoryDns, appId);
   }
 
-  public static List<SparkCluster> merge(List<SparkCluster> c1, List<SparkCluster> c2) {
-    Set<SparkCluster> combinedSet = new TreeSet<>(Comparator.comparing(SparkCluster::getId));
+  public static List<VirtualSparkClusterSpec> merge(
+      List<VirtualSparkClusterSpec> c1, List<VirtualSparkClusterSpec> c2) {
+    Set<VirtualSparkClusterSpec> combinedSet =
+        new TreeSet<>(Comparator.comparing(VirtualSparkClusterSpec::getId));
 
     if (c1 != null) {
       combinedSet.addAll(c1);
     }
     combinedSet.addAll(c2);
 
-    List<SparkCluster> combinedSparkClusters = new ArrayList<>(combinedSet);
+    List<VirtualSparkClusterSpec> combinedSparkClusters = new ArrayList<>(combinedSet);
 
     if (combinedSparkClusters.isEmpty()) {
       throw new RuntimeException(
@@ -74,7 +75,7 @@ public class ConfigUtil {
     return combinedSparkClusters;
   }
 
-  public static List<SparkCluster> getConfFromDB(AppConfig config) {
+  public static List<VirtualSparkClusterSpec> getConfFromDB(AppConfig config) {
     AppConfig.DBStorage dbconf = config.getDbStorageSOPS();
     String connectionString = dbconf.getConnectionString();
     String userId = dbconf.getUser();
@@ -82,7 +83,7 @@ public class ConfigUtil {
     String queryConf = "SELECT cid, conf FROM config";
 
     DBConnection dbConnection = new DBConnection(connectionString, userId, password);
-    List<SparkCluster> sparkClusters = new ArrayList<>();
+    List<VirtualSparkClusterSpec> sparkClusters = new ArrayList<>();
     ObjectMapper objectMapper = new ObjectMapper();
 
     try {
@@ -92,7 +93,8 @@ public class ConfigUtil {
 
       for (Map<String, Object> m : dbResults) {
         String conf = (String) m.get("conf");
-        SparkCluster sparkCluster = objectMapper.readValue(conf, SparkCluster.class);
+        VirtualSparkClusterSpec sparkCluster =
+            objectMapper.readValue(conf, VirtualSparkClusterSpec.class);
         if (sparkCluster != null) {
           sparkClusters.add(sparkCluster);
           logger.info(

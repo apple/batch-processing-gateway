@@ -19,7 +19,7 @@
 
 package com.apple.spark.core;
 
-import com.apple.spark.AppConfig;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.ApplicationState;
 import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.operator.SparkApplicationStatus;
@@ -35,7 +35,7 @@ public class RunningApplicationMonitorTest {
 
   @Test
   public void test() throws InterruptedException {
-    AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
     Timer timer = new Timer(true);
     long interval = 10;
     RunningApplicationMonitor monitor =

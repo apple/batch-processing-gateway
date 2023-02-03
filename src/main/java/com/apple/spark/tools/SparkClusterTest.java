@@ -19,8 +19,8 @@
 
 package com.apple.spark.tools;
 
-import com.apple.spark.AppConfig;
 import com.apple.spark.core.KubernetesHelper;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.operator.SparkApplicationResourceDoneable;
 import com.apple.spark.operator.SparkApplicationResourceList;
@@ -71,7 +71,7 @@ public class SparkClusterTest {
       }
     }
 
-    AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
     sparkCluster.setMasterUrl(apiServer);
     sparkCluster.setUserName(user);
     sparkCluster.setUserTokenSOPS(token);

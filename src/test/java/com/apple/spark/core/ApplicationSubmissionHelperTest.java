@@ -21,6 +21,7 @@ package com.apple.spark.core;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmitApplicationRequest;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.DriverSpec;
 import com.apple.spark.operator.EnvVar;
 import com.apple.spark.operator.ExecutorSpec;
@@ -98,7 +99,7 @@ public class ApplicationSubmissionHelperTest {
     Map<String, String> defaultSparkConf = null;
 
     SubmitApplicationRequest request = new SubmitApplicationRequest();
-    AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
     Map<String, String> sparkConf =
         ApplicationSubmissionHelper.getSparkConf(
             "submission1", request, defaultSparkConf, sparkCluster);
@@ -167,7 +168,7 @@ public class ApplicationSubmissionHelperTest {
     Map<String, String> defaultSparkConf = new HashMap<>();
 
     SubmitApplicationRequest request = new SubmitApplicationRequest();
-    AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
     Map<String, String> sparkConf =
         ApplicationSubmissionHelper.getSparkConf(
             "submission1", request, defaultSparkConf, sparkCluster);
@@ -237,7 +238,7 @@ public class ApplicationSubmissionHelperTest {
     defaultSparkConf.put("defaultKey2", "defaultValue2");
 
     SubmitApplicationRequest request = new SubmitApplicationRequest();
-    AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
     Map<String, String> sparkConf =
         ApplicationSubmissionHelper.getSparkConf(
             "submission1", request, defaultSparkConf, sparkCluster);
@@ -344,7 +345,7 @@ public class ApplicationSubmissionHelperTest {
   @Test
   public void getVolumes() {
     SubmitApplicationRequest request = new SubmitApplicationRequest();
-    AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
     List<Volume> volumes = ApplicationSubmissionHelper.getVolumes(request, sparkCluster);
     Assert.assertNull(volumes);
 
@@ -407,7 +408,7 @@ public class ApplicationSubmissionHelperTest {
   public void populateEnv() {
     SparkApplicationSpec sparkSpec = new SparkApplicationSpec();
     SubmitApplicationRequest request = new SubmitApplicationRequest();
-    AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
+    VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
     ApplicationSubmissionHelper.populateEnv(sparkSpec, request, sparkCluster);
     Assert.assertNull(sparkSpec.getDriver());
     Assert.assertNull(sparkSpec.getExecutor());

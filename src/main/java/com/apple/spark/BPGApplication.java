@@ -26,6 +26,7 @@ import com.apple.spark.core.ApplicationMonitor;
 import com.apple.spark.core.BPGStatsdConfig;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.ThrowableExceptionMapper;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.health.BPGHealthCheck;
 import com.apple.spark.rest.AdminRest;
 import com.apple.spark.rest.ApplicationGetLogRest;
@@ -223,7 +224,7 @@ public class BPGApplication extends Application<AppConfig> {
       AppConfig configuration, CounterMetricContainer periodicMetrics) {
 
     if (configuration.getSparkClusters() != null) {
-      for (AppConfig.SparkCluster cluster : configuration.getSparkClusters()) {
+      for (VirtualSparkClusterSpec cluster : configuration.getSparkClusters()) {
         List<String> sparkVersions =
             cluster.getSparkVersions() == null ? new ArrayList<>() : cluster.getSparkVersions();
         List<String> queues = cluster.getQueues() == null ? new ArrayList<>() : cluster.getQueues();

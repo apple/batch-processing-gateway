@@ -22,7 +22,7 @@ package com.apple.spark.core;
 import static com.apple.spark.core.Constants.MONITOR_KILLED_APPS;
 import static com.apple.spark.core.Constants.MONITOR_RUNNING_APPS;
 
-import com.apple.spark.AppConfig;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.DriverInfo;
 import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.operator.SparkApplicationResourceDoneable;
@@ -60,16 +60,16 @@ public class RunningApplicationMonitor {
 
   // how long (milliseconds) to check and delete long-running applications
   private final long deleteInterval;
-  private final AppConfig.SparkCluster sparkCluster;
+  private final VirtualSparkClusterSpec sparkCluster;
 
   public RunningApplicationMonitor(
-      AppConfig.SparkCluster sparkCluster, Timer timer, MeterRegistry meterRegistry) {
+      VirtualSparkClusterSpec sparkCluster, Timer timer, MeterRegistry meterRegistry) {
     this(sparkCluster, timer, DEFAULT_INTERVAL, meterRegistry);
   }
 
   /** Start a timer to kill all apps that have been running for too long */
   public RunningApplicationMonitor(
-      AppConfig.SparkCluster sparkCluster,
+      VirtualSparkClusterSpec sparkCluster,
       Timer timer,
       long deleteIntervalMillis,
       MeterRegistry meterRegistry) {

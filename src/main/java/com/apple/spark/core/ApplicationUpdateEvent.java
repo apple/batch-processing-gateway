@@ -19,7 +19,7 @@
 
 package com.apple.spark.core;
 
-import com.apple.spark.AppConfig;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplicationResource;
 
 /** The event generated whenever there's CRD update from an application. */
@@ -32,10 +32,10 @@ public class ApplicationUpdateEvent {
   private final RunningApplicationMonitor runningApplicationMonitor;
 
   // The Spark cluster the CRD update came from
-  private final AppConfig.SparkCluster sparkCluster;
+  private final VirtualSparkClusterSpec sparkCluster;
 
   public ApplicationUpdateEvent(
-      AppConfig.SparkCluster sparkCluster,
+      VirtualSparkClusterSpec sparkCluster,
       SparkApplicationResource prevCRDState,
       SparkApplicationResource newCRDState,
       RunningApplicationMonitor runningApplicationMonitor) {
@@ -53,7 +53,7 @@ public class ApplicationUpdateEvent {
     return newCRDState;
   }
 
-  public AppConfig.SparkCluster getSparkCluster() {
+  public VirtualSparkClusterSpec getSparkCluster() {
     return sparkCluster;
   }
 

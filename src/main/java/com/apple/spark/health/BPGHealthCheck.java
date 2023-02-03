@@ -19,7 +19,7 @@
 
 package com.apple.spark.health;
 
-import com.apple.spark.AppConfig;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.codahale.metrics.health.HealthCheck;
 import java.util.List;
 import org.slf4j.Logger;
@@ -29,9 +29,9 @@ public class BPGHealthCheck extends HealthCheck {
 
   private static final Logger logger = LoggerFactory.getLogger(BPGHealthCheck.class);
 
-  private final List<AppConfig.SparkCluster> sparkClusters;
+  private final List<VirtualSparkClusterSpec> sparkClusters;
 
-  public BPGHealthCheck(List<AppConfig.SparkCluster> sparkClusters) {
+  public BPGHealthCheck(List<VirtualSparkClusterSpec> sparkClusters) {
     this.sparkClusters = sparkClusters;
   }
 

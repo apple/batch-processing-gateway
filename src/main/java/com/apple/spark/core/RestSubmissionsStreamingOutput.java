@@ -21,6 +21,7 @@ package com.apple.spark.core;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmissionSummary;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.operator.SparkApplicationResourceList;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,7 +34,7 @@ public abstract class RestSubmissionsStreamingOutput extends RestStreamingOutput
   protected void writeSubmissions(
       OutputStream outputStream,
       SparkApplicationResourceList list,
-      AppConfig.SparkCluster sparkCluster,
+      VirtualSparkClusterSpec sparkCluster,
       AppConfig appConfig)
       throws IOException {
     if (list == null) {

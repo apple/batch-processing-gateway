@@ -26,8 +26,8 @@ import static com.apple.spark.core.Constants.*;
 import static com.apple.spark.core.SparkConstants.*;
 
 import com.apple.spark.AppConfig;
-import com.apple.spark.AppConfig.SparkCluster;
 import com.apple.spark.api.SubmitApplicationRequest;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.*;
 import com.apple.spark.util.ExceptionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -134,7 +134,7 @@ public class ApplicationSubmissionHelper {
       String submissionId,
       SubmitApplicationRequest request,
       Map<String, String> defaultSparkConf,
-      AppConfig.SparkCluster sparkCluster) {
+      VirtualSparkClusterSpec sparkCluster) {
 
     Map<String, String> sparkConf = null;
 
@@ -198,7 +198,7 @@ public class ApplicationSubmissionHelper {
   }
 
   public static SparkUIConfiguration getSparkUIConfiguration(
-      String submissionId, AppConfig.SparkCluster sparkCluster) {
+      String submissionId, VirtualSparkClusterSpec sparkCluster) {
     SparkUIConfiguration sparkJobUIConfiguration = null;
 
     if (sparkCluster.getSparkUIOptions() != null) {
@@ -223,7 +223,7 @@ public class ApplicationSubmissionHelper {
   }
 
   public static List<Volume> getVolumes(
-      SubmitApplicationRequest request, AppConfig.SparkCluster sparkCluster) {
+      SubmitApplicationRequest request, VirtualSparkClusterSpec sparkCluster) {
 
     // if there are volumes in the request, use that to populate spark spec
     if (request.getVolumes() != null && !request.getVolumes().isEmpty()) {
@@ -239,7 +239,7 @@ public class ApplicationSubmissionHelper {
   }
 
   public static List<VolumeMount> getVolumeMounts(
-          SubmitApplicationRequest request, AppConfig.SparkCluster sparkCluster) {
+      SubmitApplicationRequest request, VirtualSparkClusterSpec sparkCluster) {
 
     // if there are volume mounts in the request, use that to populate spark spec
     if (request.getVolumeMounts() != null && !request.getVolumeMounts().isEmpty()) {
@@ -257,7 +257,7 @@ public class ApplicationSubmissionHelper {
   public static void populateEnv(
       SparkApplicationSpec sparkSpec,
       SubmitApplicationRequest request,
-      AppConfig.SparkCluster sparkCluster) {
+      VirtualSparkClusterSpec sparkCluster) {
     if (sparkCluster.getDriver() != null && sparkCluster.getDriver().getEnv() != null) {
       // there is env in spark cluster driver configure, copy it to spark spec
       if (sparkSpec.getDriver() == null) {
@@ -411,7 +411,7 @@ public class ApplicationSubmissionHelper {
       SubmitApplicationRequest request,
       AppConfig appConfig,
       String parentQueue,
-      SparkCluster sparkCluster) {
+      VirtualSparkClusterSpec sparkCluster) {
     DriverSpec driverSpec = new DriverSpec();
 
     if (request.getDriver() != null) {
@@ -462,36 +462,41 @@ public class ApplicationSubmissionHelper {
       driverSpec.setCoreLimit(
           String.format(
               "%sm",
-              (int)Math.ceil(driverSpec.getCores() * CORE_LIMIT_RATIO * driverCpuBufferRatioQueue)));
+              (int)
+                  Math.ceil(driverSpec.getCores() * CORE_LIMIT_RATIO * driverCpuBufferRatioQueue)));
     } else {
       double originalDriverCoreLimit = getNumFromRequestStr(driverSpec.getCoreLimit());
       String driverCoreLimitUnit = getUnitFromRequestStr(driverSpec.getCoreLimit());
       double adjustedDriverCoreLimit =
           Math.round(originalDriverCoreLimit * driverCpuBufferRatioQueue);
-      if (driverCoreLimitUnit.equals("m")){
-        driverSpec.setCoreLimit((long)adjustedDriverCoreLimit + driverCoreLimitUnit);
-      }else {
+      if (driverCoreLimitUnit.equals("m")) {
+        driverSpec.setCoreLimit((long) adjustedDriverCoreLimit + driverCoreLimitUnit);
+      } else {
         driverSpec.setCoreLimit(adjustedDriverCoreLimit + driverCoreLimitUnit);
       }
-      logger.info("Setting driver core limits to {}", adjustedDriverCoreLimit + driverCoreLimitUnit);
+      logger.info(
+          "Setting driver core limits to {}", adjustedDriverCoreLimit + driverCoreLimitUnit);
     }
 
     if (driverSpec.getCoreRequest() == null || driverSpec.getCoreRequest().isEmpty()) {
       driverSpec.setCoreRequest(
-              String.format
-                      ("%sm",
-                      (int) Math.ceil(driverSpec.getCores() * CORE_REQUEST_RATIO *  driverCpuBufferRatioQueue)));
+          String.format(
+              "%sm",
+              (int)
+                  Math.ceil(
+                      driverSpec.getCores() * CORE_REQUEST_RATIO * driverCpuBufferRatioQueue)));
     } else {
       double originalDriverCoreRequest = getNumFromRequestStr(driverSpec.getCoreRequest());
       String driverCoreRequestUnit = getUnitFromRequestStr(driverSpec.getCoreRequest());
       double adjustedDriverCoreRequest =
-              Math.round(originalDriverCoreRequest * driverCpuBufferRatioQueue);
-      if (driverCoreRequestUnit.equals("m")){
-        driverSpec.setCoreRequest((long)adjustedDriverCoreRequest + driverCoreRequestUnit);
-      }else {
+          Math.round(originalDriverCoreRequest * driverCpuBufferRatioQueue);
+      if (driverCoreRequestUnit.equals("m")) {
+        driverSpec.setCoreRequest((long) adjustedDriverCoreRequest + driverCoreRequestUnit);
+      } else {
         driverSpec.setCoreRequest(adjustedDriverCoreRequest + driverCoreRequestUnit);
       }
-      logger.info("Setting driver core request to {}", adjustedDriverCoreRequest + driverCoreRequestUnit);
+      logger.info(
+          "Setting driver core request to {}", adjustedDriverCoreRequest + driverCoreRequestUnit);
     }
 
     long originalDriverMem = (long) getNumFromRequestStr(driverSpec.getMemory());
@@ -686,7 +691,7 @@ public class ApplicationSubmissionHelper {
       SubmitApplicationRequest request,
       AppConfig appConfig,
       String parentQueue,
-      SparkCluster sparkCluster) {
+      VirtualSparkClusterSpec sparkCluster) {
     ExecutorSpec executorSpec = new ExecutorSpec();
 
     if (request.getExecutor() != null) {
@@ -734,40 +739,47 @@ public class ApplicationSubmissionHelper {
       executorSpec.setCoreLimit(
           String.format(
               "%sm",
-               (int)Math.ceil(executorSpec.getCores() * CORE_LIMIT_RATIO * executorCpuBufferRatioQueue)));
+              (int)
+                  Math.ceil(
+                      executorSpec.getCores() * CORE_LIMIT_RATIO * executorCpuBufferRatioQueue)));
     } else {
       double originalExecutorCoreLimit = getNumFromRequestStr(executorSpec.getCoreLimit());
       String executorCoreLimitUnit = getUnitFromRequestStr(executorSpec.getCoreLimit());
       double adjustedExecutorCoreLimit =
           Math.round(originalExecutorCoreLimit * executorCpuBufferRatioQueue);
-      if (executorCoreLimitUnit.equals("m")){
-        executorSpec.setCoreLimit((long)adjustedExecutorCoreLimit + executorCoreLimitUnit);
-      }else {
+      if (executorCoreLimitUnit.equals("m")) {
+        executorSpec.setCoreLimit((long) adjustedExecutorCoreLimit + executorCoreLimitUnit);
+      } else {
         executorSpec.setCoreLimit(adjustedExecutorCoreLimit + executorCoreLimitUnit);
       }
-      logger.info("Setting executor core limits to {}", adjustedExecutorCoreLimit + executorCoreLimitUnit);
+      logger.info(
+          "Setting executor core limits to {}", adjustedExecutorCoreLimit + executorCoreLimitUnit);
     }
 
     if (executorSpec.getCoreRequest() == null || executorSpec.getCoreRequest().isEmpty()) {
       executorSpec.setCoreRequest(
-              String.format(
-                      "%sm",
-                      (int)Math.ceil(executorSpec.getCores() * CORE_REQUEST_RATIO * executorCpuBufferRatioQueue)));
+          String.format(
+              "%sm",
+              (int)
+                  Math.ceil(
+                      executorSpec.getCores() * CORE_REQUEST_RATIO * executorCpuBufferRatioQueue)));
     } else {
 
       double originalExecutorCoreRequest = getNumFromRequestStr(executorSpec.getCoreRequest());
       String executorCoreRequestUnit = getUnitFromRequestStr(executorSpec.getCoreRequest());
       double adjustedExecutorCoreRequest =
-              Math.round(originalExecutorCoreRequest * executorCpuBufferRatioQueue);
-      if (executorCoreRequestUnit.equals("m")){
-        executorSpec.setCoreRequest((long)adjustedExecutorCoreRequest + executorCoreRequestUnit);
-      }else {
+          Math.round(originalExecutorCoreRequest * executorCpuBufferRatioQueue);
+      if (executorCoreRequestUnit.equals("m")) {
+        executorSpec.setCoreRequest((long) adjustedExecutorCoreRequest + executorCoreRequestUnit);
+      } else {
         executorSpec.setCoreRequest(adjustedExecutorCoreRequest + executorCoreRequestUnit);
       }
-      logger.info("Setting executor core request to {}", adjustedExecutorCoreRequest + executorCoreRequestUnit);
+      logger.info(
+          "Setting executor core request to {}",
+          adjustedExecutorCoreRequest + executorCoreRequestUnit);
     }
 
-    long originalExecutorMem =(long) getNumFromRequestStr(executorSpec.getMemory());
+    long originalExecutorMem = (long) getNumFromRequestStr(executorSpec.getMemory());
     long adjustedExecutorMem = (long) Math.ceil(originalExecutorMem * executorMemBufferRatioQueue);
     String memUnit = getUnitFromRequestStr(executorSpec.getMemory());
     executorSpec.setMemory(adjustedExecutorMem + memUnit);

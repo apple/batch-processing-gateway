@@ -23,6 +23,7 @@ import com.apple.spark.AppConfig;
 import com.apple.spark.core.ApplicationSubmissionHelper;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.KubernetesHelper;
+import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplicationResource;
 import com.apple.spark.operator.SparkApplicationResourceDoneable;
 import com.apple.spark.operator.SparkApplicationResourceList;
@@ -91,11 +92,11 @@ public class RestBase {
     return appConfig;
   }
 
-  protected List<AppConfig.SparkCluster> getSparkClusters() {
+  protected List<VirtualSparkClusterSpec> getSparkClusters() {
     return appConfig.getSparkClusters();
   }
 
-  protected AppConfig.SparkCluster getSparkCluster(String submissionId) {
+  protected VirtualSparkClusterSpec getSparkCluster(String submissionId) {
     String clusterId;
     try {
       clusterId = ApplicationSubmissionHelper.getClusterIdFromSubmissionId(submissionId);
@@ -104,7 +105,7 @@ public class RestBase {
           String.format("submissionId %s is invalid", submissionId), Response.Status.BAD_REQUEST);
     }
 
-    Optional<AppConfig.SparkCluster> sparkClusterOptional =
+    Optional<VirtualSparkClusterSpec> sparkClusterOptional =
         appConfig.getSparkClusters().stream()
             .filter(t -> StringUtils.equals(t.getId(), clusterId))
             .findFirst();
@@ -117,7 +118,7 @@ public class RestBase {
   }
 
   protected SparkApplicationResource getSparkApplicationResource(String submissionId) {
-    AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
+    VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
     com.codahale.metrics.Timer timer =
         registry.timer(this.getClass().getSimpleName() + ".getSparkApplicationResource.k8s-time");
     try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
@@ -142,12 +143,12 @@ public class RestBase {
   }
 
   protected SparkApplicationResourceList getSparkApplicationResourcesByUser(
-      AppConfig.SparkCluster sparkCluster, String user) {
+      VirtualSparkClusterSpec sparkCluster, String user) {
     return getSparkApplicationResourcesByLabel(sparkCluster, Constants.PROXY_USER_LABEL, user);
   }
 
   protected SparkApplicationResourceList getSparkApplicationResourcesByLabel(
-      AppConfig.SparkCluster sparkCluster, String labelName, String labelValue) {
+      VirtualSparkClusterSpec sparkCluster, String labelName, String labelValue) {
     com.codahale.metrics.Timer timer =
         registry.timer(
             this.getClass().getSimpleName() + ".getSparkApplicationResourcesByUser.k8s-time");
@@ -173,7 +174,7 @@ public class RestBase {
   }
 
   protected SparkApplicationResourceList getSparkApplicationResources(
-      AppConfig.SparkCluster sparkCluster) {
+      VirtualSparkClusterSpec sparkCluster) {
     com.codahale.metrics.Timer timer =
         registry.timer(this.getClass().getSimpleName() + ".getSparkApplicationResources.k8s-time");
     try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
@@ -196,7 +197,7 @@ public class RestBase {
     }
   }
 
-  protected Pod getPod(String podName, AppConfig.SparkCluster sparkCluster) {
+  protected Pod getPod(String podName, VirtualSparkClusterSpec sparkCluster) {
     com.codahale.metrics.Timer timer =
         registry.timer(this.getClass().getSimpleName() + ".getPod.k8s-time");
     try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
