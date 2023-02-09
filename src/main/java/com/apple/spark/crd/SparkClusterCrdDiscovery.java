@@ -1,37 +1,19 @@
 package com.apple.spark.crd;
 
-import static com.apple.spark.core.Constants.*;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SparkClusterCrdDiscovery {
-  private static final SparkClusterCrdDiscovery sparkClusterCrdDiscovery =
-      new SparkClusterCrdDiscovery();
+  private final AtomicReference<List<VirtualSparkClusterSpec>> clusters =
+      new AtomicReference<>(getVirtualSparkClusterCrdSpec());
 
-  private static LoadingCache<String, List<VirtualSparkClusterSpec>> cache;
+  public static List<VirtualSparkClusterSpec> getVirtualSparkClusterCrdSpec() {
+    List<VirtualSparkClusterSpec> list =
+        VirtualSparkClusterHelper.getVirtualSparkClusterConfigSpec();
 
-  public SparkClusterCrdDiscovery() {
-    CacheLoader<String, List<VirtualSparkClusterSpec>> loader =
-        new CacheLoader<>() {
-          @Override
-          public List<VirtualSparkClusterSpec> load(String key) {
-            return Collections.unmodifiableList(
-                VirtualSparkClusterHelper.getVirtualSparkClusterConfigSpec());
-          }
-        };
+    List<VirtualSparkClusterSpec> unmodifiedList = Collections.unmodifiableList(list);
 
-    cache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.SECONDS).build(loader);
-  }
-
-  public static SparkClusterCrdDiscovery getInstance() {
-    return sparkClusterCrdDiscovery;
-  }
-
-  public List<VirtualSparkClusterSpec> getClusters() {
-    return cache.getUnchecked("first");
+    return unmodifiedList;
   }
 }

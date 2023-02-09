@@ -21,9 +21,7 @@ package com.apple.spark.core;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmitApplicationRequest;
-import com.apple.spark.crd.SparkClusterCrdDiscovery;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -93,11 +91,10 @@ public class SparkClusterHelper {
       AppConfig appConfig, SubmitApplicationRequest request, String user) {
     // If a user provided a specific cluster id to execute request on, return that cluster if it
     // exists and has the required version of Spark
-    List<VirtualSparkClusterSpec> concatenatedSparkClusters = concatenateSparkClusters(appConfig);
     if (!StringUtils.isEmpty(request.getClusterId())) {
       Optional<VirtualSparkClusterSpec> sparkClusterOptional;
       sparkClusterOptional =
-          concatenatedSparkClusters.stream()
+          appConfig.getSparkClusters().stream()
               .filter(t -> StringUtils.equals(t.getId(), request.getClusterId()))
               .filter(t -> t.matchSparkVersion(request.getSparkVersion()))
               .findFirst();
@@ -117,7 +114,7 @@ public class SparkClusterHelper {
 
     // Filter clusters by spark version
     List<VirtualSparkClusterSpec> sparkClusters =
-        concatenatedSparkClusters.stream()
+        appConfig.getSparkClusters().stream()
             .filter(t -> t.getWeight() > 0 && t.matchSparkVersion(request.getSparkVersion()))
             .collect(Collectors.toList());
     if (sparkClusters.size() == 0) {
@@ -159,17 +156,9 @@ public class SparkClusterHelper {
     return sparkClusters.get(0);
   }
 
-  public static List<VirtualSparkClusterSpec> concatenateSparkClusters(AppConfig appConfig) {
-
-    List<VirtualSparkClusterSpec> list = new ArrayList<>();
-
-    SparkClusterCrdDiscovery sparkClusterCrdDiscovery = SparkClusterCrdDiscovery.getInstance();
-
-    list.addAll(sparkClusterCrdDiscovery.getClusters());
-    list.addAll(appConfig.getSparkClusters());
-
-    return list;
-  }
+  //  public static List<SparkCluster> concatenateSparkClusters(AppConfig appConfig, ) {
+  //
+  //  }
 
   public static String normalizeQueue(String queue) {
     // replace repeating dots with single dot

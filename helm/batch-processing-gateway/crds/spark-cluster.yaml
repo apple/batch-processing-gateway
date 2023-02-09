@@ -168,5 +168,7 @@ spec:
               properties:
                 state:
                   type: string
+              required:
+                - sparkClusterId
               type: object
           type: object
