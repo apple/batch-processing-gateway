@@ -224,13 +224,13 @@ public class ApplicationSubmissionRestIntegrationTest {
             QueueTokenVerifier.ISSUER_ADMIN,
             "unitTestQueueToken",
             QueueTokenVerifier.CLAIM_ALLOWED_QUEUES,
-            new String[] {"canary28_secure"});
+            new String[] {"canary02_secure"});
     IntegrationTestHelper.runSparkApplication(
         serviceRootUrl,
         requestTemplate,
         submitApplicationRequest -> {
           submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
-          submitApplicationRequest.setQueue("canary28_secure");
+          submitApplicationRequest.setQueue("canary02_secure");
           submitApplicationRequest.setQueueToken(token);
         });
   }
