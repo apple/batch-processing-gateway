@@ -67,6 +67,9 @@ public class RestBase {
 
   protected static final String REQUEST_METRIC_NAME =
       String.format("statsd.%s.request", Constants.SERVICE_ABBR);
+
+  protected static final String REQUEST_ERROR_METRIC_NAME =
+      String.format("statsd.%s.request.error", Constants.SERVICE_ABBR);
   protected static final String REQUEST_LATENCY_METRIC_NAME =
       String.format("statsd.%s.request_latency", Constants.SERVICE_ABBR);
   public static final String LDAP_SEARCH_LATENCY_METRIC_NAME =

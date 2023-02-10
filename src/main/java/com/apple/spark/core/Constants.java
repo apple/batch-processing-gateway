@@ -86,6 +86,7 @@ public class Constants {
   public static final String DNS_CONFIG_OPTION_NDOTS_NAME = "ndots";
   public static final String DNS_CONFIG_OPTION_NDOTS_VALUE = "1";
   public static final int MAX_EXECUTOR_INSTANCES = 5000;
+  public static final String ADMIN_SUBMISSIONS_TAG = "admin_submissions";
 
   // Counters
   public static final String STATUS_CACHE_LOAD =

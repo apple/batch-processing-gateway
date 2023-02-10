@@ -20,6 +20,7 @@
 package com.apple.spark.rest;
 
 import static com.apple.spark.core.Constants.ADMIN_API;
+import static com.apple.spark.core.Constants.ADMIN_SUBMISSIONS_TAG;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmissionSummary;
@@ -33,10 +34,10 @@ import com.apple.spark.security.User;
 import com.apple.spark.util.ConfigUtil;
 import com.apple.spark.util.ExceptionUtils;
 import com.apple.spark.util.VersionInfo;
-import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.auth.Auth;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,7 +46,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.UnknownHostException;
 import java.util.List;
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.DefaultValue;
@@ -77,7 +77,6 @@ public class AdminRest extends RestBase {
   @Operation(
       summary = "List submissions from all users",
       tags = {"Admin"})
-  @ExceptionMetered(name = "SparkEKSClusterUnreachable", cause = UnknownHostException.class)
   @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
   @ApiResponse(responseCode = "500", description = "Internal server error")
   public String listSubmissions(
@@ -87,9 +86,9 @@ public class AdminRest extends RestBase {
           @QueryParam("name")
           String applicationName,
       @Parameter(hidden = true) @Auth User user)
-      throws IOException {
+      throws IOException, KubernetesClientException {
     requestCounters.increment(
-        REQUEST_METRIC_NAME, Tag.of("name", "admin_submissions"), Tag.of("user", user.getName()));
+        REQUEST_METRIC_NAME, Tag.of("name", ADMIN_SUBMISSIONS_TAG), Tag.of("user", user.getName()));
 
     checkRateForListSubmissions("submissions");
     logger.info(
@@ -106,7 +105,7 @@ public class AdminRest extends RestBase {
     }
   }
 
-  private String listAllSubmissions(User user) throws IOException {
+  private String listAllSubmissions(User user) throws IOException, KubernetesClientException {
     try {
       ObjectMapper objectMapper = new ObjectMapper();
       StringBuilder submissions = new StringBuilder();
@@ -126,15 +125,19 @@ public class AdminRest extends RestBase {
       logger.info("Finished listing all submissions, requested by user {}", user.getName());
       return submissions.toString();
     } catch (Throwable ex) {
+      requestCounters.increment(
+          REQUEST_ERROR_METRIC_NAME,
+          Tag.of("exception", ex.getClass().getSimpleName()),
+          Tag.of("name", ADMIN_SUBMISSIONS_TAG),
+          Tag.of("user", user.getName()));
       logger.warn(
           "Hit exception when listing all submissions, requested by user {}", user.getName());
-      ExceptionUtils.meterException();
       throw ex;
     }
   }
 
   private String listSubmissionsByApplicationName(String applicationName, User user)
-      throws IOException {
+      throws IOException, KubernetesClientException {
     try {
       ObjectMapper objectMapper = new ObjectMapper();
       StringBuilder submissions = new StringBuilder();
@@ -159,11 +162,16 @@ public class AdminRest extends RestBase {
           user.getName());
       return submissions.toString();
     } catch (Throwable ex) {
+      requestCounters.increment(
+          REQUEST_ERROR_METRIC_NAME,
+          Tag.of("exception", ex.getClass().getSimpleName()),
+          Tag.of("name", ADMIN_SUBMISSIONS_TAG),
+          Tag.of("user", user.getName()),
+          Tag.of("applicationName", applicationName));
       logger.warn(
           "Hit exception when listing all submissions by application name {}, requested by user {}",
           applicationName,
           user.getName());
-      ExceptionUtils.meterException();
       throw ex;
     }
   }
