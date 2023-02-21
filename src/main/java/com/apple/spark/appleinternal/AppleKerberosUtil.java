@@ -142,7 +142,7 @@ public class AppleKerberosUtil {
       ctx.setRequestControls(null);
 
       NamingEnumeration<?> namingEnum =
-          ctx.search("cn=users,dc=apple,dc=com", "uid=" + acUserName, getSimpleSearchControls());
+          ctx.search("cn=users,dc=apple,dc=com", "uid=" + acUserName + "@APPLECONNECT.APPLE.COM", getSimpleSearchControls());
 
       while (namingEnum.hasMore()) {
         SearchResult result = (SearchResult) namingEnum.next();
