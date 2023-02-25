@@ -2,6 +2,8 @@ package com.apple.spark.crd;
 
 import com.apple.spark.AppConfig;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,15 +18,16 @@ public class VirtualSparkClusterHelper {
     CustomResourceDefinitionContext crdContext =
         VirtualSparkClusterHelper.getVirtualSparkClusterConfigContext();
 
+    MixedOperation<
+            VirtualSparkClusterResource,
+            VirtualSparkClusterResourceList,
+            Resource<VirtualSparkClusterResource>>
+        virtualSparkClusterClient =
+            client.resources(
+                VirtualSparkClusterResource.class, VirtualSparkClusterResourceList.class);
+
     VirtualSparkClusterResourceList list =
-        client
-            .customResources(
-                crdContext,
-                VirtualSparkClusterResource.class,
-                VirtualSparkClusterResourceList.class,
-                VirtualSparkClusterResourceDoneable.class)
-            .inNamespace(appConfig.getGatewayNamespace())
-            .list();
+        virtualSparkClusterClient.inNamespace(appConfig.getGatewayNamespace()).list();
     return list != null ? list : new VirtualSparkClusterResourceList();
   }
 

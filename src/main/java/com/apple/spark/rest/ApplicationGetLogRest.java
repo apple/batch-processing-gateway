@@ -35,7 +35,7 @@ import com.apple.spark.core.KubernetesHelper;
 import com.apple.spark.core.LogDao;
 import com.apple.spark.core.RestStreamingOutput;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
-import com.apple.spark.operator.SparkApplicationResource;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ExceptionUtils;
 import com.codahale.metrics.MetricRegistry;
@@ -44,7 +44,7 @@ import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.auth.Auth;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -193,7 +193,7 @@ public class ApplicationGetLogRest extends RestBase {
       // If s3only is true, skip searching EKS.
       if (s3only.equalsIgnoreCase("false")) {
         try {
-          final SparkApplicationResource sparkApplicationResource = getSparkApplicationResource(id);
+          final SparkApplication sparkApplicationResource = getSparkApplicationResource(id);
           logStream = getLog(sparkApplicationResource, execId);
         } catch (Throwable ex) {
           ExceptionUtils.meterException();
@@ -301,14 +301,14 @@ public class ApplicationGetLogRest extends RestBase {
   }
 
   @ExceptionMetered(name = "RuntimeException", absolute = true, cause = RuntimeException.class)
-  private InputStream getLog(SparkApplicationResource sparkApplication, String execId) {
+  private InputStream getLog(SparkApplication sparkApplication, String execId) {
     if (sparkApplication == null) {
       logger.info("Cannot get log from EKS, spark application not found");
       return null;
     }
     String submissionId = sparkApplication.getMetadata().getName();
     VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
-    DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
+    KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
     String podName = "";
     try {
       if (sparkApplication.getStatus() == null) {

@@ -21,15 +21,16 @@ package com.apple.spark.tools;
 
 import com.apple.spark.core.KubernetesHelper;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
-import com.apple.spark.operator.SparkApplicationResource;
-import com.apple.spark.operator.SparkApplicationResourceDoneable;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationResourceList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodList;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.io.File;
 import java.io.IOException;
@@ -84,7 +85,7 @@ public class SparkClusterTest {
         String.format(
             "Listing pods in cluster %s namespace %s",
             sparkCluster.getMasterUrl(), sparkCluster.getSparkApplicationNamespace()));
-    try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster)) {
+    try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster)) {
       PodList podList =
           client.pods().inNamespace(sparkCluster.getSparkApplicationNamespace()).list();
       for (Pod pod : podList.getItems()) {
@@ -105,19 +106,18 @@ public class SparkClusterTest {
               new YAMLFactory()
                   .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
                   .enable(YAMLGenerator.Feature.MINIMIZE_QUOTES));
-      SparkApplicationResource sparkApplicationResource =
-          yamlObjectMapper.readValue(
-              new File(sparkApplicationFile), SparkApplicationResource.class);
-      try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster)) {
+      SparkApplication sparkApplicationResource =
+          yamlObjectMapper.readValue(new File(sparkApplicationFile), SparkApplication.class);
+      try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster)) {
         CustomResourceDefinitionContext crdContext =
             KubernetesHelper.getSparkApplicationCrdContext();
-        client
-            .customResources(
-                crdContext,
-                SparkApplicationResource.class,
-                SparkApplicationResourceList.class,
-                SparkApplicationResourceDoneable.class)
-            .create(sparkApplicationResource);
+
+        MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
+            sparkApplicationClient =
+                client.resources(SparkApplication.class, SparkApplicationResourceList.class);
+
+        sparkApplicationClient.create(sparkApplicationResource);
+
         System.out.println(
             String.format(
                 "Created Spark Application in cluster %s namespace %s from file %s",

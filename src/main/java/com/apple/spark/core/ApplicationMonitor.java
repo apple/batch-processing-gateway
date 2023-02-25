@@ -23,20 +23,13 @@ import static com.apple.spark.core.Constants.*;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
-import com.apple.spark.operator.DriverSpec;
-import com.apple.spark.operator.ExecutorSpec;
-import com.apple.spark.operator.SparkApplicationResource;
-import com.apple.spark.operator.SparkApplicationResourceList;
-import com.apple.spark.operator.SparkApplicationSpec;
+import com.apple.spark.operator.*;
 import com.apple.spark.util.CounterMetricContainer;
 import com.apple.spark.util.DateTimeUtils;
 import com.apple.spark.util.GaugeMetricContainer;
 import com.apple.spark.util.KubernetesClusterAndNamespace;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.kubernetes.client.dsl.base.OperationContext;
 import io.fabric8.kubernetes.client.informers.ResourceEventHandler;
 import io.fabric8.kubernetes.client.informers.SharedIndexInformer;
 import io.fabric8.kubernetes.client.informers.SharedInformerFactory;
@@ -158,7 +151,7 @@ public class ApplicationMonitor implements AutoCloseable {
         String.format(
             "%s/%s", SparkConstants.SPARK_APPLICATION_CRD_GROUP, SparkConstants.CRD_VERSION),
         SparkConstants.SPARK_APPLICATION_KIND,
-        SparkApplicationResource.class);
+        SparkApplication.class);
 
     if (appConfig.getSparkClusters() != null) {
       Map<KubernetesClusterAndNamespace, VirtualSparkClusterSpec> uniqueClusters = new HashMap<>();
@@ -196,32 +189,25 @@ public class ApplicationMonitor implements AutoCloseable {
         sparkCluster.getEksCluster(),
         sparkCluster.getSparkApplicationNamespace());
 
-    DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
+    KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
     clients.add(client);
 
     SharedInformerFactory sharedInformerFactory = client.informers();
     informerFactories.add(sharedInformerFactory);
 
-    CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
-    SharedIndexInformer<SparkApplicationResource> informer =
-        sharedInformerFactory.sharedIndexInformerForCustomResource(
-            crdContext,
-            SparkApplicationResource.class,
-            SparkApplicationResourceList.class,
-            new OperationContext().withNamespace(sparkCluster.getSparkApplicationNamespace()),
-            RESYNC_MILLIS);
+    SharedIndexInformer<SparkApplication> informer =
+        sharedInformerFactory.sharedIndexInformerFor(SparkApplication.class, RESYNC_MILLIS);
 
     RunningApplicationMonitor runningApplicationMonitor =
         new RunningApplicationMonitor(sparkCluster, timer, meterRegistry);
 
     informer.addEventHandler(
-        new ResourceEventHandler<SparkApplicationResource>() {
+        new ResourceEventHandler<SparkApplication>() {
           @Override
-          public void onAdd(SparkApplicationResource sparkApplicationResource) {}
+          public void onAdd(SparkApplication sparkApplicationResource) {}
 
           @Override
-          public void onUpdate(
-              SparkApplicationResource prevCRDState, SparkApplicationResource newCRDState) {
+          public void onUpdate(SparkApplication prevCRDState, SparkApplication newCRDState) {
             int timeoutMillis = 100;
             try {
               boolean added =
@@ -246,8 +232,7 @@ public class ApplicationMonitor implements AutoCloseable {
 
           @Override
           public void onDelete(
-              SparkApplicationResource sparkApplicationResource,
-              boolean deletedFinalStateUnknown) {}
+              SparkApplication sparkApplicationResource, boolean deletedFinalStateUnknown) {}
         });
 
     sharedInformerFactory.addSharedInformerEventListener(
@@ -286,8 +271,8 @@ public class ApplicationMonitor implements AutoCloseable {
    */
   private void onUpdateImpl_logApplication(
       VirtualSparkClusterSpec sparkCluster,
-      SparkApplicationResource prevCRDState,
-      SparkApplicationResource currCRDState) {
+      SparkApplication prevCRDState,
+      SparkApplication currCRDState) {
     String submissionId = currCRDState.getMetadata().getName();
     String newState = SparkApplicationResourceHelper.getState(currCRDState);
     String oldState = SparkApplicationResourceHelper.getState(prevCRDState);
@@ -308,7 +293,7 @@ public class ApplicationMonitor implements AutoCloseable {
       Timestamp startTime = null;
       if (!driverInfoCollectedSubIds.contains(submissionId)
           && newState.equals(SparkConstants.RUNNING_STATE)) {
-        try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster)) {
+        try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster)) {
           String driverStartTime;
           SparkApplicationSpec spec = currCRDState.getSpec();
           DriverSpec driverSpec = null;

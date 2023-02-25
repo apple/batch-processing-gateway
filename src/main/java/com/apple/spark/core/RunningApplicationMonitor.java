@@ -24,14 +24,14 @@ import static com.apple.spark.core.Constants.MONITOR_RUNNING_APPS;
 
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.DriverInfo;
-import com.apple.spark.operator.SparkApplicationResource;
-import com.apple.spark.operator.SparkApplicationResourceDoneable;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationResourceList;
 import com.apple.spark.util.CounterMetricContainer;
 import com.apple.spark.util.DateTimeUtils;
 import com.apple.spark.util.GaugeMetricContainer;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import java.util.List;
@@ -111,7 +111,7 @@ public class RunningApplicationMonitor {
         deleteInterval);
   }
 
-  public static long getMaxRunningMillis(SparkApplicationResource sparkApplicationResource) {
+  public static long getMaxRunningMillis(SparkApplication sparkApplicationResource) {
     if (sparkApplicationResource.getMetadata() == null
         || sparkApplicationResource.getMetadata().getLabels() == null) {
       return Constants.DEFAULT_MAX_RUNNING_MILLIS;
@@ -135,7 +135,7 @@ public class RunningApplicationMonitor {
     }
   }
 
-  public static long getSpotTimeoutMillis(SparkApplicationResource sparkApplicationResource) {
+  public static long getSpotTimeoutMillis(SparkApplication sparkApplicationResource) {
     if (sparkApplicationResource.getMetadata() == null
         || sparkApplicationResource.getMetadata().getLabels() == null) {
       return Constants.DEFAULT_MAX_RUNNING_MILLIS;
@@ -166,8 +166,7 @@ public class RunningApplicationMonitor {
    * @param prevCRDState the previous CRD state
    * @param currCRDState the current CRD state
    */
-  public void onUpdate(
-      SparkApplicationResource prevCRDState, SparkApplicationResource currCRDState) {
+  public void onUpdate(SparkApplication prevCRDState, SparkApplication currCRDState) {
     String newState = SparkApplicationResourceHelper.getState(currCRDState);
     if (SparkConstants.RUNNING_STATE.equalsIgnoreCase(newState)) {
       String name = currCRDState.getMetadata().getName();
@@ -269,18 +268,13 @@ public class RunningApplicationMonitor {
    * @param appName the name of the app (typically submission ID)
    */
   protected void killApplication(String namespace, String appName) {
-    try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster)) {
-      CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
-      SparkApplicationResource sparkApplicationResource =
-          client
-              .customResources(
-                  crdContext,
-                  SparkApplicationResource.class,
-                  SparkApplicationResourceList.class,
-                  SparkApplicationResourceDoneable.class)
-              .inNamespace(namespace)
-              .withName(appName)
-              .get();
+    try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster)) {
+      MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
+          sparkApplicationClient =
+              client.resources(SparkApplication.class, SparkApplicationResourceList.class);
+
+      SparkApplication sparkApplicationResource =
+          sparkApplicationClient.inNamespace(namespace).withName(appName).get();
       if (sparkApplicationResource == null) {
         logger.warn(
             "Failed to kill application {}/{} due to application not found", namespace, appName);

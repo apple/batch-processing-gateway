@@ -1,7 +1,7 @@
 package com.apple.spark.core;
 
 import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
@@ -82,7 +82,7 @@ public class ConfigValue {
     int retryTimes = 2;
     int retryIntervalMillis = 1000;
     for (int i = 0; i <= retryTimes; i++) {
-      try (DefaultKubernetesClient client = KubernetesHelper.getLocalK8sClient()) {
+      try (KubernetesClient client = KubernetesHelper.getLocalK8sClient()) {
         Secret secret = client.secrets().inNamespace(namespace).withName(secretName).get();
         if (secret == null) {
           logger.info(

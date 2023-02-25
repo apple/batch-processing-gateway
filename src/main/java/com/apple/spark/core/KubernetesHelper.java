@@ -21,11 +21,8 @@ package com.apple.spark.core;
 
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.util.EndAwareInputStream;
-import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.Config;
-import io.fabric8.kubernetes.client.ConfigBuilder;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.*;
 import io.fabric8.kubernetes.client.dsl.LogWatch;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -89,7 +86,7 @@ public class KubernetesHelper {
 
   // Note: the client returned by this method may not last for long time, since its credential may
   // expire. Caller of this method should do retry in case the credential expires.
-  public static DefaultKubernetesClient getLocalK8sClient() {
+  public static KubernetesClient getLocalK8sClient() {
     Long timeoutMillis = DEFAULT_TIMEOUT_MILLIS;
     ConfigBuilder configBuilder =
         new ConfigBuilder(Config.autoConfigure(null))
@@ -116,11 +113,11 @@ public class KubernetesHelper {
       }
     }
     Config config = configBuilder.build();
-    return new DefaultKubernetesClient(config);
+    return new KubernetesClientBuilder().withConfig(config).build();
   }
 
-  public static DefaultKubernetesClient getK8sClient(VirtualSparkClusterSpec sparkCluster) {
-    return new DefaultKubernetesClient(getK8sConfig(sparkCluster));
+  public static KubernetesClient getK8sClient(VirtualSparkClusterSpec sparkCluster) {
+    return new KubernetesClientBuilder().withConfig(getK8sConfig(sparkCluster)).build();
   }
 
   public static CustomResourceDefinitionContext getSparkApplicationCrdContext() {
@@ -133,9 +130,8 @@ public class KubernetesHelper {
   }
 
   public static InputStream tryGetLogStream(
-      DefaultKubernetesClient client, String namespace, String podName) {
-    PodResource<Pod, DoneablePod> podResource =
-        client.inNamespace(namespace).pods().withName(podName);
+      KubernetesClient client, String namespace, String podName) {
+    PodResource podResource = client.pods().inNamespace(namespace).withName(podName);
     if (podResource == null) {
       logger.info("Cannot get pod resource {}", podName);
       return null;
@@ -239,7 +235,9 @@ public class KubernetesHelper {
             .withConnectionTimeout(timeoutMillis.intValue())
             .withRequestTimeout(timeoutMillis.intValue())
             .withWebsocketTimeout(timeoutMillis)
-            .withUserAgent(Constants.KUBERNETES_USER_AGENT);
+            .withUserAgent(Constants.KUBERNETES_USER_AGENT)
+            .withCurrentContext(null)
+            .withAutoConfigure(false);
     if (sparkCluster.getHttpProxy() != null && !sparkCluster.getHttpProxy().isEmpty()) {
       configBuilder = configBuilder.withHttpProxy(sparkCluster.getHttpProxy());
     }

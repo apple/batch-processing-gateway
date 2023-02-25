@@ -8,21 +8,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import com.google.common.io.ByteArrayDataOutput;
-import com.google.common.io.ByteStreams;
 import io.dropwizard.util.Resources;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import okhttp3.MediaType;
-import okhttp3.Response;
-import okio.BufferedSource;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,11 +153,11 @@ public class IntegrationTestHelper {
 
     // submit application
     final String submitUrl = String.format("%s/spark", serviceRootUrl);
-    MediaType mediaType;
+    String mediaType;
     if (requestTemplateIsYaml) {
-      mediaType = MediaType.parse("application/x-yaml");
+      mediaType = "application/x-yaml";
     } else {
-      mediaType = MediaType.parse("application/json");
+      mediaType = "application/json";
     }
     logger.info("Submitting application to {}", submitUrl);
     SubmitApplicationResponse submitApplicationResponse =
@@ -212,19 +209,20 @@ public class IntegrationTestHelper {
         String.format("%s/spark/%s/describe", serviceRootUrl, submissionId);
     boolean getKubeLog = false;
 
-    try (Response httpResponse =
-        HttpUtils.getHttpResponse(getKubeLogUrl, authHeaderName, authHeaderValue)) {
-      logger.info("Reading kube log for submission id: {}", submissionId);
-      BufferedSource source = httpResponse.body().source();
-      byte[] buffer = new byte[8196];
-      while (!source.exhausted()) {
-        int count = source.read(buffer);
-        if (count > 0) {
-          getKubeLog = true;
-          System.out.write(buffer, 0, count);
-        }
+    HttpResponse httpResponse =
+        HttpUtils.getHttpResponse(getKubeLogUrl, authHeaderName, authHeaderValue);
+    logger.info("Reading kube log for submission id: {}", submissionId);
+    byte[] buffer = httpResponse.body().toString().getBytes();
+
+    ByteArrayInputStream bufferSource = new ByteArrayInputStream(buffer);
+    while (bufferSource.available() > 0) {
+      int count = bufferSource.read();
+      if (count > 0) {
+        getKubeLog = true;
+        System.out.write(buffer, 0, count);
       }
     }
+
     Assert.assertTrue(getKubeLog);
 
     // fetch application driver log
@@ -338,22 +336,21 @@ public class IntegrationTestHelper {
       throws IOException {
 
     final String getDriverLogUrl = String.format("%s/log?subId=%s", serviceRootUrl, submissionId);
-    ByteArrayDataOutput driverLogData = ByteStreams.newDataOutput();
 
-    try (Response httpResponse =
-        HttpUtils.getHttpResponse(getDriverLogUrl, authHeaderName, authHeaderValue)) {
-      logger.info("Reading driver log for submission id: {}", submissionId);
-      BufferedSource source = httpResponse.body().source();
-      byte[] buffer = new byte[8196];
-      while (!source.exhausted()) {
-        int count = source.read(buffer);
-        if (count > 0) {
-          System.out.write(buffer, 0, count);
-          driverLogData.write(buffer, 0, count);
-        }
+    HttpResponse httpResponse =
+        HttpUtils.getHttpResponse(getDriverLogUrl, authHeaderName, authHeaderValue);
+    logger.info("Reading driver log for submission id: {}", submissionId);
+
+    byte[] buffer = httpResponse.body().toString().getBytes();
+
+    ByteArrayInputStream bufferSource = new ByteArrayInputStream(buffer);
+    while (bufferSource.available() > 0) {
+      int count = bufferSource.read();
+      if (count > 0) {
+        System.out.write(buffer, 0, count);
       }
     }
 
-    return new String(driverLogData.toByteArray(), StandardCharsets.UTF_8);
+    return new String(buffer, StandardCharsets.UTF_8);
   }
 }

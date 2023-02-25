@@ -28,7 +28,7 @@ import com.apple.spark.core.Constants;
 import com.apple.spark.core.KubernetesHelper;
 import com.apple.spark.core.RestStreamingOutput;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
-import com.apple.spark.operator.SparkApplicationResource;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationResourceList;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ConfigUtil;
@@ -111,11 +111,11 @@ public class AdminRest extends RestBase {
       StringBuilder submissions = new StringBuilder();
       for (VirtualSparkClusterSpec sparkCluster : getSparkClusters()) {
         SparkApplicationResourceList list = getSparkApplicationResources(sparkCluster);
-        List<SparkApplicationResource> sparkApplicationResources = list.getItems();
+        List<SparkApplication> sparkApplicationResources = list.getItems();
         if (sparkApplicationResources == null) {
           continue;
         }
-        for (SparkApplicationResource sparkApplicationResource : sparkApplicationResources) {
+        for (SparkApplication sparkApplicationResource : sparkApplicationResources) {
           SubmissionSummary submission = new SubmissionSummary();
           submission.copyFrom(sparkApplicationResource, sparkCluster, appConfig);
           submissions.append(objectMapper.writeValueAsString(submission));
@@ -145,11 +145,11 @@ public class AdminRest extends RestBase {
         SparkApplicationResourceList list =
             getSparkApplicationResourcesByLabel(
                 sparkCluster, Constants.APPLICATION_NAME_LABEL, applicationName);
-        List<SparkApplicationResource> sparkApplicationResources = list.getItems();
+        List<SparkApplication> sparkApplicationResources = list.getItems();
         if (sparkApplicationResources == null) {
           continue;
         }
-        for (SparkApplicationResource sparkApplicationResource : sparkApplicationResources) {
+        for (SparkApplication sparkApplicationResource : sparkApplicationResources) {
           SubmissionSummary submission = new SubmissionSummary();
           submission.copyFrom(sparkApplicationResource, sparkCluster, appConfig);
           submissions.append(objectMapper.writeValueAsString(submission));

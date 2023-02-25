@@ -19,6 +19,6 @@
 
 package com.apple.spark.operator;
 
-import io.fabric8.kubernetes.client.CustomResourceList;
+import io.fabric8.kubernetes.api.model.DefaultKubernetesResourceList;
 
-public class SparkApplicationResourceList extends CustomResourceList<SparkApplicationResource> {}
+public class SparkApplicationResourceList extends DefaultKubernetesResourceList<SparkApplication> {}

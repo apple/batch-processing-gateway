@@ -1,8 +1,9 @@
 package com.apple.spark.crd;
 
+import io.fabric8.kubernetes.api.model.Namespaced;
 import io.fabric8.kubernetes.client.CustomResource;
 
-public class VirtualSparkClusterResource extends CustomResource {
+public class VirtualSparkClusterResource extends CustomResource implements Namespaced {
   private VirtualSparkClusterSpec spec;
   private VirtualSparkClusterStatus status;
 

@@ -25,7 +25,7 @@ import com.apple.spark.AppConfig;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.SparkConstants;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
-import com.apple.spark.operator.SparkApplicationResource;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationSpec;
 import com.apple.spark.util.ConfigUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -87,10 +87,10 @@ public class SubmissionSummary extends SubmissionStatus {
   }
 
   public void copyFrom(
-      SparkApplicationResource sparkApplicationResource,
+      SparkApplication sparkApplication,
       VirtualSparkClusterSpec sparkCluster,
       AppConfig appConfig) {
-    this.copyFrom(sparkApplicationResource);
+    this.copyFrom(sparkApplication);
     if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())
         && (SparkConstants.RUNNING_STATE.equalsIgnoreCase(getApplicationState())
             || SparkConstants.SPOT_TIMEOUT_STATE.equalsIgnoreCase(getApplicationState()))) {
@@ -105,15 +105,14 @@ public class SubmissionSummary extends SubmissionStatus {
   }
 
   @Override
-  public void copyFrom(SparkApplicationResource sparkApplicationResource) {
-    super.copyFrom(sparkApplicationResource);
-    setSubmissionId(sparkApplicationResource.getMetadata().getName());
-    if (sparkApplicationResource.getMetadata().getLabels() != null) {
-      String user =
-          sparkApplicationResource.getMetadata().getLabels().get(Constants.PROXY_USER_LABEL);
+  public void copyFrom(SparkApplication sparkApplication) {
+    super.copyFrom(sparkApplication);
+    setSubmissionId(sparkApplication.getMetadata().getName());
+    if (sparkApplication.getMetadata().getLabels() != null) {
+      String user = sparkApplication.getMetadata().getLabels().get(Constants.PROXY_USER_LABEL);
       String queue = "";
-      if (sparkApplicationResource.getMetadata().getLabels().containsKey(Constants.QUEUE_LABEL)) {
-        queue = sparkApplicationResource.getMetadata().getLabels().get(Constants.QUEUE_LABEL);
+      if (sparkApplication.getMetadata().getLabels().containsKey(Constants.QUEUE_LABEL)) {
+        queue = sparkApplication.getMetadata().getLabels().get(Constants.QUEUE_LABEL);
       }
       String dagName = "";
 
@@ -123,24 +122,19 @@ public class SubmissionSummary extends SubmissionStatus {
       int executorCores = 1;
       Long executorMemoryGB = 0L;
 
-      if (sparkApplicationResource.getSpec().getDriver().getLabels() != null) {
-        if (sparkApplicationResource
+      if (sparkApplication.getSpec().getDriver().getLabels() != null) {
+        if (sparkApplication
             .getSpec()
             .getDriver()
             .getLabels()
             .containsKey(Constants.DAG_NAME_LABEL)) {
           dagName =
-              sparkApplicationResource
-                  .getSpec()
-                  .getDriver()
-                  .getLabels()
-                  .get(Constants.DAG_NAME_LABEL);
+              sparkApplication.getSpec().getDriver().getLabels().get(Constants.DAG_NAME_LABEL);
         }
       }
-      if (sparkApplicationResource.getSpec().getDriver().getMemory() != null) {
+      if (sparkApplication.getSpec().getDriver().getMemory() != null) {
         try {
-          driverMemoryGB =
-              byteStringAsGb(sparkApplicationResource.getSpec().getDriver().getMemory());
+          driverMemoryGB = byteStringAsGb(sparkApplication.getSpec().getDriver().getMemory());
         } catch (Exception e) {
           logger.info(
               "Cannot convert Driver memory size string to Gb for {}, {}.",
@@ -148,19 +142,18 @@ public class SubmissionSummary extends SubmissionStatus {
               e.toString());
         }
       }
-      if (sparkApplicationResource.getSpec().getDriver().getCores() != null) {
-        driverCores = sparkApplicationResource.getSpec().getDriver().getCores();
+      if (sparkApplication.getSpec().getDriver().getCores() != null) {
+        driverCores = sparkApplication.getSpec().getDriver().getCores();
       }
-      if (sparkApplicationResource.getSpec().getExecutor().getCores() != null) {
-        executorCores = sparkApplicationResource.getSpec().getExecutor().getCores();
+      if (sparkApplication.getSpec().getExecutor().getCores() != null) {
+        executorCores = sparkApplication.getSpec().getExecutor().getCores();
       }
-      if (sparkApplicationResource.getSpec().getExecutor().getInstances() != null) {
-        executorInstances = sparkApplicationResource.getSpec().getExecutor().getInstances();
+      if (sparkApplication.getSpec().getExecutor().getInstances() != null) {
+        executorInstances = sparkApplication.getSpec().getExecutor().getInstances();
       }
-      if (sparkApplicationResource.getSpec().getExecutor().getMemory() != null) {
+      if (sparkApplication.getSpec().getExecutor().getMemory() != null) {
         try {
-          executorMemoryGB =
-              byteStringAsGb(sparkApplicationResource.getSpec().getExecutor().getMemory());
+          executorMemoryGB = byteStringAsGb(sparkApplication.getSpec().getExecutor().getMemory());
         } catch (Exception e) {
           logger.info(
               "Cannot convert Executor memory size string to Gb for {}, {}.",
@@ -187,7 +180,7 @@ public class SubmissionSummary extends SubmissionStatus {
         setDagName(dagName);
       }
     }
-    SparkApplicationSpec spec = sparkApplicationResource.getSpec();
+    SparkApplicationSpec spec = sparkApplication.getSpec();
     if (spec != null) {
       setSparkVersion(spec.getSparkVersion());
       setApplicationArguments(spec.getArguments());
