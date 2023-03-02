@@ -127,7 +127,7 @@ pipelines:
     machine:
       env:
         APP_VERSION: "1.1"
-        VERSION: skate-dev-${APP_VERSION}.#{}
+        VERSION: skate-APP_VERSION}.#{}
         BUILD_TIME: "$(date)"
     build:
       template: freestyle:v4:publish
@@ -157,7 +157,7 @@ pipelines:
     machine:
       env:
         HELM_CHART: "./apple-internal/helm/spinnaker-skate"
-        HELM_REPO: "apple-aiml-skate-dev-spinnaker"
+        HELM_REPO: "apple-aiml-skate-spinnaker"
         IMG_REPO: "aiml-di-dpi/skate/dev"
     build:
       template: freestyle:v4:publish
