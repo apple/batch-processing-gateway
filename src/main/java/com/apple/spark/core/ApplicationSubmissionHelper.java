@@ -23,6 +23,7 @@ import static com.apple.spark.core.BatchSchedulerConstants.PLACEHOLDER_TIMEOUT_I
 import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_ROOT_QUEUE;
 import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_SPARK_DEFAULT_QUEUE;
 import static com.apple.spark.core.Constants.*;
+import static com.apple.spark.core.MonitoringConstants.*;
 import static com.apple.spark.core.SparkConstants.*;
 
 import com.apple.spark.AppConfig;
@@ -866,5 +867,61 @@ public class ApplicationSubmissionHelper {
 
       return request.getImage();
     }
+  }
+
+  public static void populatePrometheusMonitoring(SubmitApplicationRequest request) {
+    if (request.getMonitoring() == null) {
+      request.setMonitoring(new MonitoringSpec());
+    }
+    MonitoringSpec monitoring = request.getMonitoring();
+    if (monitoring.getPrometheus() != null) {
+      return;
+    }
+    monitoring.setExposeDriverMetrics(true);
+    monitoring.setExposeExecutorMetrics(true);
+    PrometheusSpec promSpec = new PrometheusSpec();
+    promSpec.setJmxExporterJar(PROMETHEUS_JAR_PATH);
+    promSpec.setPort(DEFAULT_PROMETHEUS_PORT);
+    monitoring.setPrometheus(promSpec);
+  }
+
+  public static void populatePrometheusAnnotations(SubmitApplicationRequest request) {
+    // This assumes Prometheus Spec is set
+    int port = request.getMonitoring().getPrometheus().getPort();
+
+    if (request.getDriver().getAnnotations() == null) {
+      request.getDriver().setAnnotations(new HashMap<>());
+    }
+    Map<String, String> driverAnnotations = request.getDriver().getAnnotations();
+    driverAnnotations.putAll(getDatadogAnnotations(DRIVER_CONTAINER_NAME, port));
+
+    if (request.getExecutor().getAnnotations() == null) {
+      request.getExecutor().setAnnotations(new HashMap<>());
+    }
+    Map<String, String> executorAnnotations = request.getExecutor().getAnnotations();
+    executorAnnotations.putAll(getDatadogAnnotations(EXECUTOR_CONTAINER_NAME, port));
+  }
+
+  /**
+   * ad.datadoghq.com/spark-kubernetes-{driver|executor}.check_names=["openmetrics"]
+   * ad.datadoghq.com/spark-kubernetes-{driver|executor}.init_configs=[{}]
+   * ad.datadoghq.com/spark-kubernetes-{driver|executor}.instances=[{
+   *   "prometheus_url": "http://%%host%%:9889/metrics",
+   *   "namespace": "spark",
+   *   "metrics": ["*"]
+   * }]
+   */
+  static Map<String, String> getDatadogAnnotations(String containerName, int port) {
+    String datadogPrefix = String.format("%s/%s", DATADOG_AD_PREFIX, containerName);
+    return Map.ofEntries(
+            Map.entry(String.format("%s.%s", datadogPrefix, "check_names"), "[\"openmetrics\"]"),
+            Map.entry(String.format("%s.%s", datadogPrefix, "init_configs"), "[{}]"),
+            Map.entry(
+                    String.format("%s.%s", datadogPrefix, "instances"),
+                    String.format(
+                            "[{\"prometheus_url\":\"http://%%%%host%%%%:%d/%s\"," +
+                            "\"namespace\":\"spark\",\"metrics\":[\"*\"]}]",
+                            port, DEFAULT_PROMETHEUS_METRICS_PATH))
+    );
   }
 }

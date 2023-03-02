@@ -99,6 +99,8 @@ public class SubmitApplicationRequest {
 
   private Dependencies deps;
 
+  private MonitoringSpec monitoring;
+
   private String pythonVersion;
   @Hidden private String imagePullPolicy;
   @Hidden private RestartPolicy restartPolicy;
@@ -268,6 +270,14 @@ public class SubmitApplicationRequest {
 
   public void setDeps(Dependencies deps) {
     this.deps = deps;
+  }
+
+  public MonitoringSpec getMonitoring() {
+    return monitoring;
+  }
+
+  public void setMonitoring(MonitoringSpec monitoring) {
+    this.monitoring = monitoring;
   }
 
   public String getPythonVersion() {

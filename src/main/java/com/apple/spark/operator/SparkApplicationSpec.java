@@ -377,6 +377,11 @@ public class SparkApplicationSpec {
       return this;
     }
 
+    public Builder withMonitoringSpec(MonitoringSpec monitoring) {
+      this.sparkApplicationSpec.monitoring = monitoring;
+      return this;
+    }
+
     public Builder withPythonVersion(String pythonVersion) {
       this.sparkApplicationSpec.pythonVersion = pythonVersion;
       return this;

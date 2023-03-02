@@ -23,6 +23,7 @@ import static com.apple.spark.core.ApplicationSubmissionHelper.*;
 import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_ROOT_QUEUE;
 import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_SCHEDULER;
 import static com.apple.spark.core.Constants.*;
+import static com.apple.spark.core.MonitoringConstants.ENABLE_METRICS_CONF;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.DeleteSubmissionResponse;
@@ -257,6 +258,13 @@ public class ApplicationSubmissionRest extends RestBase {
     String parentQueue = SparkClusterHelper.getParentQueue(queue);
     String queueTagValue = queue == null ? "" : queue;
 
+    // Populate Prometheus monitoring configs into the request
+    if (request.getSparkConf() != null &&
+            Boolean.parseBoolean(request.getSparkConf().get(ENABLE_METRICS_CONF))) {
+      populatePrometheusMonitoring(request);
+      populatePrometheusAnnotations(request);
+    }
+
     // the Spark spec to be submitted to Spark cluster
     SparkApplicationSpec.Builder specBuilder =
         new SparkApplicationSpec.Builder()
@@ -275,6 +283,7 @@ public class ApplicationSubmissionRest extends RestBase {
             .withRestartPolicy(request.getRestartPolicy())
             .withVolumes(request.getVolumes())
             .withDeps(request.getDeps())
+            .withMonitoringSpec(request.getMonitoring())
             .withPythonVersion(request.getPythonVersion())
             .withTimeToLiveSeconds(sparkCluster.getTtlSeconds())
             .extendSparkConf(

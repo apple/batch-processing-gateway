@@ -22,12 +22,8 @@ package com.apple.spark.core;
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmitApplicationRequest;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
-import com.apple.spark.operator.DriverSpec;
-import com.apple.spark.operator.EnvVar;
-import com.apple.spark.operator.ExecutorSpec;
-import com.apple.spark.operator.HostPathVolumeSource;
-import com.apple.spark.operator.SparkApplicationSpec;
-import com.apple.spark.operator.Volume;
+import com.apple.spark.operator.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +31,8 @@ import java.util.Map;
 import javax.ws.rs.WebApplicationException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import static com.apple.spark.core.MonitoringConstants.*;
 
 public class ApplicationSubmissionHelperTest {
 
@@ -92,6 +90,23 @@ public class ApplicationSubmissionHelperTest {
           + "  instances: 2\n"
           + "  cores: 1\n"
           + "  memory: 1g\n"
+          + "\n";
+
+  private final String MINIMUM_REQUEST_BODY_YAML =
+      "---\n"
+          + "driver:\n"
+          + "  cores: 1\n"
+          + "  memory: 1g\n"
+          + "  annotations:\n"
+          + "    \"dk1\": \"dv1\"\n"
+          + "executor:\n"
+          + "  instances: 2\n"
+          + "  cores: 1\n"
+          + "  memory: 1g\n"
+          + "  annotations:\n"
+          + "    \"ek1\": \"ev1\"\n"
+          + "monitoring:\n"
+          + "  exposeDriverMetrics: false\n"
           + "\n";
 
   @Test
@@ -576,5 +591,27 @@ public class ApplicationSubmissionHelperTest {
 
     Assert.assertFalse(ApplicationSubmissionHelper.looksLikeFilePath(DUMMY_REQUEST_BODY_JSON));
     Assert.assertFalse(ApplicationSubmissionHelper.looksLikeFilePath(DUMMY_REQUEST_BODY_YAML));
+  }
+
+  @Test
+  public void populatePrometheusMonitoringSettings() {
+    SubmitApplicationRequest request = ApplicationSubmissionHelper.parseSubmitRequest(
+            MINIMUM_REQUEST_BODY_YAML, "yaml");
+    ApplicationSubmissionHelper.populatePrometheusMonitoring(request);
+    ApplicationSubmissionHelper.populatePrometheusAnnotations(request);
+
+    Assert.assertTrue(request.getMonitoring().getExposeDriverMetrics());
+    Assert.assertTrue(request.getMonitoring().getExposeExecutorMetrics());
+    Assert.assertEquals((int) request.getMonitoring().getPrometheus().getPort(), DEFAULT_PROMETHEUS_PORT);
+    Assert.assertEquals(request.getMonitoring().getPrometheus().getJmxExporterJar(), PROMETHEUS_JAR_PATH);
+
+    Map<String, String> da = new HashMap<>(
+            ApplicationSubmissionHelper.getDatadogAnnotations(DRIVER_CONTAINER_NAME, DEFAULT_PROMETHEUS_PORT));
+    da.put("dk1", "dv1");
+    Map<String, String> ea = new HashMap<>(
+            ApplicationSubmissionHelper.getDatadogAnnotations(EXECUTOR_CONTAINER_NAME, DEFAULT_PROMETHEUS_PORT));
+    ea.put("ek1", "ev1");
+    Assert.assertEquals(request.getDriver().getAnnotations(), da);
+    Assert.assertEquals(request.getExecutor().getAnnotations(), ea);
   }
 }
