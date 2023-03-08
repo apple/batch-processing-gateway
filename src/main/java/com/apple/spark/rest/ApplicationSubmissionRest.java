@@ -259,8 +259,8 @@ public class ApplicationSubmissionRest extends RestBase {
     String queueTagValue = queue == null ? "" : queue;
 
     // Populate Prometheus monitoring configs into the request
-    if (request.getSparkConf() != null &&
-            Boolean.parseBoolean(request.getSparkConf().get(ENABLE_METRICS_CONF))) {
+    if (request.getSparkConf() != null
+        && Boolean.parseBoolean(request.getSparkConf().get(ENABLE_METRICS_CONF))) {
       populatePrometheusMonitoring(request);
       populatePrometheusAnnotations(request);
     }
@@ -467,11 +467,7 @@ public class ApplicationSubmissionRest extends RestBase {
           sparkApplicationClient =
               client.resources(SparkApplication.class, SparkApplicationResourceList.class);
 
-      try {
-        sparkApplicationClient.create(sparkApplication);
-      } catch (Exception ex) {
-        throw new RuntimeException(ex.getMessage());
-      }
+      sparkApplicationClient.create(sparkApplication);
 
       SubmitApplicationResponse response = new SubmitApplicationResponse();
       response.setSubmissionId(submissionId);
