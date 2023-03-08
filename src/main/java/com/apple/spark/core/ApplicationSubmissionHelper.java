@@ -882,6 +882,7 @@ public class ApplicationSubmissionHelper {
     PrometheusSpec promSpec = new PrometheusSpec();
     promSpec.setJmxExporterJar(PROMETHEUS_JAR_PATH);
     promSpec.setPort(DEFAULT_PROMETHEUS_PORT);
+    promSpec.setConfigFile(PROMETHEUS_CONFIG_PATH);
     monitoring.setPrometheus(promSpec);
   }
 

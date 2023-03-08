@@ -604,6 +604,7 @@ public class ApplicationSubmissionHelperTest {
     Assert.assertTrue(request.getMonitoring().getExposeExecutorMetrics());
     Assert.assertEquals((int) request.getMonitoring().getPrometheus().getPort(), DEFAULT_PROMETHEUS_PORT);
     Assert.assertEquals(request.getMonitoring().getPrometheus().getJmxExporterJar(), PROMETHEUS_JAR_PATH);
+    Assert.assertEquals(request.getMonitoring().getPrometheus().getConfigFile(), PROMETHEUS_CONFIG_PATH);
 
     Map<String, String> da = new HashMap<>(
             ApplicationSubmissionHelper.getDatadogAnnotations(DRIVER_CONTAINER_NAME, DEFAULT_PROMETHEUS_PORT));
