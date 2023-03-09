@@ -888,6 +888,9 @@ public class ApplicationSubmissionHelper {
 
   public static void populatePrometheusAnnotations(SubmitApplicationRequest request) {
     // This assumes Prometheus Spec is set
+    if (request.getMonitoring().getPrometheus().getPort() == null) {
+      request.getMonitoring().getPrometheus().setPort(DEFAULT_PROMETHEUS_PORT);
+    }
     int port = request.getMonitoring().getPrometheus().getPort();
 
     if (request.getDriver().getAnnotations() == null) {

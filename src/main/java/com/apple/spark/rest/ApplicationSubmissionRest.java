@@ -261,6 +261,7 @@ public class ApplicationSubmissionRest extends RestBase {
     // Populate Prometheus monitoring configs into the request
     if (request.getSparkConf() != null
         && Boolean.parseBoolean(request.getSparkConf().get(ENABLE_METRICS_CONF))) {
+      logger.info("Detected enable_metrics=true, the Spark job JMX metrics will be exported");
       populatePrometheusMonitoring(request);
       populatePrometheusAnnotations(request);
     }
