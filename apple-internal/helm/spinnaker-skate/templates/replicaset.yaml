@@ -52,6 +52,9 @@ spec:
             - name: configuration
               mountPath: "/app/"
               readOnly: true
+            - name: spark-prometheus-configuration
+              mountPath: "/etc/prometheus"
+              readOnly: true
           env:
             - name: STATSD_SERVER_IP
               valueFrom:
@@ -86,3 +89,6 @@ spec:
             items:
               - key: 'skate-config-yaml'
                 path: 'app-config.gz'
+        - name: spark-prometheus-configuration
+          configMap:
+            name: 'spark-prometheus'

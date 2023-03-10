@@ -19,18 +19,16 @@
 
 package com.apple.spark.core;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 public class MonitoringConstants {
 
   public static final String ENABLE_METRICS_CONF = "enable_metrics";
 
   // Prometheus monitoring
   public static final String PROMETHEUS_JAR_PATH = "/prometheus/jmx_prometheus_javaagent.jar";
-  public static final String PROMETHEUS_CONFIG_PATH = "/prometheus/prometheus.yaml";
+  public static final String PROMETHEUS_SPARK3_CONFIG_PATH =
+      "/etc/prometheus/prometheus-spark3.yaml";
+  public static final String PROMETHEUS_SPARK2_CONFIG_PATH =
+      "/etc/prometheus/prometheus-spark2.yaml";
   public static final int DEFAULT_PROMETHEUS_PORT = 9889;
   public static final String DEFAULT_PROMETHEUS_METRICS_PATH = "metrics";
 

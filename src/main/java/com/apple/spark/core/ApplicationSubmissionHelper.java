@@ -31,6 +31,7 @@ import com.apple.spark.api.SubmitApplicationRequest;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.*;
 import com.apple.spark.util.ExceptionUtils;
+import com.apple.spark.util.FileUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -877,13 +878,30 @@ public class ApplicationSubmissionHelper {
     if (monitoring.getPrometheus() != null) {
       return;
     }
-    monitoring.setExposeDriverMetrics(true);
-    monitoring.setExposeExecutorMetrics(true);
-    PrometheusSpec promSpec = new PrometheusSpec();
-    promSpec.setJmxExporterJar(PROMETHEUS_JAR_PATH);
-    promSpec.setPort(DEFAULT_PROMETHEUS_PORT);
-    promSpec.setConfigFile(PROMETHEUS_CONFIG_PATH);
-    monitoring.setPrometheus(promSpec);
+    try {
+      // Parse the Spark prometheus config file to promSpec
+      // If spark version not supported, will throw NullPointerException
+      String prometheusConfig =
+          FileUtil.readFileAsString(getPrometheusConfigPath(request.getSparkVersion()));
+      PrometheusSpec promSpec = new PrometheusSpec();
+      promSpec.setConfiguration(prometheusConfig);
+      promSpec.setJmxExporterJar(PROMETHEUS_JAR_PATH);
+      promSpec.setPort(DEFAULT_PROMETHEUS_PORT);
+      monitoring.setPrometheus(promSpec);
+      monitoring.setExposeDriverMetrics(true);
+      monitoring.setExposeExecutorMetrics(true);
+    } catch (Throwable e) {
+      throw new WebApplicationException(e);
+    }
+  }
+
+  static String getPrometheusConfigPath(String sparkVersion) {
+    if (sparkVersion.startsWith("3")) {
+      return PROMETHEUS_SPARK3_CONFIG_PATH;
+    } else if (sparkVersion.startsWith("2")) {
+      return PROMETHEUS_SPARK2_CONFIG_PATH;
+    }
+    return null;
   }
 
   public static void populatePrometheusAnnotations(SubmitApplicationRequest request) {
@@ -909,23 +927,19 @@ public class ApplicationSubmissionHelper {
   /**
    * ad.datadoghq.com/spark-kubernetes-{driver|executor}.check_names=["openmetrics"]
    * ad.datadoghq.com/spark-kubernetes-{driver|executor}.init_configs=[{}]
-   * ad.datadoghq.com/spark-kubernetes-{driver|executor}.instances=[{
-   *   "prometheus_url": "http://%%host%%:9889/metrics",
-   *   "namespace": "spark",
-   *   "metrics": ["*"]
-   * }]
+   * ad.datadoghq.com/spark-kubernetes-{driver|executor}.instances=[{ "prometheus_url":
+   * "http://%%host%%:9889/metrics", "namespace": "spark", "metrics": ["*"] }]
    */
   static Map<String, String> getDatadogAnnotations(String containerName, int port) {
     String datadogPrefix = String.format("%s/%s", DATADOG_AD_PREFIX, containerName);
     return Map.ofEntries(
-            Map.entry(String.format("%s.%s", datadogPrefix, "check_names"), "[\"openmetrics\"]"),
-            Map.entry(String.format("%s.%s", datadogPrefix, "init_configs"), "[{}]"),
-            Map.entry(
-                    String.format("%s.%s", datadogPrefix, "instances"),
-                    String.format(
-                            "[{\"prometheus_url\":\"http://%%%%host%%%%:%d/%s\"," +
-                            "\"namespace\":\"spark\",\"metrics\":[\"*\"]}]",
-                            port, DEFAULT_PROMETHEUS_METRICS_PATH))
-    );
+        Map.entry(String.format("%s.%s", datadogPrefix, "check_names"), "[\"openmetrics\"]"),
+        Map.entry(String.format("%s.%s", datadogPrefix, "init_configs"), "[{}]"),
+        Map.entry(
+            String.format("%s.%s", datadogPrefix, "instances"),
+            String.format(
+                "[{\"prometheus_url\":\"http://%%%%host%%%%:%d/%s\","
+                    + "\"namespace\":\"spark\",\"metrics\":[\"*\"]}]",
+                port, DEFAULT_PROMETHEUS_METRICS_PATH)));
   }
 }

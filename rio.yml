@@ -127,7 +127,7 @@ pipelines:
     machine:
       env:
         APP_VERSION: "1.1"
-        VERSION: skate-APP_VERSION}.#{}
+        VERSION: skate-${APP_VERSION}.#{}
         BUILD_TIME: "$(date)"
     build:
       template: freestyle:v4:publish
@@ -149,7 +149,7 @@ pipelines:
             - name: "SKATE_VERSION"
               value: ${VERSION}
 
-  - name: dpi-skate-dev-publish-spinnaker-chart
+  - name: dpi-skate-publish-dev-spinnaker-chart
     branchName: release
     timeout: 95
     trigger:
