@@ -77,7 +77,7 @@ public class ApplicationSubmissionRestIntegrationTest {
         submitApplicationRequest -> {
           submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
           submitApplicationRequest.setSparkVersion(sparkVersion);
-          submitApplicationRequest.setQueue("poc");
+          submitApplicationRequest.setQueue("gateway-ci");
         });
   }
 
@@ -87,8 +87,6 @@ public class ApplicationSubmissionRestIntegrationTest {
       throws IOException {
     final String requestTemplate = "/SubmitSparkApplicationRequest_python_example.json";
     final String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
-    final String mainClass = null;
-    final String dependencyPyFile = null;
 
     IntegrationTestHelper.runSparkApplication(
         serviceRootUrl,
@@ -96,7 +94,7 @@ public class ApplicationSubmissionRestIntegrationTest {
         submitApplicationRequest -> {
           submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
           submitApplicationRequest.setSparkVersion(sparkVersion);
-          submitApplicationRequest.setQueue("poc");
+          submitApplicationRequest.setQueue("gateway-ci");
         });
   }
 
@@ -115,6 +113,7 @@ public class ApplicationSubmissionRestIntegrationTest {
           submitApplicationRequest.setSparkVersion(sparkVersion);
           submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
           submitApplicationRequest.setApplicationName(applicationName);
+          submitApplicationRequest.setQueue("gateway-ci");
         });
 
     // Check application status in DB
@@ -151,8 +150,9 @@ public class ApplicationSubmissionRestIntegrationTest {
     final String requestTemplate = "/SubmitSparkApplicationRequest_python_example.json";
     final String sparkApplication = "/SparkExampleAppWhichWillFail.py";
     final String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
+    final String queue = "gateway-ci";
     IntegrationTestHelper.runSparkApplicationWhichWillFail(
-        serviceRootUrl, requestTemplate, sparkVersion, sparkApplicationFile);
+        serviceRootUrl, requestTemplate, sparkVersion, sparkApplicationFile, queue);
   }
 
   @Test(dataProvider = "sparkVersions")
@@ -163,13 +163,15 @@ public class ApplicationSubmissionRestIntegrationTest {
     final String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
     final String mainClass = null;
     final String dependencyPyFile = null;
+    final String queue = "gateway-ci";
     IntegrationTestHelper.runSparkApplication(
         serviceRootUrl,
         requestTemplate,
         sparkVersion,
         sparkApplicationFile,
         mainClass,
-        dependencyPyFile);
+        dependencyPyFile,
+        queue);
   }
 
   @Test(dataProvider = "sparkVersions")
@@ -181,13 +183,16 @@ public class ApplicationSubmissionRestIntegrationTest {
     final String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
     final String mainClass = null;
     final String dependencyPyFile = null;
+    final String queue = "gateway-ci";
+
     IntegrationTestHelper.runSparkApplication(
         serviceRootUrl,
         requestTemplate,
         sparkVersion,
         sparkApplicationFile,
         mainClass,
-        dependencyPyFile);
+        dependencyPyFile,
+        queue);
   }
 
   @Test(dataProvider = "sparkVersions")
@@ -201,6 +206,8 @@ public class ApplicationSubmissionRestIntegrationTest {
     final String dependencyFile =
         skateIntegrationTestResourcesFolderUrl
             + "/SubmitSparkApplicationRequest_python_example.json";
+    final String queue = "gateway-ci";
+
     IntegrationTestHelper.runSparkApplication(
         serviceRootUrl,
         requestTemplate,
@@ -208,7 +215,8 @@ public class ApplicationSubmissionRestIntegrationTest {
         sparkApplicationFile,
         mainClass,
         dependencyPyFile,
-        dependencyFile);
+        dependencyFile,
+        queue);
   }
 
   @Test
@@ -274,9 +282,11 @@ public class ApplicationSubmissionRestIntegrationTest {
 
   @Test(expectedExceptions = RuntimeException.class)
   public void runPythonSparkApplicationWithTooLargeMaxRunningMillis() throws IOException {
-    String requestTemplate = "/SubmitSparkApplicationRequest_python_example.json";
-    String sparkApplication = "/SparkExampleApp.py";
-    String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
+    final String requestTemplate = "/SubmitSparkApplicationRequest_python_example.json";
+    final String sparkApplication = "/SparkExampleApp.py";
+    final String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
+    final String queue = "gateway-ci";
+
     IntegrationTestHelper.runSparkApplication(
         serviceRootUrl,
         requestTemplate,
@@ -284,6 +294,7 @@ public class ApplicationSubmissionRestIntegrationTest {
           submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
           submitApplicationRequest.setSparkConf(new HashMap<>());
           submitApplicationRequest.getSparkConf().put("skate.maxRunningMillis", "43200001");
+          submitApplicationRequest.setQueue(queue);
         });
   }
 
@@ -326,6 +337,7 @@ public class ApplicationSubmissionRestIntegrationTest {
             testSupport.getConfiguration().getS3Bucket());
 
     final String mainClass = "org.apache.spark.examples.SparkPi";
+    final String queue = "gateway-ci";
 
     String driverLogs =
         IntegrationTestHelper.runSparkAppAndGetDriverLog(
@@ -335,6 +347,7 @@ public class ApplicationSubmissionRestIntegrationTest {
               submitApplicationRequest.setSparkVersion(sparkVersion);
               submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
               submitApplicationRequest.setMainClass(mainClass);
+              submitApplicationRequest.setQueue(queue);
             });
 
     Assert.assertTrue(driverLogs.contains("This is an application-level INFO log"));

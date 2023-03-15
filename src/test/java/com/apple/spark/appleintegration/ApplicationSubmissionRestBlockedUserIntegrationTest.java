@@ -48,12 +48,14 @@ public class ApplicationSubmissionRestBlockedUserIntegrationTest {
     final String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
     final String mainClass = null;
     final String dependencyPyFile = null;
+    final String queue = "gateway-ci";
     IntegrationTestHelper.runSparkApplication(
         serviceRootUrl,
         requestTemplate,
         sparkVersion,
         sparkApplicationFile,
         mainClass,
-        dependencyPyFile);
+        dependencyPyFile,
+        queue);
   }
 }

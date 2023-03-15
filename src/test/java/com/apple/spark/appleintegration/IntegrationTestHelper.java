@@ -37,7 +37,8 @@ public class IntegrationTestHelper {
       String sparkVersion,
       String sparkApplicationFile,
       String mainClass,
-      String dependencyPyFile)
+      String dependencyPyFile,
+      String queue)
       throws IOException {
     runSparkApplication(
         serviceRootUrl,
@@ -46,7 +47,8 @@ public class IntegrationTestHelper {
         sparkApplicationFile,
         mainClass,
         dependencyPyFile,
-        null);
+        null,
+        queue);
   }
 
   public static void runSparkApplication(
@@ -56,7 +58,8 @@ public class IntegrationTestHelper {
       String sparkApplicationFile,
       String mainClass,
       String dependencyPyFile,
-      String dependencyFile)
+      String dependencyFile,
+      String queue)
       throws IOException {
 
     runSparkApplication(
@@ -79,6 +82,7 @@ public class IntegrationTestHelper {
             }
             submitApplicationRequest.getDeps().setFiles(Arrays.asList(dependencyFile));
           }
+          submitApplicationRequest.setQueue(queue);
         });
   }
 
@@ -106,7 +110,8 @@ public class IntegrationTestHelper {
       String serviceRootUrl,
       String requestTemplate,
       String sparkVersion,
-      String sparkApplicationFile)
+      String sparkApplicationFile,
+      String queue)
       throws IOException {
     runSparkApplication(
         serviceRootUrl,
@@ -114,6 +119,7 @@ public class IntegrationTestHelper {
         submitApplicationRequest -> {
           submitApplicationRequest.setSparkVersion(sparkVersion);
           submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
+          submitApplicationRequest.setQueue(queue);
         },
         "FAILED",
         false);
