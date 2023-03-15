@@ -23,6 +23,7 @@ import com.apple.spark.AppConfig;
 import com.apple.spark.core.ApplicationSubmissionHelper;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.KubernetesHelper;
+import com.apple.spark.core.SparkClusterHelper;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationResourceList;
@@ -96,7 +97,7 @@ public class RestBase {
   }
 
   protected List<VirtualSparkClusterSpec> getSparkClusters() {
-    return appConfig.getSparkClusters();
+    return SparkClusterHelper.concatenateSparkClusters(appConfig);
   }
 
   protected VirtualSparkClusterSpec getSparkCluster(String submissionId) {
@@ -109,7 +110,7 @@ public class RestBase {
     }
 
     Optional<VirtualSparkClusterSpec> sparkClusterOptional =
-        appConfig.getSparkClusters().stream()
+        SparkClusterHelper.concatenateSparkClusters(appConfig).stream()
             .filter(t -> StringUtils.equals(t.getId(), clusterId))
             .findFirst();
     if (!sparkClusterOptional.isPresent()) {

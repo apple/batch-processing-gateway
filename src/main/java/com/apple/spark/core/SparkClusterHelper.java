@@ -122,7 +122,9 @@ public class SparkClusterHelper {
             .collect(Collectors.toList());
     if (sparkClusters.size() == 0) {
       throw new WebApplicationException(
-          String.format("Spark version not supported: %s", request.getSparkVersion()),
+          String.format(
+              "Spark version not supported out of total %s spark clusters: %s",
+              concatenatedSparkClusters.size(), request.getSparkVersion()),
           Response.Status.BAD_REQUEST);
     }
 

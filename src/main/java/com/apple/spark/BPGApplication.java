@@ -22,10 +22,7 @@ package com.apple.spark;
 import static com.apple.spark.core.Constants.QUEUE_INFO;
 import static com.apple.spark.core.Constants.SERVICE_ABBR;
 
-import com.apple.spark.core.ApplicationMonitor;
-import com.apple.spark.core.BPGStatsdConfig;
-import com.apple.spark.core.Constants;
-import com.apple.spark.core.ThrowableExceptionMapper;
+import com.apple.spark.core.*;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.health.BPGHealthCheck;
 import com.apple.spark.rest.AdminRest;
@@ -159,8 +156,8 @@ public class BPGApplication extends Application<AppConfig> {
     // To use @Auth to inject a User Principal type into REST resource
     environment.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
 
-    final BPGHealthCheck healthCheck = new BPGHealthCheck(configuration.getSparkClusters());
-    environment.healthChecks().register("sparkClusters", healthCheck);
+    final BPGHealthCheck healthCheck = new BPGHealthCheck();
+    environment.healthChecks().register("bpgHealthCheck", healthCheck);
 
     // Support OpenAPI spec for all components under com.apple.spark.rest
     OpenAPI openAPI = new OpenAPI();
@@ -223,20 +220,19 @@ public class BPGApplication extends Application<AppConfig> {
   private void sendQueueInfoMetrics(
       AppConfig configuration, CounterMetricContainer periodicMetrics) {
 
-    if (configuration.getSparkClusters() != null) {
-      for (VirtualSparkClusterSpec cluster : configuration.getSparkClusters()) {
-        List<String> sparkVersions =
-            cluster.getSparkVersions() == null ? new ArrayList<>() : cluster.getSparkVersions();
-        List<String> queues = cluster.getQueues() == null ? new ArrayList<>() : cluster.getQueues();
-        for (String sparkVersion : sparkVersions) {
-          for (String queue : queues) {
-            periodicMetrics.increment(
-                QUEUE_INFO,
-                Tag.of("eks", cluster.getEksCluster()),
-                Tag.of("spark_cluster_id", cluster.getId()),
-                Tag.of("spark_version", sparkVersion),
-                Tag.of("queue", queue));
-          }
+    for (VirtualSparkClusterSpec cluster :
+        SparkClusterHelper.concatenateSparkClusters(configuration)) {
+      List<String> sparkVersions =
+          cluster.getSparkVersions() == null ? new ArrayList<>() : cluster.getSparkVersions();
+      List<String> queues = cluster.getQueues() == null ? new ArrayList<>() : cluster.getQueues();
+      for (String sparkVersion : sparkVersions) {
+        for (String queue : queues) {
+          periodicMetrics.increment(
+              QUEUE_INFO,
+              Tag.of("eks", cluster.getEksCluster()),
+              Tag.of("spark_cluster_id", cluster.getId()),
+              Tag.of("spark_version", sparkVersion),
+              Tag.of("queue", queue));
         }
       }
     }

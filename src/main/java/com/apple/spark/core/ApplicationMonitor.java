@@ -153,24 +153,23 @@ public class ApplicationMonitor implements AutoCloseable {
         SparkConstants.SPARK_APPLICATION_KIND,
         SparkApplication.class);
 
-    if (appConfig.getSparkClusters() != null) {
-      Map<KubernetesClusterAndNamespace, VirtualSparkClusterSpec> uniqueClusters = new HashMap<>();
-      for (VirtualSparkClusterSpec sparkCluster : appConfig.getSparkClusters()) {
-        if (sparkCluster.getWeight() > 0) {
-          KubernetesClusterAndNamespace kubernetesClusterAndNamespace =
-              new KubernetesClusterAndNamespace(
-                  sparkCluster.getMasterUrl(), sparkCluster.getSparkApplicationNamespace());
+    Map<KubernetesClusterAndNamespace, VirtualSparkClusterSpec> uniqueClusters = new HashMap<>();
+    for (VirtualSparkClusterSpec sparkCluster :
+        SparkClusterHelper.concatenateSparkClusters(appConfig)) {
+      if (sparkCluster.getWeight() > 0) {
+        KubernetesClusterAndNamespace kubernetesClusterAndNamespace =
+            new KubernetesClusterAndNamespace(
+                sparkCluster.getMasterUrl(), sparkCluster.getSparkApplicationNamespace());
 
-          uniqueClusters.put(kubernetesClusterAndNamespace, sparkCluster);
-        }
+        uniqueClusters.put(kubernetesClusterAndNamespace, sparkCluster);
       }
+    }
 
-      // For each Spark cluster, start a RunningApplicationMonitor instance, and register a CRD
-      // informer to listen to CRD updates.
-      Timer timer = new Timer(true);
-      for (VirtualSparkClusterSpec sparkCluster : uniqueClusters.values()) {
-        start(sparkCluster, timer);
-      }
+    // For each Spark cluster, start a RunningApplicationMonitor instance, and register a CRD
+    // informer to listen to CRD updates.
+    Timer timer = new Timer(true);
+    for (VirtualSparkClusterSpec sparkCluster : uniqueClusters.values()) {
+      start(sparkCluster, timer);
     }
   }
 

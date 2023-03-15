@@ -39,13 +39,6 @@ public class ConfigUtil {
 
   private static final Logger logger = LoggerFactory.getLogger(ConfigUtil.class);
 
-  public static void mergeConfig(AppConfig config) {
-    List<VirtualSparkClusterSpec> clustersFromDB = getConfFromDB(config);
-    List<VirtualSparkClusterSpec> clustersFromCM = config.getSparkClusters();
-    List<VirtualSparkClusterSpec> combinedSparkClusters = merge(clustersFromCM, clustersFromDB);
-    config.setSparkClusters(combinedSparkClusters);
-  }
-
   public static String getSparkUIUrl(VirtualSparkClusterSpec cluster, String submissionId) {
     return String.format(
         "%s/%s/%s", cluster.getSparkUIUrl(), cluster.getSparkApplicationNamespace(), submissionId);

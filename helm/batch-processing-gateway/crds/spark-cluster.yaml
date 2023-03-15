@@ -44,6 +44,10 @@ spec:
                   type: string
                 userTokenSOPS:
                   type: string
+                httpProxy:
+                  type: string
+                httpsProxy:
+                  type: string
                 sparkApplicationNamespace:
                   type: string
                 sparkServiceAccount:
