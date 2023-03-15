@@ -35,7 +35,6 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
@@ -127,7 +126,6 @@ public class RestBase {
         registry.timer(this.getClass().getSimpleName() + ".getSparkApplicationResource.k8s-time");
     try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
         com.codahale.metrics.Timer.Context context = timer.time()) {
-      CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
       MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
           sparkApplicationClient =
               client.resources(SparkApplication.class, SparkApplicationResourceList.class);
@@ -158,8 +156,6 @@ public class RestBase {
             this.getClass().getSimpleName() + ".getSparkApplicationResourcesByUser.k8s-time");
     try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
         com.codahale.metrics.Timer.Context context = timer.time()) {
-      CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
-
       MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
           sparkApplicationClient =
               client.resources(SparkApplication.class, SparkApplicationResourceList.class);

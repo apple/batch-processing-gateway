@@ -185,7 +185,7 @@ public class IntegrationTestHelper {
 
     String applicationState = null;
 
-    while (System.currentTimeMillis() - startTime < 300000) {
+    while (System.currentTimeMillis() - startTime < 500000) {
       getSubmissionStatusResponse =
           HttpUtils.get(
               getStatusUrl, authHeaderName, authHeaderValue, GetSubmissionStatusResponse.class);

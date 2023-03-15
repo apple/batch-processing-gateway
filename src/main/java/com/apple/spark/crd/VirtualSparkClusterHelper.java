@@ -1,53 +1,46 @@
 package com.apple.spark.crd;
 
-import com.apple.spark.AppConfig;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import com.apple.spark.core.KubernetesHelper;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import java.util.ArrayList;
 import java.util.List;
 
 /** This class is to help retrieve spark cluster resource from CRD */
 public class VirtualSparkClusterHelper {
-  public static VirtualSparkClusterResourceList getVirtualSparkClusterConfigResources() {
-    DefaultKubernetesClient client = new DefaultKubernetesClient();
+  private static VirtualSparkClusterResourceList getVirtualSparkClusterConfigResources(
+      String gatewayNamespace) {
+    try (KubernetesClient client = KubernetesHelper.getLocalK8sClient()) {
+      MixedOperation<
+              VirtualSparkCluster, VirtualSparkClusterResourceList, Resource<VirtualSparkCluster>>
+          virtualSparkClusterClient =
+              client.resources(VirtualSparkCluster.class, VirtualSparkClusterResourceList.class);
 
-    AppConfig appConfig = new AppConfig();
+      if (gatewayNamespace == null || gatewayNamespace.isEmpty()) {
+        gatewayNamespace = KubernetesHelper.tryGetServiceAccountNamespace();
+      }
 
-    CustomResourceDefinitionContext crdContext =
-        VirtualSparkClusterHelper.getVirtualSparkClusterConfigContext();
+      if (gatewayNamespace == null || gatewayNamespace.isEmpty()) {
+        gatewayNamespace = VirtualSparkClusterConstants.DEFAULT_GATEWAY_NAMESPACE;
+      }
 
-    MixedOperation<
-            VirtualSparkClusterResource,
-            VirtualSparkClusterResourceList,
-            Resource<VirtualSparkClusterResource>>
-        virtualSparkClusterClient =
-            client.resources(
-                VirtualSparkClusterResource.class, VirtualSparkClusterResourceList.class);
+      VirtualSparkClusterResourceList list =
+          virtualSparkClusterClient.inNamespace(gatewayNamespace).list();
 
-    VirtualSparkClusterResourceList list =
-        virtualSparkClusterClient.inNamespace(appConfig.getGatewayNamespace()).list();
-    return list != null ? list : new VirtualSparkClusterResourceList();
+      return list != null ? list : new VirtualSparkClusterResourceList();
+    }
   }
 
-  public static List<VirtualSparkClusterSpec> getVirtualSparkClusterConfigSpec() {
-    VirtualSparkClusterResourceList list = getVirtualSparkClusterConfigResources();
+  public static List<VirtualSparkClusterSpec> getVirtualSparkClusterConfigSpecList(
+      String gatewayNamespace) {
+    VirtualSparkClusterResourceList list = getVirtualSparkClusterConfigResources(gatewayNamespace);
 
     List<VirtualSparkClusterSpec> specList = new ArrayList<>();
 
-    for (VirtualSparkClusterResource resource : list.getItems()) {
+    for (VirtualSparkCluster resource : list.getItems()) {
       specList.add(resource.getSpec());
     }
     return specList;
-  }
-
-  public static CustomResourceDefinitionContext getVirtualSparkClusterConfigContext() {
-    return new CustomResourceDefinitionContext.Builder()
-        .withGroup(VirtualSparkClusterConstants.VIRTUAL_SPARK_CLUSTER_CRD_GROUP)
-        .withScope(VirtualSparkClusterConstants.CRD_SCOPE)
-        .withVersion(VirtualSparkClusterConstants.CRD_VERSION)
-        .withPlural(VirtualSparkClusterConstants.VIRTUAL_SPARK_CLUSTER_CRD_PLURAL)
-        .build();
   }
 }

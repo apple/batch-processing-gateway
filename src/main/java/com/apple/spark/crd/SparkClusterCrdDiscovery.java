@@ -1,19 +1,37 @@
 package com.apple.spark.crd;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import static com.apple.spark.core.Constants.*;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class SparkClusterCrdDiscovery {
-  private final AtomicReference<List<VirtualSparkClusterSpec>> clusters =
-      new AtomicReference<>(getVirtualSparkClusterCrdSpec());
+  private static final SparkClusterCrdDiscovery instance = new SparkClusterCrdDiscovery();
 
-  public static List<VirtualSparkClusterSpec> getVirtualSparkClusterCrdSpec() {
-    List<VirtualSparkClusterSpec> list =
-        VirtualSparkClusterHelper.getVirtualSparkClusterConfigSpec();
+  private static LoadingCache<String, List<VirtualSparkClusterSpec>> cache;
 
-    List<VirtualSparkClusterSpec> unmodifiedList = Collections.unmodifiableList(list);
+  //    tryGetServiceAccountNamespace
+  public SparkClusterCrdDiscovery() {
+    CacheLoader<String, List<VirtualSparkClusterSpec>> loader =
+        new CacheLoader<>() {
+          @Override
+          public List<VirtualSparkClusterSpec> load(String gatewayNamespace) {
+            return Collections.unmodifiableList(
+                VirtualSparkClusterHelper.getVirtualSparkClusterConfigSpecList(gatewayNamespace));
+          }
+        };
+    // TODO: Make 10 seconds configuration
+    cache = CacheBuilder.newBuilder().expireAfterAccess(10, TimeUnit.SECONDS).build(loader);
+  }
 
-    return unmodifiedList;
+  public static SparkClusterCrdDiscovery getInstance() {
+    return instance;
+  }
+
+  public List<VirtualSparkClusterSpec> getClusters(String gatewayNamespace) {
+    return cache.getUnchecked(gatewayNamespace);
   }
 }
