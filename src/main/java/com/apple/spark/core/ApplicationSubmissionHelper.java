@@ -368,25 +368,32 @@ public class ApplicationSubmissionHelper {
 
   private static Map<String, String> applyFeatureGate(
       SubmitApplicationRequest request, Map<String, String> conf) {
-    String featureSwitch = "RangerOnCustomImage";
-    List<String> rangerKeys =
-        new ArrayList<>(Arrays.asList("spark.sql.extensions", "spark.ranger.plugin.spark.env"));
+    // Controls if talking with OSS Server for custom image users. Default value is false. This switch exists for the
+    // transition period to OSS Ranger Server, some Spark custom image users may have a base one that doesn't know some
+    // OSS server environments
+    String featureSwitch = "OSSRangerServerOnCustomImage";
+    String rangerEnvKey = "spark.ranger.plugin.spark.env";
+    String ossSuffix = "-oss";
 
-    Map<String, String> filteredMap =
-        conf.entrySet().stream()
-            .filter(
-                map -> {
-                  if (request.getImage() != null
-                      && (StringUtils.isEmpty(conf.get(featureSwitch))
-                          || !conf.get(featureSwitch).equalsIgnoreCase("On"))) {
-                    return !rangerKeys.contains(map.getKey());
-                  } else {
-                    return true;
-                  }
-                })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    boolean disableOSSRangerServer =
+            (request.getImage() != null) &&
+                    (StringUtils.isEmpty(conf.get(featureSwitch)) ||
+                            !conf.get(featureSwitch).equalsIgnoreCase("On"));
 
-    return filteredMap;
+    Map<String, String> newMap =
+            conf.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+    if (disableOSSRangerServer && conf.containsKey(rangerEnvKey)) {
+
+      String rangerEnvValue = conf.get(rangerEnvKey);
+      if (rangerEnvValue.contains(ossSuffix)) {
+        newMap.remove(rangerEnvKey);
+        // Update with a config entry that removes last 4 letters "-oss", so still connects to non-oss ranger Server
+        newMap.put(rangerEnvKey, rangerEnvValue.substring(0, rangerEnvValue.length() - 4));
+      }
+    }
+
+    return newMap;
   }
 
   /**
