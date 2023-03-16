@@ -64,7 +64,7 @@ public class SparkClusterCrdDiscovery {
     try {
       list = cache.getUnchecked(gatewayNamespace);
     } catch (Throwable ex) {
-      logger.info(ex.getMessage());
+      logger.warn("Failed to get VirtualSparkCluster from " + gatewayNamespace, ex);
     }
     return list;
   }
