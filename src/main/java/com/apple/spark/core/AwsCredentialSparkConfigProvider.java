@@ -25,6 +25,7 @@ import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityRequest;
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithWebIdentityResult;
 import com.amazonaws.services.securitytoken.model.Credentials;
+import com.apple.spark.AppConfig;
 import com.apple.spark.operator.SparkApplicationSpec;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,7 +53,8 @@ public class AwsCredentialSparkConfigProvider {
    * This method adds aws credential related spark config if needed.
    * @param sparkSpec
    */
-  public static void addAwsCredentialSparkConfig(SparkApplicationSpec sparkSpec) {
+  public static void addAwsCredentialSparkConfig(
+      SparkApplicationSpec sparkSpec, AppConfig.QueueConfig queueConfig) {
     if (sparkSpec.getSparkConf() == null) {
       return;
     }
@@ -61,6 +63,17 @@ public class AwsCredentialSparkConfigProvider {
         sparkSpec.getSparkConf().get(Constants.ASSUME_ROLE_WITH_WEB_IDENTITY_ROLE_ARN);
     if (assumeRoleWithWebIdentityRoleArn == null || assumeRoleWithWebIdentityRoleArn.isEmpty()) {
       return;
+    }
+
+    if (queueConfig == null) {
+      throw new RuntimeException("Queue is not configured to allow assuming role");
+    }
+
+    if (!queueConfig.allowAssumeRole(assumeRoleWithWebIdentityRoleArn)) {
+      throw new RuntimeException(
+          String.format(
+              "Queue %s does not allow assuming role %s",
+              queueConfig.getName(), assumeRoleWithWebIdentityRoleArn));
     }
 
     logger.info(

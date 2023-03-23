@@ -77,4 +77,23 @@ public class GatewayConfigTest {
     Assert.assertTrue(sparkCluster.matchQueue("q2"));
     Assert.assertFalse(sparkCluster.matchQueue("q3"));
   }
+
+  @Test
+  public void allowAssumeRole() {
+    AppConfig.QueueConfig queueConfig = new AppConfig.QueueConfig();
+    Assert.assertFalse(queueConfig.allowAssumeRole(null));
+    Assert.assertFalse(queueConfig.allowAssumeRole(""));
+    Assert.assertFalse(queueConfig.allowAssumeRole("role1"));
+
+    queueConfig.setAllowedAssumeRoles(new ArrayList<>());
+    Assert.assertFalse(queueConfig.allowAssumeRole(null));
+    Assert.assertFalse(queueConfig.allowAssumeRole(""));
+    Assert.assertFalse(queueConfig.allowAssumeRole("role1"));
+
+    queueConfig.setAllowedAssumeRoles(Arrays.asList("role1:arn"));
+    Assert.assertFalse(queueConfig.allowAssumeRole(null));
+    Assert.assertFalse(queueConfig.allowAssumeRole(""));
+    Assert.assertFalse(queueConfig.allowAssumeRole("role1"));
+    Assert.assertTrue(queueConfig.allowAssumeRole("role1:arn"));
+  }
 }

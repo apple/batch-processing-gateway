@@ -538,6 +538,7 @@ public class AppConfig extends Configuration {
     private double executorCPUBufferRatio = 1.0;
     private double driverMemBufferRatio = 1.0;
     private double executorMemBufferRatio = 1.0;
+    private List<String> allowedAssumeRoles;
 
     public String getName() {
       return name;
@@ -645,6 +646,19 @@ public class AppConfig extends Configuration {
 
     public void setExecutorMemBufferRatio(String executorMemBufferRatio) {
       this.executorMemBufferRatio = Double.parseDouble(executorMemBufferRatio);
+    }
+
+    public List<String> getAllowedAssumeRoles() {
+      return allowedAssumeRoles;
+    }
+
+    public void setAllowedAssumeRoles(List<String> allowedAssumeRoles) {
+      this.allowedAssumeRoles = allowedAssumeRoles;
+    }
+
+    public boolean allowAssumeRole(String roleArn) {
+      return allowedAssumeRoles != null
+          && allowedAssumeRoles.stream().anyMatch(t -> t.equalsIgnoreCase(roleArn));
     }
   }
 
