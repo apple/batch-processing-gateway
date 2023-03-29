@@ -143,7 +143,7 @@ pipelines:
             - repo: docker.apple.com/aiml-di-dpi/skate/dev
     finally:
       pipelineChain:
-        - pipeline: dpi-skate-dev-publish-spinnaker-chart
+        - pipeline: dpi-skate-publish-dev-spinnaker-chart
           upstreamGitRevision: true
           buildArguments:
             - name: "SKATE_VERSION"

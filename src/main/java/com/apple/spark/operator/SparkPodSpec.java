@@ -37,6 +37,7 @@ public class SparkPodSpec {
   private String coreRequest;
   private String memory;
   private String memoryOverhead;
+  private GpuSpec gpu;
   @Hidden private String image;
   private List<EnvVar> env;
   @Hidden private Map<String, String> labels;
@@ -68,6 +69,9 @@ public class SparkPodSpec {
     }
     if (another.memoryOverhead != null) {
       this.memoryOverhead = another.memoryOverhead;
+    }
+    if (another.gpu != null) {
+      this.gpu = another.gpu;
     }
     if (another.image != null) {
       this.image = another.image;
@@ -130,6 +134,14 @@ public class SparkPodSpec {
 
   public void setMemoryOverhead(String memoryOverhead) {
     this.memoryOverhead = memoryOverhead;
+  }
+
+  public GpuSpec getGpu() {
+    return gpu;
+  }
+
+  public void setGpu(GpuSpec gpu) {
+    this.gpu = gpu;
   }
 
   public String getImage() {

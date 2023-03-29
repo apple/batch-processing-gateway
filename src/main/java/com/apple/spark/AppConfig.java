@@ -24,6 +24,7 @@ import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.dropwizard.Configuration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,6 +58,8 @@ public class AppConfig extends Configuration {
   private List<String> adminUsers;
 
   private List<QueueConfig> queues;
+
+  private Map<String, QueueConfig> queueConfigs;
 
   private QueueTokenConfig queueTokenSOPS;
 
@@ -175,6 +178,20 @@ public class AppConfig extends Configuration {
 
   public void setQueues(List<QueueConfig> queues) {
     this.queues = queues;
+  }
+
+  public Map<String, QueueConfig> getQueueConfigs() {
+    if (queueConfigs != null) {
+      return queueConfigs;
+    }
+    if (queues == null) {
+      return null;
+    }
+    queueConfigs = new HashMap<>();
+    for (QueueConfig queue : queues) {
+      queueConfigs.put(queue.getName(), queue);
+    }
+    return queueConfigs;
   }
 
   public QueueTokenConfig getQueueTokenSOPS() {
@@ -539,6 +556,7 @@ public class AppConfig extends Configuration {
     private double driverMemBufferRatio = 1.0;
     private double executorMemBufferRatio = 1.0;
     private List<String> allowedAssumeRoles;
+    private boolean supportGpu = false;
 
     public String getName() {
       return name;
@@ -659,6 +677,14 @@ public class AppConfig extends Configuration {
     public boolean allowAssumeRole(String roleArn) {
       return allowedAssumeRoles != null
           && allowedAssumeRoles.stream().anyMatch(t -> t.equalsIgnoreCase(roleArn));
+    }
+
+    public Boolean getSupportGpu() {
+      return supportGpu;
+    }
+
+    public void setSupportGpu(Boolean supportGpu) {
+      this.supportGpu = supportGpu;
     }
   }
 

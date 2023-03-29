@@ -258,6 +258,9 @@ public class ApplicationSubmissionRest extends RestBase {
     String parentQueue = SparkClusterHelper.getParentQueue(queue);
     String queueTagValue = queue == null ? "" : queue;
 
+    // Reject GPU jobs submitted to non-GPU queues
+    validateGpuRequest(request, queue);
+
     // Populate Prometheus monitoring configs into the request
     if (request.getSparkConf() != null
         && Boolean.parseBoolean(request.getSparkConf().get(ENABLE_METRICS_CONF))) {
@@ -1066,6 +1069,17 @@ public class ApplicationSubmissionRest extends RestBase {
                   instances, MAX_EXECUTOR_INSTANCES),
               Response.Status.BAD_REQUEST);
         }
+      }
+    }
+  }
+
+  private void validateGpuRequest(SubmitApplicationRequest request, String queue) {
+    if (request.getExecutor().getGpu() != null) {
+      if (!appConfig.getQueueConfigs().containsKey(queue)
+          || !appConfig.getQueueConfigs().get(queue).getSupportGpu()) {
+        String errMsg = String.format("Queue %s doesn't support GPU", queue);
+        logger.error(errMsg);
+        throw new WebApplicationException(errMsg);
       }
     }
   }
