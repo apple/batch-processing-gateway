@@ -62,6 +62,10 @@ public class AwsCredentialSparkConfigProvider {
     String assumeRoleWithWebIdentityRoleArn =
         sparkSpec.getSparkConf().get(Constants.ASSUME_ROLE_WITH_WEB_IDENTITY_ROLE_ARN);
     if (assumeRoleWithWebIdentityRoleArn == null || assumeRoleWithWebIdentityRoleArn.isEmpty()) {
+      assumeRoleWithWebIdentityRoleArn = queueConfig.getDefaultAssumeRole();
+    }
+
+    if (assumeRoleWithWebIdentityRoleArn == null || assumeRoleWithWebIdentityRoleArn.isEmpty()) {
       return;
     }
 

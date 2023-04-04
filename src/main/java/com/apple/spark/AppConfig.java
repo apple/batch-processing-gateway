@@ -556,6 +556,7 @@ public class AppConfig extends Configuration {
     private double driverMemBufferRatio = 1.0;
     private double executorMemBufferRatio = 1.0;
     private List<String> allowedAssumeRoles;
+    private String defaultAssumeRole;
     private boolean supportGpu = false;
 
     public String getName() {
@@ -677,6 +678,14 @@ public class AppConfig extends Configuration {
     public boolean allowAssumeRole(String roleArn) {
       return allowedAssumeRoles != null
           && allowedAssumeRoles.stream().anyMatch(t -> t.equalsIgnoreCase(roleArn));
+    }
+
+    public String getDefaultAssumeRole() {
+      return defaultAssumeRole;
+    }
+
+    public void setDefaultAssumeRole(String defaultAssumeRole) {
+      this.defaultAssumeRole = defaultAssumeRole;
     }
 
     public Boolean getSupportGpu() {
