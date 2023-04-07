@@ -52,6 +52,7 @@ public class AwsCredentialSparkConfigProvider {
   /***
    * This method adds aws credential related spark config if needed.
    * @param sparkSpec
+   * @param queueConfig this may be null
    */
   public static void addAwsCredentialSparkConfig(
       SparkApplicationSpec sparkSpec, AppConfig.QueueConfig queueConfig) {
@@ -62,7 +63,9 @@ public class AwsCredentialSparkConfigProvider {
     String assumeRoleWithWebIdentityRoleArn =
         sparkSpec.getSparkConf().get(Constants.ASSUME_ROLE_WITH_WEB_IDENTITY_ROLE_ARN);
     if (assumeRoleWithWebIdentityRoleArn == null || assumeRoleWithWebIdentityRoleArn.isEmpty()) {
-      assumeRoleWithWebIdentityRoleArn = queueConfig.getDefaultAssumeRole();
+      if (queueConfig != null) {
+        assumeRoleWithWebIdentityRoleArn = queueConfig.getDefaultAssumeRole();
+      }
     }
 
     if (assumeRoleWithWebIdentityRoleArn == null || assumeRoleWithWebIdentityRoleArn.isEmpty()) {
