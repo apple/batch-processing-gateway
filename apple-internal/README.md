@@ -47,3 +47,35 @@ $ sops --encrypt --age <pub-key-in-key-file> config.yml > int-test-config.enc.ym
 ## Spinnaker Helm Chart
 The `spinnaker-skate` is a Helm chart particularly made for Spinnaker deployment.
 As defined in Rio `rio.xml`, every time a change is merged to the main branch, a new helm chart version is automatically published.
+
+### Local Testing
+Steps to run batch-processing-gateway locally:
+1. Add config.yaml in the local batch-processing-gateway project folder. The content of config.yaml is the configMap of skate-vXX (like skate-v046)
+2. Set up a run configuration to run com.apple.spark.BGPApplication with "server config.yaml" as parameter
+3. In a terminal, set the aws-profile and context according to the config.yaml
+4. Run application and use the following in the above terminal to submit a job
+```bash
+curl -u user_name:dummy_password http://localhost:8080/skatev2/spark -i -X POST \
+    -H 'Content-Type: application/json' \
+    -d '{
+        "sparkVersion": "3.2",
+        "mainApplicationFile": "s3a://bpg/uploaded/foo/MinimalSparkApp.py",
+        "driver": {
+        "cores": 1,
+        "memory": "2g"
+    },
+    "executor": {
+        "instances": 1,
+        "cores": 1,
+        "memory": "2g"
+    }
+    }'
+```
+
+Troubleshooting:
+If you get an error like following:
+```bash
+curl: (7) Failed to connect to localhost port 8080 after 6 ms: Connection refused
+```
+Please change the server.applicationConnectors.port in the config.yaml and the corresponding endpoint in the above command line, then try again.
+
