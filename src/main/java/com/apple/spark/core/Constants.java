@@ -41,6 +41,8 @@ public class Constants {
   public static final Set<String> AIRFLOW_SYSTEM_ACCOUNTS =
       new HashSet<>(Arrays.asList("aimldpiairflow_bot", "aimldpiairflow_bot_2"));
 
+  public static final Set<String> FEATURESTORE_SYSTEM_ACCOUNTS = new HashSet<>(Arrays.asList("skatebot_s", "skatebot_search"));
+
   public static final String UNKNOWN_STATE = "UNKNOWN";
   public static final String SPOT_TIMEOUT = "SPOT_TIMEOUT";
   public static final String FAILED_STATE = "FAILED";

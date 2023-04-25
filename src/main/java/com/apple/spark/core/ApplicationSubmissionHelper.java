@@ -120,7 +120,7 @@ public class ApplicationSubmissionHelper {
    * @return the DAG username if user is a system account
    */
   public static String getProxyUser(String user, String dagUser) {
-    if (AIRFLOW_SYSTEM_ACCOUNTS.contains(user)) {
+    if (AIRFLOW_SYSTEM_ACCOUNTS.contains(user) || FEATURESTORE_SYSTEM_ACCOUNTS.contains(user)) {
       return dagUser;
     }
 
