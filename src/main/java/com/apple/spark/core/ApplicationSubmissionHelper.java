@@ -144,9 +144,8 @@ public class ApplicationSubmissionHelper {
       if (sparkConf == null) {
         sparkConf = new HashMap<>();
       }
-      Map<String, String> filteredDefaultSparkConf = applyFeatureGate(request, defaultSparkConf);
-
-      for (Map.Entry<String, String> entry : filteredDefaultSparkConf.entrySet()) {
+      
+      for (Map.Entry<String, String> entry : defaultSparkConf.entrySet()) {
         sparkConf.put(entry.getKey(), substitutionSparkConfigValue(entry.getValue(), submissionId));
       }
     }
@@ -364,36 +363,6 @@ public class ApplicationSubmissionHelper {
       value = value.replace(Constants.SPARK_APPLICATION_RESOURCE_NAME_VAR, submissionId);
     }
     return value;
-  }
-
-  private static Map<String, String> applyFeatureGate(
-      SubmitApplicationRequest request, Map<String, String> conf) {
-    // Controls if talking with OSS Server for custom image users. Default value is false. This switch exists for the
-    // transition period to OSS Ranger Server, some Spark custom image users may have a base one that doesn't know some
-    // OSS server environments
-    String featureSwitch = "OSSRangerServerOnCustomImage";
-    String rangerEnvKey = "spark.ranger.plugin.spark.env";
-    String ossSuffix = "-oss";
-
-    boolean disableOSSRangerServer =
-            (request.getImage() != null) &&
-                    (StringUtils.isEmpty(conf.get(featureSwitch)) ||
-                            !conf.get(featureSwitch).equalsIgnoreCase("On"));
-
-    Map<String, String> newMap =
-            conf.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-    if (disableOSSRangerServer && conf.containsKey(rangerEnvKey)) {
-
-      String rangerEnvValue = conf.get(rangerEnvKey);
-      if (rangerEnvValue.contains(ossSuffix)) {
-        newMap.remove(rangerEnvKey);
-        // Update with a config entry that removes last 4 letters "-oss", so still connects to non-oss ranger Server
-        newMap.put(rangerEnvKey, rangerEnvValue.substring(0, rangerEnvValue.length() - 4));
-      }
-    }
-
-    return newMap;
   }
 
   /**
