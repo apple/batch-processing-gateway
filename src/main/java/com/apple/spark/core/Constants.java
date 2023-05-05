@@ -117,6 +117,4 @@ public class Constants {
   public static final String HEALTH_CHECK_API = "/healthcheck";
   public static final String ADMIN_API = "/admin";
   public static final String LOG_API = "/log";
-  public static final String HIVE_METASTORE_SASL_ENABLED =
-          "spark.hadoop.hive.metastore.sasl.enabled";
 }
