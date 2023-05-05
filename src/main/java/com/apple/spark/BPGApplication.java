@@ -31,7 +31,7 @@ import com.apple.spark.rest.AdminRest;
 import com.apple.spark.rest.ApplicationGetLogRest;
 import com.apple.spark.rest.ApplicationSubmissionRest;
 import com.apple.spark.rest.HealthcheckRest;
-import com.apple.spark.rest.S3Rest;
+import com.apple.spark.rest.CloudStorageRest;
 import com.apple.spark.security.User;
 import com.apple.spark.security.UserNameAuthFilter;
 import com.apple.spark.security.UserNameBasicAuthenticator;
@@ -98,6 +98,11 @@ public class BPGApplication extends Application<AppConfig> {
 
   @Override
   public void run(final AppConfig configuration, final Environment environment) {
+    String applicationContextPath = configuration.getApplicationContextPath();
+    if (applicationContextPath == null || applicationContextPath.isEmpty()) {
+      applicationContextPath = Constants.DEFAULT_APPLICATION_CONTEXT_PATH;
+    }
+    environment.getApplicationContext().setContextPath(applicationContextPath);
 
     // Get the application's metric registry
     MetricRegistry registry = environment.metrics();
@@ -114,8 +119,8 @@ public class BPGApplication extends Application<AppConfig> {
         new ApplicationGetLogRest(configuration, meterRegistry);
     environment.jersey().register(applicationGetLogRest);
 
-    final S3Rest s3Rest = new S3Rest(configuration, meterRegistry);
-    environment.jersey().register(s3Rest);
+    final CloudStorageRest cloudStorageRest = new CloudStorageRest(configuration, meterRegistry);
+    environment.jersey().register(cloudStorageRest);
 
     final AdminRest adminRest = new AdminRest(configuration, meterRegistry);
     environment.jersey().register(adminRest);

@@ -19,7 +19,7 @@
 
 package com.apple.spark.rest;
 
-import static com.apple.spark.core.Constants.LOG_API_V2;
+import static com.apple.spark.core.Constants.LOG_API;
 import static com.apple.spark.rest.AwsConstants.CLIENT_REGION;
 import static com.apple.spark.rest.AwsConstants.S3_GET_TIMEOUT_MILLISECS;
 import static com.apple.spark.util.HttpUtils.get;
@@ -75,7 +75,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @PermitAll
-@Path(LOG_API_V2)
+@Path(LOG_API)
 @Produces(MediaType.APPLICATION_JSON)
 public class ApplicationGetLogRest extends RestBase {
 

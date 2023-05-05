@@ -108,7 +108,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @PermitAll
-@Path(SPARK_API_V2)
+@Path(SPARK_API)
 @Produces(MediaType.APPLICATION_JSON)
 public class ApplicationSubmissionRest extends RestBase {
 

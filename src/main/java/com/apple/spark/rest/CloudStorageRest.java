@@ -19,7 +19,7 @@
 
 package com.apple.spark.rest;
 
-import static com.apple.spark.core.Constants.S3_API_V2;
+import static com.apple.spark.core.Constants.S3_API;
 import static com.apple.spark.rest.AwsConstants.CLIENT_REGION;
 import static com.apple.spark.rest.AwsConstants.S3_PUT_TIMEOUT_MILLISECS;
 
@@ -42,6 +42,7 @@ import com.apple.spark.security.User;
 import com.apple.spark.util.ExceptionUtils;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
+import com.google.cloud.storage.*;
 import io.dropwizard.auth.Auth;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -49,6 +50,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -72,16 +74,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @PermitAll
-@Path(S3_API_V2)
+@Path(S3_API)
 @Produces(MediaType.APPLICATION_JSON)
-public class S3Rest extends RestBase {
+public class CloudStorageRest extends RestBase {
 
-  private static final Logger logger = LoggerFactory.getLogger(S3Rest.class);
+  private static final Logger logger = LoggerFactory.getLogger(CloudStorageRest.class);
 
   private static final Optional<String> s3endpoint =
       Optional.ofNullable(System.getProperty("s3.endpoint.url"));
 
-  public S3Rest(AppConfig appConfig, MeterRegistry meterRegistry) {
+  public CloudStorageRest(AppConfig appConfig, MeterRegistry meterRegistry) {
     super(appConfig, meterRegistry);
   }
 
@@ -128,24 +130,47 @@ public class S3Rest extends RestBase {
     requestCounters.increment(
         REQUEST_METRIC_NAME, Tag.of("name", "upload_s3_file"), Tag.of("user", user.getName()));
 
-    if (contentLength == null) {
-      if (contentLengthHeaderValue == null) {
-        throw new WebApplicationException(
-            "Please provide content-length in http request header or query parameter",
-            Response.Status.BAD_REQUEST);
-      }
-      try {
-        contentLength = Long.parseLong(contentLengthHeaderValue);
-      } catch (Throwable ex) {
-        throw new WebApplicationException(
-            "Please provide valid value for content-length in http request header",
-            Response.Status.BAD_REQUEST);
+    String bucket = appConfig.getS3Bucket();
+    if (bucket == null) {
+      bucket = "";
+    }
+
+    String gsBucketPrefix = "gs://";
+    boolean uploadToGcs = false;
+    if (bucket.toLowerCase().startsWith(gsBucketPrefix)) {
+      uploadToGcs = true;
+      bucket = bucket.substring(gsBucketPrefix.length());
+    }
+
+    if (!uploadToGcs) {
+      if (contentLength == null) {
+        if (contentLengthHeaderValue == null) {
+          throw new WebApplicationException(
+              "Please provide content-length in http request header or query parameter",
+              Response.Status.BAD_REQUEST);
+        }
+        try {
+          contentLength = Long.parseLong(contentLengthHeaderValue);
+        } catch (Throwable ex) {
+          throw new WebApplicationException(
+              "Please provide valid value for content-length in http request header",
+              Response.Status.BAD_REQUEST);
+        }
       }
     }
 
     String key = generateS3Key(fileName, folderName);
-    logger.info("Upload file to s3 {} in bucket {}", key, appConfig.getS3Bucket());
+    logger.info("Upload file to s3 {} in bucket {}", key, bucket);
 
+    if (!uploadToGcs) {
+      return uploadStreamS3(inputStream, contentLength, bucket, key);
+    } else {
+      return uploadStreamGcs(inputStream, bucket, key);
+    }
+  }
+
+  private UploadS3Response uploadStreamS3(
+      InputStream inputStream, Long contentLength, String bucket, String key) {
     // Use default credential provider chain for imdsv2-rbacv2
     DefaultAWSCredentialsProviderChain awsDefaultCredentialChain =
         new DefaultAWSCredentialsProviderChain();
@@ -185,8 +210,7 @@ public class S3Rest extends RestBase {
     metadata.setContentType("application/octet-stream");
     metadata.setContentLength(contentLength);
 
-    PutObjectRequest request =
-        new PutObjectRequest(appConfig.getS3Bucket(), key, inputStream, metadata);
+    PutObjectRequest request = new PutObjectRequest(bucket, key, inputStream, metadata);
 
     AtomicLong totalTransferredBytes = new AtomicLong(0);
 
@@ -236,7 +260,25 @@ public class S3Rest extends RestBase {
     }
 
     UploadS3Response response = new UploadS3Response();
-    response.setUrl(String.format("s3a://%s/%s", appConfig.getS3Bucket(), key));
+    response.setUrl(String.format("s3a://%s/%s", bucket, key));
+    return response;
+  }
+
+  private UploadS3Response uploadStreamGcs(InputStream inputStream, String bucket, String key) {
+    Storage storage = StorageOptions.getDefaultInstance().getService();
+    BlobId blobId = BlobId.of(bucket, key);
+    BlobInfo blobInfo =
+        BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
+    logger.info("Uploading to GCS: gs://{}/{}", bucket, key);
+    try {
+      storage.createFrom(blobInfo, inputStream);
+      logger.info("Uploaded to GCS: gs://{}/{}", bucket, key);
+    } catch (IOException e) {
+      throw new WebApplicationException(
+          "Failed to upload to GCS: " + ExceptionUtils.getExceptionNameAndMessage(e), e);
+    }
+    UploadS3Response response = new UploadS3Response();
+    response.setUrl(String.format("gs://%s/%s", bucket, key));
     return response;
   }
 

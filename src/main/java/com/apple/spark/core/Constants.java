@@ -109,10 +109,12 @@ public class Constants {
   public static final String MONITOR_DROPPED_EVENT =
       String.format("statsd.%s.monitor.dropped_event", SERVICE_ABBR);
 
+  public static final String DEFAULT_APPLICATION_CONTEXT_PATH = "/skatev2";
+
   // API Endpoints
-  public static final String SPARK_API_V2 = "/apiv2/spark";
-  public static final String S3_API_V2 = "/apiv2/s3";
-  public static final String HEALTH_CHECK_API_V2 = "/apiv2/healthcheck";
-  public static final String ADMIN_API_V2 = "/apiv2/admin";
-  public static final String LOG_API_V2 = "/apiv2/log";
+  public static final String SPARK_API = "/spark";
+  public static final String S3_API = "/s3";
+  public static final String HEALTH_CHECK_API = "/healthcheck";
+  public static final String ADMIN_API = "/admin";
+  public static final String LOG_API = "/log";
 }
