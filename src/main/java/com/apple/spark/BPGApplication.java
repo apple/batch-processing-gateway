@@ -98,6 +98,11 @@ public class BPGApplication extends Application<AppConfig> {
 
   @Override
   public void run(final AppConfig configuration, final Environment environment) {
+    String applicationContextPath = configuration.getApplicationContextPath();
+    if (applicationContextPath == null || applicationContextPath.isEmpty()) {
+      applicationContextPath = Constants.DEFAULT_APPLICATION_CONTEXT_PATH;
+    }
+    environment.getApplicationContext().setContextPath(applicationContextPath);
 
     // Get the application's metric registry
     MetricRegistry registry = environment.metrics();

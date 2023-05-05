@@ -19,7 +19,7 @@
 
 package com.apple.spark.rest;
 
-import static com.apple.spark.core.Constants.S3_API_V2;
+import static com.apple.spark.core.Constants.S3_API;
 import static com.apple.spark.rest.AwsConstants.CLIENT_REGION;
 import static com.apple.spark.rest.AwsConstants.S3_PUT_TIMEOUT_MILLISECS;
 
@@ -72,7 +72,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @PermitAll
-@Path(S3_API_V2)
+@Path(S3_API)
 @Produces(MediaType.APPLICATION_JSON)
 public class S3Rest extends RestBase {
 

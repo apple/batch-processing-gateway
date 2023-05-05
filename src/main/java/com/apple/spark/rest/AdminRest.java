@@ -19,7 +19,7 @@
 
 package com.apple.spark.rest;
 
-import static com.apple.spark.core.Constants.ADMIN_API_V2;
+import static com.apple.spark.core.Constants.ADMIN_API;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.core.Constants;
@@ -55,7 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @PermitAll
-@Path(ADMIN_API_V2)
+@Path(ADMIN_API)
 @Produces(MediaType.APPLICATION_JSON)
 public class AdminRest extends RestBase {
 
