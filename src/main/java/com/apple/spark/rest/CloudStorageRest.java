@@ -81,7 +81,7 @@ public class CloudStorageRest extends RestBase {
   private static final Logger logger = LoggerFactory.getLogger(CloudStorageRest.class);
 
   private static final Optional<String> s3endpoint =
-          Optional.ofNullable(System.getProperty("s3.endpoint.url"));
+      Optional.ofNullable(System.getProperty("s3.endpoint.url"));
 
   public CloudStorageRest(AppConfig appConfig, MeterRegistry meterRegistry) {
     super(appConfig, meterRegistry);
@@ -91,44 +91,44 @@ public class CloudStorageRest extends RestBase {
   @Path("{name}")
   @Timed
   @ExceptionMetered(
-          name = "WebApplicationException",
-          absolute = true,
-          cause = WebApplicationException.class)
+      name = "WebApplicationException",
+      absolute = true,
+      cause = WebApplicationException.class)
   @Operation(
-          summary = "Upload an artifact to S3 and save as a S3 object.",
-          description =
-                  "The content length parameter must be exactly same as the size of the stream. DO NOT"
-                          + " upload any sensitive data file.",
-          tags = {"Storage"})
+      summary = "Upload an artifact to S3 and save as a S3 object.",
+      description =
+          "The content length parameter must be exactly same as the size of the stream. DO NOT"
+              + " upload any sensitive data file.",
+      tags = {"Storage"})
   @RequestBody(content = @Content(mediaType = "application/octet-stream"))
   public UploadS3Response uploadStream(
-          @Parameter(
-                  description = "name of the artifact without parent folders",
-                  example = "artifact.jar")
+      @Parameter(
+              description = "name of the artifact without parent folders",
+              example = "artifact.jar")
           @PathParam("name")
           String fileName,
-          InputStream inputStream,
-          @Parameter(description = "content length can be provided in either query or header")
+      InputStream inputStream,
+      @Parameter(description = "content length can be provided in either query or header")
           @QueryParam("content-length")
           Long contentLength,
-          @Parameter(description = "content length can be provided in either query or header")
+      @Parameter(description = "content length can be provided in either query or header")
           @HeaderParam("content-length")
           String contentLengthHeaderValue,
-          @Parameter(
-                  description = "the folder path to which you want to publish the artifact",
-                  example = "your/folder/")
+      @Parameter(
+              description = "the folder path to which you want to publish the artifact",
+              example = "your/folder/")
           @QueryParam("folder")
           String folderName,
-          @Parameter(hidden = true) @DefaultValue("none") @HeaderParam("Client-Version")
+      @Parameter(hidden = true) @DefaultValue("none") @HeaderParam("Client-Version")
           String clientVersion,
-          @Parameter(hidden = true) @Auth User user) {
+      @Parameter(hidden = true) @Auth User user) {
     logger.info(
-            "LogClientInfo: user {}, {}, Client-Version {}",
-            user.getName(),
-            "uploadStream",
-            clientVersion);
+        "LogClientInfo: user {}, {}, Client-Version {}",
+        user.getName(),
+        "uploadStream",
+        clientVersion);
     requestCounters.increment(
-            REQUEST_METRIC_NAME, Tag.of("name", "upload_s3_file"), Tag.of("user", user.getName()));
+        REQUEST_METRIC_NAME, Tag.of("name", "upload_s3_file"), Tag.of("user", user.getName()));
 
     String bucket = appConfig.getS3Bucket();
     if (bucket == null) {
@@ -146,15 +146,15 @@ public class CloudStorageRest extends RestBase {
       if (contentLength == null) {
         if (contentLengthHeaderValue == null) {
           throw new WebApplicationException(
-                  "Please provide content-length in http request header or query parameter",
-                  Response.Status.BAD_REQUEST);
+              "Please provide content-length in http request header or query parameter",
+              Response.Status.BAD_REQUEST);
         }
         try {
           contentLength = Long.parseLong(contentLengthHeaderValue);
         } catch (Throwable ex) {
           throw new WebApplicationException(
-                  "Please provide valid value for content-length in http request header",
-                  Response.Status.BAD_REQUEST);
+              "Please provide valid value for content-length in http request header",
+              Response.Status.BAD_REQUEST);
         }
       }
     }
@@ -170,10 +170,10 @@ public class CloudStorageRest extends RestBase {
   }
 
   private UploadS3Response uploadStreamS3(
-          InputStream inputStream, Long contentLength, String bucket, String key) {
+      InputStream inputStream, Long contentLength, String bucket, String key) {
     // Use default credential provider chain for imdsv2-rbacv2
     DefaultAWSCredentialsProviderChain awsDefaultCredentialChain =
-            new DefaultAWSCredentialsProviderChain();
+        new DefaultAWSCredentialsProviderChain();
 
     ClientConfiguration clientConfiguration = new ClientConfiguration();
     clientConfiguration.setConnectionTimeout(S3_PUT_TIMEOUT_MILLISECS);
@@ -182,13 +182,13 @@ public class CloudStorageRest extends RestBase {
     clientConfiguration.setClientExecutionTimeout(S3_PUT_TIMEOUT_MILLISECS);
 
     AmazonS3ClientBuilder s3ClientBuilder =
-            AmazonS3ClientBuilder.standard()
-                    .withClientConfiguration(clientConfiguration)
-                    .withCredentials(awsDefaultCredentialChain);
+        AmazonS3ClientBuilder.standard()
+            .withClientConfiguration(clientConfiguration)
+            .withCredentials(awsDefaultCredentialChain);
 
     if (s3endpoint.isPresent()) {
       s3ClientBuilder.withEndpointConfiguration(
-              new AwsClientBuilder.EndpointConfiguration(s3endpoint.get(), CLIENT_REGION.getName()));
+          new AwsClientBuilder.EndpointConfiguration(s3endpoint.get(), CLIENT_REGION.getName()));
       s3ClientBuilder.enablePathStyleAccess();
     } else {
       s3ClientBuilder.withRegion(CLIENT_REGION);
@@ -200,11 +200,11 @@ public class CloudStorageRest extends RestBase {
     final long multipartUploadThreshold = 10 * 1024 * 1024; // 10MB
 
     TransferManager transferManager =
-            TransferManagerBuilder.standard()
-                    .withS3Client(s3Client)
-                    .withMultipartCopyThreshold(multipartUploadThreshold)
-                    .withMultipartUploadThreshold(multipartUploadThreshold)
-                    .build();
+        TransferManagerBuilder.standard()
+            .withS3Client(s3Client)
+            .withMultipartCopyThreshold(multipartUploadThreshold)
+            .withMultipartUploadThreshold(multipartUploadThreshold)
+            .build();
 
     ObjectMetadata metadata = new ObjectMetadata();
     metadata.setContentType("application/octet-stream");
@@ -215,25 +215,25 @@ public class CloudStorageRest extends RestBase {
     AtomicLong totalTransferredBytes = new AtomicLong(0);
 
     request.setGeneralProgressListener(
-            new ProgressListener() {
-              private long lastLogTime = 0;
+        new ProgressListener() {
+          private long lastLogTime = 0;
 
-              @Override
-              public void progressChanged(ProgressEvent progressEvent) {
-                long count = progressEvent.getBytesTransferred();
-                long total = totalTransferredBytes.addAndGet(count);
-                long currentTime = System.currentTimeMillis();
-                long logInterval = 10000;
-                if (currentTime - lastLogTime >= logInterval) {
-                  logger.info(
-                          "S3 upload progress: {}, recent transferred {} bytes, total transferred {}",
-                          key,
-                          count,
-                          total);
-                  lastLogTime = currentTime;
-                }
-              }
-            });
+          @Override
+          public void progressChanged(ProgressEvent progressEvent) {
+            long count = progressEvent.getBytesTransferred();
+            long total = totalTransferredBytes.addAndGet(count);
+            long currentTime = System.currentTimeMillis();
+            long logInterval = 10000;
+            if (currentTime - lastLogTime >= logInterval) {
+              logger.info(
+                  "S3 upload progress: {}, recent transferred {} bytes, total transferred {}",
+                  key,
+                  count,
+                  total);
+              lastLogTime = currentTime;
+            }
+          }
+        });
 
     // https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/best-practices.html
     request.getRequestClientOptions().setReadLimit((int) multipartUploadThreshold + 1);
@@ -243,18 +243,18 @@ public class CloudStorageRest extends RestBase {
       Upload upload = transferManager.upload(request);
       UploadResult uploadResult = upload.waitForUploadResult();
       logger.info(
-              "S3 upload finished: {}, file {} bytes, total transferred {}",
-              key,
-              contentLength,
-              totalTransferredBytes.get());
+          "S3 upload finished: {}, file {} bytes, total transferred {}",
+          key,
+          contentLength,
+          totalTransferredBytes.get());
       if (!uploadResult.getKey().equals(key)) {
         ExceptionUtils.meterRuntimeException();
         throw new RuntimeException(
-                String.format("Invalid key in upload result: %s", uploadResult.getKey()));
+            String.format("Invalid key in upload result: %s", uploadResult.getKey()));
       }
     } catch (InterruptedException e) {
       throw new WebApplicationException(
-              "Failed to upload to s3: " + ExceptionUtils.getExceptionNameAndMessage(e), e);
+          "Failed to upload to s3: " + ExceptionUtils.getExceptionNameAndMessage(e), e);
     } finally {
       transferManager.shutdownNow();
     }
@@ -268,14 +268,14 @@ public class CloudStorageRest extends RestBase {
     Storage storage = StorageOptions.getDefaultInstance().getService();
     BlobId blobId = BlobId.of(bucket, key);
     BlobInfo blobInfo =
-            BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
+        BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
     logger.info("Uploading to GCS: gs://{}/{}", bucket, key);
     try {
       storage.createFrom(blobInfo, inputStream);
       logger.info("Uploaded to GCS: gs://{}/{}", bucket, key);
     } catch (IOException e) {
       throw new WebApplicationException(
-              "Failed to upload to GCS: " + ExceptionUtils.getExceptionNameAndMessage(e), e);
+          "Failed to upload to GCS: " + ExceptionUtils.getExceptionNameAndMessage(e), e);
     }
     UploadS3Response response = new UploadS3Response();
     response.setUrl(String.format("gs://%s/%s", bucket, key));
@@ -285,10 +285,10 @@ public class CloudStorageRest extends RestBase {
   private String generateS3Key(String fileName, String folderName) {
     if (StringUtils.isEmpty(folderName)) {
       DateTimeFormatter formatter =
-              DateTimeFormatter.ofPattern("yyyyMMdd").withZone(ZoneOffset.UTC);
+          DateTimeFormatter.ofPattern("yyyyMMdd").withZone(ZoneOffset.UTC);
       String dateStr = formatter.format(Instant.now());
       return String.format(
-              "%s/%s/%s/%s", appConfig.getS3Folder(), dateStr, UUID.randomUUID(), fileName);
+          "%s/%s/%s/%s", appConfig.getS3Folder(), dateStr, UUID.randomUUID(), fileName);
     } else {
       folderName = StringUtils.strip(folderName, "/");
       return String.format("%s/%s/%s", appConfig.getS3Folder(), folderName, fileName);
