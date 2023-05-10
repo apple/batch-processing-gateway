@@ -163,9 +163,7 @@ public class ApplicationSubmissionHelper {
       if (sparkConf == null) {
         sparkConf = new HashMap<>();
       }
-      for (Map.Entry<String, String> entry : request.getSparkConf().entrySet()) {
-        sparkConf.put(entry.getKey(), entry.getValue());
-      }
+      sparkConf.putAll(request.getSparkConf());
     }
 
     if (!StringUtils.isEmpty(request.getApplicationName())) {
@@ -496,7 +494,7 @@ public class ApplicationSubmissionHelper {
     if (driverSpec.getAffinity() == null) {
       List<String> driverNodeLabelValues = getDriverNodeLabelValuesForQueue(appConfig, parentQueue);
       String nodeLabelKey = getDriverNodeLabelKeyForQueue(appConfig, parentQueue);
-      if (driverNodeLabelValues != null && driverNodeLabelValues.size() > 0) {
+      if (driverNodeLabelValues.size() > 0) {
         // set hard requiredDuringSchedulingIgnoredDuringExecutionTerm to driver
         NodeSelectorRequirement nodeSelectorRequirement =
             new NodeSelectorRequirement(
@@ -515,6 +513,12 @@ public class ApplicationSubmissionHelper {
         NodeAffinity nodeAffinity = new NodeAffinity(requiredSchedulingTerm);
         driverSpec.setAffinity(new Affinity(nodeAffinity));
       }
+    }
+
+    Map<String, String> sparkConf = request.getSparkConf();
+    String driverJavaOptions = sparkConf.get("spark.driver.extraJavaOptions");
+    if (driverJavaOptions != null && driverJavaOptions.length() > 0) {
+      driverSpec.setJavaOptions(driverJavaOptions);
     }
 
     return driverSpec;
@@ -808,6 +812,12 @@ public class ApplicationSubmissionHelper {
         Collections.singletonList(
             new PodDNSConfigOption(DNS_CONFIG_OPTION_NDOTS_NAME, DNS_CONFIG_OPTION_NDOTS_VALUE)));
     executorSpec.setDnsConfig(executorPodDNSConfig);
+
+    Map<String, String> sparkConf = request.getSparkConf();
+    String executorJavaOptions = sparkConf.get("spark.executor.extraJavaOptions");
+    if (executorJavaOptions != null && executorJavaOptions.length() > 0) {
+      executorSpec.setJavaOptions(executorJavaOptions);
+    }
 
     return executorSpec;
   }
