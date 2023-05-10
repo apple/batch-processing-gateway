@@ -464,6 +464,21 @@ subjects:
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: {{ .Values.rbac.clusterRole }}
+  name: {{ .Values.rbac.clusterRoleEdit }}
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Values.rbac.virtualClusterRoleBinding }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.serviceAccounts.skate.name }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ .Values.rbac.virtualClusterRole }}
   apiGroup: rbac.authorization.k8s.io
   {{- end }}

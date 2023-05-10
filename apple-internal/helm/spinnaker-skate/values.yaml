@@ -52,9 +52,10 @@ skateConfiguration: ''
 rbac:
   # -- Create and use `rbac` resources
   create: true
-  clusterRole: "skate-role"
+  virtualClusterRole: "skate-role"
   clusterRoleEdit: "edit"
   clusterRoleBinding: "skate-crb"
+  virtualClusterRoleBinding: "skate-crb-virtual"
 
 serviceAccounts:
   skate:
