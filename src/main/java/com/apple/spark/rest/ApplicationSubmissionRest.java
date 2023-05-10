@@ -34,6 +34,7 @@ import com.apple.spark.api.SubmissionSummary;
 import com.apple.spark.api.SubmitApplicationRequest;
 import com.apple.spark.api.SubmitApplicationResponse;
 import com.apple.spark.appleinternal.AppleKerberosUtil;
+import com.apple.spark.appleinternal.AppleWhisperUtil;
 import com.apple.spark.core.*;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.*;
@@ -461,6 +462,8 @@ public class ApplicationSubmissionRest extends RestBase {
       // The following line is for Apple only, and should be excluded from Open Source Upstream
       AppleKerberosUtil.enableKerberosSupport(
           sparkSpec, request, appConfig, proxyUser, timerMetrics);
+
+      AppleWhisperUtil.enableWhisperSupport(sparkSpec, proxyUser);
 
       AppConfig.QueueConfig queueConfig = null;
       if (appConfig.getQueues() != null) {
