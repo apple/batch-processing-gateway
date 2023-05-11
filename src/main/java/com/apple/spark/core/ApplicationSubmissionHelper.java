@@ -516,9 +516,11 @@ public class ApplicationSubmissionHelper {
     }
 
     Map<String, String> sparkConf = request.getSparkConf();
-    String driverJavaOptions = sparkConf.get("spark.driver.extraJavaOptions");
-    if (driverJavaOptions != null && driverJavaOptions.length() > 0) {
-      driverSpec.setJavaOptions(driverJavaOptions);
+    if (sparkConf != null) {
+      String driverJavaOptions = sparkConf.get("spark.driver.extraJavaOptions");
+      if (driverJavaOptions != null && driverJavaOptions.length() > 0) {
+        driverSpec.setJavaOptions(driverJavaOptions);
+      }
     }
 
     return driverSpec;
@@ -814,9 +816,11 @@ public class ApplicationSubmissionHelper {
     executorSpec.setDnsConfig(executorPodDNSConfig);
 
     Map<String, String> sparkConf = request.getSparkConf();
-    String executorJavaOptions = sparkConf.get("spark.executor.extraJavaOptions");
-    if (executorJavaOptions != null && executorJavaOptions.length() > 0) {
-      executorSpec.setJavaOptions(executorJavaOptions);
+    if (sparkConf != null) {
+      String executorJavaOptions = sparkConf.get("spark.executor.extraJavaOptions");
+      if (executorJavaOptions != null && executorJavaOptions.length() > 0) {
+        executorSpec.setJavaOptions(executorJavaOptions);
+      }
     }
 
     return executorSpec;
