@@ -8,8 +8,10 @@ import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmitApplicationRequest;
 import com.apple.spark.operator.*;
 import com.apple.spark.util.TimerMetricContainer;
+import com.google.gson.Gson;
 import io.fabric8.kubernetes.api.model.CSIVolumeSource;
 import io.fabric8.kubernetes.api.model.EmptyDirVolumeSource;
+import io.leangen.geantyref.TypeToken;
 import io.micrometer.core.instrument.Tag;
 import java.util.*;
 import javax.naming.NamingEnumeration;
@@ -18,6 +20,8 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,20 +86,34 @@ public class AppleKerberosUtil {
       }
 
       // Add initContainer which generates a delegation token for Spark application
-      List<InitContainer> initContainers = appConfig.getDriverInitContainers();
-      EnvVar userPrincipal = new EnvVar("USER_PRINCIPAL", proxyUser);
-      List<EnvVar> envVars = new ArrayList<>();
-      envVars.add(userPrincipal);
-      // loop through the list, find the initContainer and add user principal env variable
-      for (int i = 0; i < initContainers.size(); i++) {
-        if (initContainers.get(i).getName().equals("delegation-token-tool")) {
-          if (initContainers.get(i).getEnv() != null) {
-            initContainers.get(i).getEnv().add(userPrincipal);
-          } else {
-            initContainers.get(i).setEnv(envVars);
-          }
-        }
+      Gson gson = new Gson();
+      List<InitContainer> initContainers;
+      Optional<InitContainer> firstInitContainer;
+      try {
+        initContainers = gson.fromJson(gson.toJson(appConfig.getDriverInitContainers()), new TypeToken<List<InitContainer>>() {
+        }.getType());
+        // loop through the list, find the "delegation-token-tool" initContainer and add user principal env variable
+        firstInitContainer = initContainers.stream().filter(container -> container.getName().equals(AppleKerberosUtilConstants.DELEGATION_CONTAINER_NAME)).findFirst();
+      } catch (Exception e) {
+        String errMsg = "Secured HMS can't be used without having initContainer in appConfig";
+        logger.error(errMsg);
+        throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
       }
+
+      EnvVar userPrincipal = new EnvVar(AppleKerberosUtilConstants.INIT_CONTAINER_ENV_KEY, proxyUser);
+
+      firstInitContainer.ifPresentOrElse(container -> {
+        if (container.getEnv() != null) {
+          container.getEnv().add(userPrincipal);
+        } else {
+          container.setEnv(Collections.singletonList(userPrincipal));
+        }
+      }, () -> {
+        String errMsg = "Secured HMS can't be used without having delegation-token-tool initContainer in appConfig";
+        logger.error(errMsg);
+        throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
+      });
+
       sparkSpec.getDriver().setInitContainers(initContainers);
 
       // Add HADOOP_USER_NAME env variable for driver container
