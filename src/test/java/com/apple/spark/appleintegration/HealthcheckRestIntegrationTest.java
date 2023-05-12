@@ -30,7 +30,7 @@ public class HealthcheckRestIntegrationTest {
   @Test
   public void test() {
     final String authHeaderName = "X-Appleconnect-Acaccountname";
-    final String authHeaderValue = "skatetest_bot";
+    final String authHeaderValue = "raimldpi";
     String fullUrl = serviceRootUrl + "/healthcheck/status";
     String response = HttpUtils.get(fullUrl, authHeaderName, authHeaderValue);
     Assert.assertTrue(response.contains("OK"));

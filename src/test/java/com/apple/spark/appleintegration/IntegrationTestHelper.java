@@ -29,7 +29,7 @@ public class IntegrationTestHelper {
 
   private static final Logger logger = LoggerFactory.getLogger(IntegrationTestHelper.class);
   private static final String authHeaderName = "X-Appleconnect-Acaccountname";
-  private static final String authHeaderValue = "skatetest_bot";
+  private static final String authHeaderValue = "raimldpi";
 
   public static void runSparkApplication(
       String serviceRootUrl,
