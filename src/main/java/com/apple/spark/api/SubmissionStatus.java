@@ -19,6 +19,9 @@
 
 package com.apple.spark.api;
 
+import static com.apple.spark.core.SparkConstants.RUNNING_STATE;
+import static com.apple.spark.core.SparkConstants.SUBMITTED_STATE;
+
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.SparkConstants;
 import com.apple.spark.operator.SparkApplication;
@@ -53,7 +56,16 @@ public class SubmissionStatus {
       }
     }
 
-    this.setDuration(System.currentTimeMillis() - getCreationTime());
+    if (this.terminationTime == null) {
+      if (this.getApplicationState() != null) {
+        if (this.getApplicationState().equals(RUNNING_STATE)
+            || this.getApplicationState().equals(SUBMITTED_STATE)) {
+          this.setDuration(System.currentTimeMillis() - getCreationTime());
+        }
+      }
+    } else {
+      this.setDuration(getTerminationTime() - getCreationTime());
+    }
 
     if (sparkApplicationResource.getMetadata().getLabels() != null) {
       String spotInstanceLabel = "";
