@@ -62,6 +62,11 @@ public class SubmitApplicationRequest {
   private String spotTimeoutMillis;
 
   @Schema(
+      description =
+          "To enable Graviton Instance feature that schedules all Spark pods to Graviton nodes")
+  private boolean gravitonInstance;
+
+  @Schema(
       required = true,
       description = "Spark version in the format of x.y, where x and y are integers.")
   private String sparkVersion;
@@ -198,6 +203,14 @@ public class SubmitApplicationRequest {
 
   public void setSpotTimeoutMillis(String spotTimeoutMillis) {
     this.spotTimeoutMillis = spotTimeoutMillis;
+  }
+
+  public boolean getGravitonInstance() {
+    return gravitonInstance;
+  }
+
+  public void setGravitonInstance(boolean gravitonInstance) {
+    this.gravitonInstance = gravitonInstance;
   }
 
   public String getSparkVersion() {
