@@ -63,6 +63,24 @@ public class SubmitApplicationRequest {
 
   @Schema(
       description =
+          "Name of the project. This will help aggregate cost"
+              + " attribution the same project later.")
+  private String projectId;
+
+  @Schema(
+      description =
+          "Name of the project phase. This will help aggregate cost"
+              + " attribution the same project phase later.")
+  private String projectPhase;
+
+  @Schema(
+      description =
+          "Name of the custom tag user like to added. This will help user to aggregate cost"
+              + " attribution on their own need.")
+  private String customTag;
+
+  @Schema(
+      description =
           "To enable Graviton Instance feature that schedules all Spark pods to Graviton nodes")
   private boolean gravitonInstance;
 
@@ -203,6 +221,30 @@ public class SubmitApplicationRequest {
 
   public void setSpotTimeoutMillis(String spotTimeoutMillis) {
     this.spotTimeoutMillis = spotTimeoutMillis;
+  }
+
+  public String getProjectId() {
+    return projectId;
+  }
+
+  public void setProjectId(String projectId) {
+    this.projectId = projectId;
+  }
+
+  public String getProjectPhase() {
+    return projectPhase;
+  }
+
+  public void setProjectPhase(String projectPhase) {
+    this.projectPhase = projectPhase;
+  }
+
+  public String getCustomTag() {
+    return customTag;
+  }
+
+  public void setCustomTag(String customTag) {
+    this.customTag = customTag;
   }
 
   public boolean getGravitonInstance() {

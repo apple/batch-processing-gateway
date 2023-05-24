@@ -60,7 +60,12 @@ public class Constants {
   public static final String TASK_NAME_LABEL = "task_name";
   public static final String COST_TABLE_NAME = "cost";
   public static final String MAX_RUNNING_MILLIS_LABEL = "maxRunningMillis";
-
+  public static final String AIML_OBSV_USER_LABEL = "aiml_obsv_user";
+  public static final String AIML_OBSV_JOB_ID_LABEL = "aiml_obsv_job_id";
+  public static final String AIML_OBSV_QUEUE_LABEL = "aiml_obsv_queue";
+  public static final String AIML_OBSV_PROJECT_ID_LABEL = "aiml_obsv_project_id";
+  public static final String AIML_OBSV_PHASE_LABEL = "aiml_obsv_phase";
+  public static final String AIML_OBSV_CUSTOM_TAG_LABEL = "aiml_obsv_custom_tag";
   public static final String SPOT_INSTANCE_LABEL = "spotInstance";
   public static final String SPOT_TIMEOUT_LABEL = "spotTimeoutMillis";
   public static final String DEFAULT_DRIVER_NODE_LABEL_KEY = "node_group_category";

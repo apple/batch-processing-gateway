@@ -92,7 +92,12 @@ public class IntegrationTestHelper {
       Consumer<SubmitApplicationRequest> requestModifier)
       throws IOException {
     runSparkApplication(
-        serviceRootUrl, requestTemplate, requestModifier, SparkConstants.COMPLETED_STATE, false);
+        serviceRootUrl,
+        requestTemplate,
+        requestModifier,
+        SparkConstants.COMPLETED_STATE,
+        false,
+        false);
   }
 
   // Returning Driver Log, in case specific test cases want to assert on extra conditions
@@ -102,7 +107,27 @@ public class IntegrationTestHelper {
       Consumer<SubmitApplicationRequest> requestModifier)
       throws IOException {
     return runSparkApplication(
-            serviceRootUrl, requestTemplate, requestModifier, SparkConstants.COMPLETED_STATE, true)
+            serviceRootUrl,
+            requestTemplate,
+            requestModifier,
+            SparkConstants.COMPLETED_STATE,
+            true,
+            false)
+        .get();
+  }
+
+  public static String runSparkAppAndGetSparkSpec(
+      String serviceRootUrl,
+      String requestTemplate,
+      Consumer<SubmitApplicationRequest> requestModifier)
+      throws IOException {
+    return runSparkApplication(
+            serviceRootUrl,
+            requestTemplate,
+            requestModifier,
+            SparkConstants.COMPLETED_STATE,
+            false,
+            true)
         .get();
   }
 
@@ -122,6 +147,7 @@ public class IntegrationTestHelper {
           submitApplicationRequest.setQueue(queue);
         },
         "FAILED",
+        false,
         false);
   }
 
@@ -131,7 +157,8 @@ public class IntegrationTestHelper {
       String requestTemplate,
       Consumer<SubmitApplicationRequest> requestModifier,
       String expectedFinalState,
-      boolean driverLog)
+      boolean driverLog,
+      boolean sparkSpec)
       throws IOException {
 
     boolean requestTemplateIsYaml = requestTemplate.toLowerCase().endsWith("yaml");
@@ -230,6 +257,9 @@ public class IntegrationTestHelper {
     }
 
     Assert.assertTrue(getKubeLog);
+
+    // fetch spark application spec
+    String sparkSpecStr = getSparkSpecFromDescribe(serviceRootUrl, submissionId);
 
     // fetch application driver log
     String driverLogStr = getDriverLog(serviceRootUrl, submissionId);
@@ -333,6 +363,8 @@ public class IntegrationTestHelper {
 
     if (driverLog) {
       return Optional.of(driverLogStr);
+    } else if (sparkSpec) {
+      return Optional.of(sparkSpecStr);
     } else {
       return Optional.empty();
     }
@@ -357,6 +389,28 @@ public class IntegrationTestHelper {
       }
     }
 
+    return new String(buffer, StandardCharsets.UTF_8);
+  }
+
+  private static String getSparkSpecFromDescribe(String serviceRootUrl, String submissionId)
+      throws IOException {
+
+    final String getDriverLogUrl =
+        String.format("%s/spark/%s/describe", serviceRootUrl, submissionId);
+
+    HttpResponse httpResponse =
+        HttpUtils.getHttpResponse(getDriverLogUrl, authHeaderName, authHeaderValue);
+    logger.info("Reading Spark Spec for submission id: {}", submissionId);
+
+    byte[] buffer = httpResponse.body().toString().getBytes();
+
+    ByteArrayInputStream bufferSource = new ByteArrayInputStream(buffer);
+    while (bufferSource.available() > 0) {
+      int count = bufferSource.read();
+      if (count > 0) {
+        System.out.write(buffer, 0, count);
+      }
+    }
     return new String(buffer, StandardCharsets.UTF_8);
   }
 }

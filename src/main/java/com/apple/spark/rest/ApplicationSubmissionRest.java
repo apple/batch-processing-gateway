@@ -33,6 +33,7 @@ import com.apple.spark.api.GetSubmissionStatusResponse;
 import com.apple.spark.api.SubmissionSummary;
 import com.apple.spark.api.SubmitApplicationRequest;
 import com.apple.spark.api.SubmitApplicationResponse;
+import com.apple.spark.appleinternal.AppleCostAttrUtils;
 import com.apple.spark.appleinternal.AppleKerberosUtil;
 import com.apple.spark.appleinternal.AppleWhisperUtil;
 import com.apple.spark.core.*;
@@ -464,6 +465,9 @@ public class ApplicationSubmissionRest extends RestBase {
           sparkSpec, request, appConfig, proxyUser, timerMetrics);
 
       AppleWhisperUtil.enableWhisperSupport(sparkSpec, proxyUser);
+
+      AppleCostAttrUtils.AddCostAttrLabelsToPods(
+          sparkApplication, request, proxyUser, queue, submissionId);
 
       AppConfig.QueueConfig queueConfig = null;
       if (appConfig.getQueues() != null) {
