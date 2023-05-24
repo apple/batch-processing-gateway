@@ -455,7 +455,7 @@
     },
     {
       "type": "string",
-      "defaultValue": "docker.apple.com/aiml-dp/automation-agent:0.2.10-pre.52",
+      "defaultValue": "docker.apple.com/aiml-dp/automation-agent:1.3.0",
       "description": "automation agent image",
       "name": "AutomationAgentDefaultVersion"
     },
