@@ -66,6 +66,9 @@ public class SubmissionStatus {
           */
           this.setDuration(FAILED_SUBMISSION_DURATION);
         }
+      }else{
+        // when termination time is null and application state is null, set the duration to 0 as well
+        this.setDuration(FAILED_SUBMISSION_DURATION);
       }
     } else {
       this.setDuration(getTerminationTime() - getCreationTime());
