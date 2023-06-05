@@ -32,6 +32,7 @@ public class SparkConstants {
   public static final String FAILED_STATE = "FAILED";
   public static final String SUBMITTED_STATE = "SUBMITTED";
   public static final String FAILED_SUBMISSION_STATE = "FAILED_SUBMISSION";
+  public static final long FAILED_SUBMISSION_DURATION = 0;
   public static final String UNKNOWN_PHASE = "Unknown";
   public static final String PENDING_PHASE = "Pending";
   public static final String CRD_SCOPE = "Namespaced";

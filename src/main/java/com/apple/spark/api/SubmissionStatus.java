@@ -19,6 +19,8 @@
 
 package com.apple.spark.api;
 
+import static com.apple.spark.core.SparkConstants.*;
+
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.SparkConstants;
 import com.apple.spark.operator.SparkApplication;
@@ -53,7 +55,21 @@ public class SubmissionStatus {
       }
     }
 
-    this.setDuration(System.currentTimeMillis() - getCreationTime());
+    if (this.terminationTime == null) {
+      if (this.getApplicationState() != null) {
+        if (this.getApplicationState().equals(RUNNING_STATE)
+            || this.getApplicationState().equals(SUBMITTED_STATE)) {
+          this.setDuration(System.currentTimeMillis() - getCreationTime());
+        } else {
+          /* When terminationTime is null, spark k8s operator or spark gateway will assign some other state,
+          like FAILED, SUBMISSION_FAILED, etc. In this case, we will set the duration as 0 to cover the corner case
+          */
+          this.setDuration(FAILED_SUBMISSION_DURATION);
+        }
+      }
+    } else {
+      this.setDuration(getTerminationTime() - getCreationTime());
+    }
 
     if (sparkApplicationResource.getMetadata().getLabels() != null) {
       String spotInstanceLabel = "";
