@@ -127,7 +127,7 @@
         "required": true
       },
       {
-        "default": "og60-skate-eks-02-secrets-example",
+        "default": "${ templateVariables.WhisperBucket }",
         "description": "",
         "hasOptions": false,
         "label": "",
@@ -141,7 +141,7 @@
         "required": false
       },
       {
-        "default": "8286483",
+        "default": "${ templateVariables.WhisperNamespace }",
         "description": "",
         "hasOptions": false,
         "label": "",
@@ -449,7 +449,7 @@
   "variables": [
     {
       "type": "string",
-      "defaultValue": "1.1.258",
+      "defaultValue": "1.1.480",
       "description": "HelmChartVersion",
       "name": "HelmChartVersion"
     },
@@ -500,6 +500,18 @@
       "defaultValue": "https://github.pie.apple.com/api/v3/repos/aiml-datainfra/dp-configuration/contents/environments/siri/test/skate/og60-skate-eks-02/config.yaml",
       "description": "ApplicationConfiguration",
       "name": "ApplicationConfiguration"
+    },
+    {
+      "type": "string",
+      "defaultValue": "",
+      "description": "Whisper Bucket",
+      "name": "WhisperBucket"
+    },
+    {
+      "type": "string",
+      "defaultValue": "8286483",
+      "description": "Whisper Namespace",
+      "name": "WhisperNamespace"
     }
   ]
 }
