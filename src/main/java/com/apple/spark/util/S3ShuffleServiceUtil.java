@@ -128,23 +128,23 @@ public class S3ShuffleServiceUtil {
 
       for (String confKey : dualShuffleManagerDefaultSparkConf.keySet()) {
         if (request.getSparkConf().containsKey(confKey)) {
-          if (confKey.equals(APPLE_S3_SHUFFLE_SERVICE_EXTERNAL_PLUGIN_KEY)
-              && !request
-                  .getSparkConf()
-                  .get(APPLE_S3_SHUFFLE_SERVICE_EXTERNAL_PLUGIN_KEY)
-                  .equals(APPLE_S3_SHUFFLE_SERVICE_EXTERNAL_PLUGIN_VALUE)) {
-            {
-              logger.warn(
-                  "current S3 shuffle service not support %s, replace it to default plugin: %s",
-                  request.getSparkConf().get(APPLE_S3_SHUFFLE_SERVICE_EXTERNAL_PLUGIN_KEY),
-                  APPLE_S3_SHUFFLE_SERVICE_EXTERNAL_PLUGIN_VALUE);
+          if (confKey.equals(APPLE_S3_SHUFFLE_SERVICE_EXTERNAL_PLUGIN_KEY)) {
+            String confVal = request.getSparkConf().get(confKey);
+            if (confVal == null || confVal.isEmpty() || confVal.trim().isEmpty()) {
+              sparkSpec.getSparkConf().put(confKey, APPLE_S3_SHUFFLE_SERVICE_EXTERNAL_PLUGIN_VALUE);
+            } else {
               sparkSpec
                   .getSparkConf()
-                  .put(confKey, dualShuffleManagerDefaultSparkConf.get(confKey));
+                  .put(
+                      confKey,
+                      request.getSparkConf().get(confKey).trim()
+                          + ","
+                          + APPLE_S3_SHUFFLE_SERVICE_EXTERNAL_PLUGIN_VALUE);
             }
+          } else {
+            sparkSpec.getSparkConf().put(confKey, request.getSparkConf().get(confKey));
           }
-          sparkSpec.getSparkConf().put(confKey, request.getSparkConf().get(confKey));
-        } else {
+        } else { // set default configs if request dose not include the configs
           sparkSpec.getSparkConf().put(confKey, dualShuffleManagerDefaultSparkConf.get(confKey));
         }
       }
