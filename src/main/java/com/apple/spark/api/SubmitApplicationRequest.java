@@ -76,7 +76,6 @@ public class SubmitApplicationRequest {
               + " provide the full path to the Python file.")
   private String mainApplicationFile;
 
-  @Schema(description = "Any arguments that should be passed in", example = "['--date', date]")
   private List<String> arguments;
 
   private Map<String, String> sparkConf;
