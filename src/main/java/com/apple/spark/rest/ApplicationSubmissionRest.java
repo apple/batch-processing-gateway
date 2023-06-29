@@ -40,6 +40,7 @@ import com.apple.spark.appleinternal.AppleKerberosUtil;
 import com.apple.spark.appleinternal.AppleWhisperUtil;
 import com.apple.spark.core.*;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
+import com.apple.spark.crd.costattrib.CostAttributionSpec;
 import com.apple.spark.operator.*;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ConfigUtil;
@@ -473,8 +474,11 @@ public class ApplicationSubmissionRest extends RestBase {
 
       AppleWhisperUtil.enableWhisperSupport(sparkSpec, proxyUser);
 
+      // get latest Cost Attribution tags from CRD to submit the job to
+      CostAttributionSpec costAttribution = SparkClusterHelper.getCostAttribution(appConfig);
+
       AppleCostAttrUtils.AddCostAttrLabelsToPods(
-          sparkApplication, request, proxyUser, queue, submissionId);
+          sparkApplication, request, proxyUser, queue, submissionId, costAttribution);
 
       AppConfig.QueueConfig queueConfig = null;
       if (appConfig.getQueues() != null) {

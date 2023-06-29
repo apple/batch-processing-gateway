@@ -23,10 +23,11 @@ import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmitApplicationRequest;
 import com.apple.spark.crd.SparkClusterCrdDiscovery;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import com.apple.spark.crd.costattrib.CostAttributionCrdDiscovery;
+import com.apple.spark.crd.costattrib.CostAttributionSpec;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -185,6 +186,41 @@ public class SparkClusterHelper {
     }
 
     return list;
+  }
+
+  public static CostAttributionSpec getCostAttribution(AppConfig appConfig) {
+
+    List<CostAttributionSpec> list = new ArrayList<>();
+    CostAttributionCrdDiscovery costAttributionCrdDiscovery =
+        CostAttributionCrdDiscovery.getInstance();
+
+    String gatewayNamespace = appConfig.getGatewayNamespace();
+    if (gatewayNamespace == null || gatewayNamespace.isEmpty()) {
+      gatewayNamespace = KubernetesHelper.tryGetServiceAccountNamespace();
+    }
+    if (gatewayNamespace == null || gatewayNamespace.isEmpty()) {
+      logger.info("Cannot get gateway namespace, skip loading CostAttribution CRD");
+    } else {
+      list.addAll(costAttributionCrdDiscovery.getCostAttribs(gatewayNamespace));
+    }
+
+    list.sort(
+        (o1, o2) -> {
+          int versionOrder =
+              Integer.compare(Integer.parseInt(o2.getVersion()), Integer.parseInt(o1.getVersion()));
+          if (versionOrder != 0) {
+            return versionOrder;
+          } else {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            try {
+              return sdf.parse(o2.getCreatedTime()).compareTo(sdf.parse(o1.getCreatedTime()));
+            } catch (ParseException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        });
+
+    return list.isEmpty() ? null : list.get(0);
   }
 
   public static String normalizeQueue(String queue) {

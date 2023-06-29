@@ -63,6 +63,7 @@ public class Constants {
   public static final String AIML_OBSV_USER_LABEL = "aiml_obsv_user";
   public static final String AIML_OBSV_JOB_ID_LABEL = "aiml_obsv_job_id";
   public static final String AIML_OBSV_QUEUE_LABEL = "aiml_obsv_queue";
+  public static final String AIML_OBSV_JOB_NAME_LABEL = "aiml_obsv_job_name";
   public static final String AIML_OBSV_PROJECT_ID_LABEL = "aiml_obsv_project_id";
   public static final String AIML_OBSV_PHASE_LABEL = "aiml_obsv_phase";
   public static final String AIML_OBSV_CUSTOM_TAG_LABEL = "aiml_obsv_custom_tag";

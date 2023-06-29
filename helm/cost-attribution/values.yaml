@@ -1,0 +1,7 @@
+# Default values for cost attribution .
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+createdTime: 2023-06-20
+domain: siri
+
