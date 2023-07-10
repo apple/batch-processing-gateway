@@ -17,6 +17,8 @@ public class S3ShuffleServiceUtil {
   public static final String APPLE_S3_SHUFFLE_SERVICE_EXTERNAL_PLUGIN_VALUE =
       "org.apache.spark.externalshuffle.sparkplugin.ExternalShuffleSparkPlugin";
 
+//  public static final String APPLE_S3_SHUFFLE_SERVICE_REMOTE_STORAGE_URI= "spark.shuffle.remote.storageMasterUri";
+
   public S3ShuffleServiceUtil() {}
 
   /**
@@ -148,6 +150,16 @@ public class S3ShuffleServiceUtil {
           sparkSpec.getSparkConf().put(confKey, dualShuffleManagerDefaultSparkConf.get(confKey));
         }
       }
+
+      /* Disable the decommission feature of vanilla Spark since there is conflict to update map output file status
+         when enabling dual shuffle manager, we do not allow user to enable it when dual shuffle manager is used
+       */
+      sparkSpec.getSparkConf().put("spark.decommission.enabled", "false");
+      sparkSpec.getSparkConf().put("spark.storage.decommission.enabled", "false");
+      logger.info(
+              String.format(
+                      "Decommission feature of vanilla Spark is disabled when enabling dual shuffle manager"));
+
       logger.info(
           String.format(
               "S3-based shuffle service enabled and the shuffle manager name is %s",
