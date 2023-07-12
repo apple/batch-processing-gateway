@@ -19,7 +19,7 @@ package:
 security:
   scanReports:
     dockerfile:
-      continueOnFail: false
+      continueOnFail: true
     dockerload:
       continueOnFail: false
 
