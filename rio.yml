@@ -15,6 +15,13 @@ package:
   dockerfile:
     perApplication: false
     dockerfilePath: Dockerfile
+    
+security:
+  scanReports:
+    dockerfile:
+      continueOnFail: false
+    dockerload:
+      continueOnFail: false
 
 pipelines:
   - name: pr-check-release
