@@ -491,7 +491,7 @@ public class ApplicationSubmissionHelper {
     // this is to prevent driver pods from being killed when nodes are being scaling down
     if (driverSpec.getAffinity() == null) {
       List<String> driverNodeLabelValues =
-          getDriverNodeLabelValuesForQueue(appConfig, parentQueue, request.getGravitonInstance());
+          getDriverNodeLabelValuesForQueue(appConfig, parentQueue, request.getNodeArch());
       String nodeLabelKey = getDriverNodeLabelKeyForQueue(appConfig, parentQueue);
       if (driverNodeLabelValues.size() > 0) {
         // set hard requiredDuringSchedulingIgnoredDuringExecutionTerm to driver
@@ -565,7 +565,7 @@ public class ApplicationSubmissionHelper {
   }
 
   private static List<String> getDriverNodeLabelValuesForQueue(
-      AppConfig appConfig, String queue, boolean isGraviton) {
+      AppConfig appConfig, String queue, String nodeArch) {
     Optional<AppConfig.QueueConfig> queueConfigOptional =
         appConfig.getQueues().stream().filter(t -> t.getName().equals(queue)).findFirst();
     List<String> res = new ArrayList<>();
@@ -574,12 +574,12 @@ public class ApplicationSubmissionHelper {
       AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
       if (queueConfig != null && queueConfig.getDriverNodeLabelValues() != null) {
         for (String nodeLabelValue : queueConfig.getDriverNodeLabelValues()) {
-          if (isGraviton) {
-            if (nodeLabelValue.contains(GRAVITON_INSTANCE_NODE_LABEL_SUFFIX)) {
+          if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
+            if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)){
               res.add(nodeLabelValue);
             }
           } else {
-            if (!nodeLabelValue.contains(GRAVITON_INSTANCE_NODE_LABEL_SUFFIX)) {
+            if (!INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains) ) {
               res.add(nodeLabelValue);
             }
           }
@@ -617,7 +617,7 @@ public class ApplicationSubmissionHelper {
   }
 
   private static List<String> getExecutorSpotNodeLabelValuesForQueue(
-      AppConfig appConfig, String queue, boolean isGraviton) {
+      AppConfig appConfig, String queue, String nodeArch) {
     Optional<AppConfig.QueueConfig> queueConfigOptional =
         appConfig.getQueues().stream().filter(t -> t.getName().equals(queue)).findFirst();
     List<String> res = new ArrayList<>();
@@ -626,12 +626,12 @@ public class ApplicationSubmissionHelper {
       AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
       if (queueConfig != null && queueConfig.getExecutorSpotNodeLabelValues() != null) {
         for (String nodeLabelValue : queueConfig.getExecutorSpotNodeLabelValues()) {
-          if (isGraviton) {
-            if (nodeLabelValue.contains(GRAVITON_INSTANCE_NODE_LABEL_SUFFIX)) {
+          if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
+            if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
               res.add(nodeLabelValue);
             }
           } else {
-            if (!nodeLabelValue.contains(GRAVITON_INSTANCE_NODE_LABEL_SUFFIX)) {
+            if (!INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
               res.add(nodeLabelValue);
             }
           }
@@ -656,7 +656,7 @@ public class ApplicationSubmissionHelper {
   }
 
   private static List<String> getExecutorNodeLabelValuesForQueue(
-      AppConfig appConfig, String queue, boolean isGraviton) {
+      AppConfig appConfig, String queue, String nodeArch) {
     Optional<AppConfig.QueueConfig> queueConfigOptional =
         appConfig.getQueues().stream().filter(t -> t.getName().equals(queue)).findFirst();
     List<String> res = new ArrayList<>();
@@ -665,12 +665,12 @@ public class ApplicationSubmissionHelper {
       AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
       if (queueConfig != null && queueConfig.getExecutorNodeLabelValues() != null) {
         for (String nodeLabelValue : queueConfig.getExecutorNodeLabelValues()) {
-          if (isGraviton) {
-            if (nodeLabelValue.contains(GRAVITON_INSTANCE_NODE_LABEL_SUFFIX)) {
+          if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
+            if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
               res.add(nodeLabelValue);
             }
           } else {
-            if (!nodeLabelValue.contains(GRAVITON_INSTANCE_NODE_LABEL_SUFFIX)) {
+            if (!INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
               res.add(nodeLabelValue);
             }
           }
@@ -817,11 +817,11 @@ public class ApplicationSubmissionHelper {
       if (request.getSpotInstance()) {
         executorNodeLabelValues =
             getExecutorSpotNodeLabelValuesForQueue(
-                appConfig, parentQueue, request.getGravitonInstance());
+                appConfig, parentQueue, request.getNodeArch());
       } else {
         executorNodeLabelValues =
             getExecutorNodeLabelValuesForQueue(
-                appConfig, parentQueue, request.getGravitonInstance());
+                appConfig, parentQueue, request.getNodeArch());
       }
 
       String nodeLabelKey = getExecutorNodeLabelKeyForQueue(appConfig, parentQueue);

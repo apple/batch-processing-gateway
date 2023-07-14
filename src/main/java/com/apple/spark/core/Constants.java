@@ -48,6 +48,11 @@ public class Constants {
   public static final String SPOT_TIMEOUT = "SPOT_TIMEOUT";
 
   public static final String GRAVITON_INSTANCE_NODE_LABEL_SUFFIX = "graviton";
+  public static final String ARM64_NODE_LABEL_SUFFIX = "arm64";
+
+  public static final Set<String> INSTANCE_ARCH_ARM_NODE_LABEL_SET =
+          new HashSet<>(Arrays.asList(GRAVITON_INSTANCE_NODE_LABEL_SUFFIX, ARM64_NODE_LABEL_SUFFIX));
+
   public static final String FAILED_STATE = "FAILED";
   public static final String SPARK_APPLICATION_RESOURCE_NAME_VAR =
       "{spark-application-resource-name}";

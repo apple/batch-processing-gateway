@@ -85,6 +85,11 @@ public class SubmitApplicationRequest {
   private boolean gravitonInstance;
 
   @Schema(
+          description =
+                  "To set instance architecture that schedules all Spark pods on them, like arm64 and amd64")
+  private String nodeArch;
+
+  @Schema(
       required = true,
       description = "Spark version in the format of x.y, where x and y are integers.")
   private String sparkVersion;
@@ -252,6 +257,14 @@ public class SubmitApplicationRequest {
 
   public void setGravitonInstance(boolean gravitonInstance) {
     this.gravitonInstance = gravitonInstance;
+  }
+
+  public String getNodeArch() {
+    return nodeArch;
+  }
+
+  public void setNodeArch(String nodeArch) {
+    this.nodeArch = nodeArch;
   }
 
   public String getSparkVersion() {
