@@ -33,13 +33,15 @@ import java.util.Map;
 public class SparkPodSpec {
 
   private Integer cores;
+  private String coreRequest;
   private String coreLimit;
   private String memory;
   private String memoryOverhead;
-  @Hidden private String image;
+  private String image;
   private List<EnvVar> env;
-  @Hidden private Map<String, String> labels;
-  @Hidden private Map<String, String> annotations;
+  private Map<String, String> labels;
+  private Map<String, String> annotations;
+  
   @Hidden private Long terminationGracePeriodSeconds;
   @Hidden private String serviceAccount;
   @Hidden private List<VolumeMount> volumeMounts;
@@ -49,7 +51,6 @@ public class SparkPodSpec {
   @Hidden private Affinity affinity;
   @Hidden private PodDNSConfig dnsConfig;
 
-  @Hidden private String coreRequest;
   @Hidden private String javaOptions;
 
   protected void copyFrom(SparkPodSpec another) {
