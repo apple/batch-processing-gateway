@@ -38,10 +38,11 @@ public class SparkPodSpec {
   private String memory;
   private String memoryOverhead;
   private GpuSpec gpu;
-  @Hidden private String image;
+  private String image;
   private List<EnvVar> env;
-  @Hidden private Map<String, String> labels;
-  @Hidden private Map<String, String> annotations;
+  private Map<String, String> labels;
+  private Map<String, String> annotations;
+  
   @Hidden private Long terminationGracePeriodSeconds;
   @Hidden private String serviceAccount;
   @Hidden private List<VolumeMount> volumeMounts;
