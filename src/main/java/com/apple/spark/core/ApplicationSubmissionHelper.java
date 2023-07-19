@@ -574,7 +574,7 @@ public class ApplicationSubmissionHelper {
       AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
       if (queueConfig != null && queueConfig.getDriverNodeLabelValues() != null) {
         for (String nodeLabelValue : queueConfig.getDriverNodeLabelValues()) {
-          if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
+          if ( nodeArch != null && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
             if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)){
               res.add(nodeLabelValue);
             }
@@ -626,7 +626,7 @@ public class ApplicationSubmissionHelper {
       AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
       if (queueConfig != null && queueConfig.getExecutorSpotNodeLabelValues() != null) {
         for (String nodeLabelValue : queueConfig.getExecutorSpotNodeLabelValues()) {
-          if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
+          if ( nodeArch != null && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
             if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
               res.add(nodeLabelValue);
             }
@@ -665,7 +665,7 @@ public class ApplicationSubmissionHelper {
       AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
       if (queueConfig != null && queueConfig.getExecutorNodeLabelValues() != null) {
         for (String nodeLabelValue : queueConfig.getExecutorNodeLabelValues()) {
-          if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
+          if (nodeArch !=null && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
             if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
               res.add(nodeLabelValue);
             }
