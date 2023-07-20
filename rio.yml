@@ -177,7 +177,7 @@ pipelines:
 
 
   - name: dpi-skate-publish-os-chart
-    branchName: main
+    branchName: release
     timeout: 95
     env:
       HELM_REPO: "apple-aiml-skate"
