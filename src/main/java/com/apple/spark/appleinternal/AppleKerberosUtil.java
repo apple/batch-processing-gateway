@@ -90,29 +90,43 @@ public class AppleKerberosUtil {
       List<InitContainer> initContainers;
       Optional<InitContainer> firstInitContainer;
       try {
-        initContainers = gson.fromJson(gson.toJson(appConfig.getDriverInitContainers()), new TypeToken<List<InitContainer>>() {
-        }.getType());
-        // loop through the list, find the "delegation-token-tool" initContainer and add user principal env variable
-        firstInitContainer = initContainers.stream().filter(container -> container.getName().equals(AppleKerberosUtilConstants.DELEGATION_CONTAINER_NAME)).findFirst();
+        initContainers =
+            gson.fromJson(
+                gson.toJson(appConfig.getDriverInitContainers()),
+                new TypeToken<List<InitContainer>>() {}.getType());
+        // loop through the list, find the "delegation-token-tool" initContainer and add user
+        // principal env variable
+        firstInitContainer =
+            initContainers.stream()
+                .filter(
+                    container ->
+                        container
+                            .getName()
+                            .equals(AppleKerberosUtilConstants.DELEGATION_CONTAINER_NAME))
+                .findFirst();
       } catch (Exception e) {
         String errMsg = "Secured HMS can't be used without having initContainer in appConfig";
         logger.error(errMsg);
         throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
       }
 
-      EnvVar userPrincipal = new EnvVar(AppleKerberosUtilConstants.INIT_CONTAINER_ENV_KEY, proxyUser);
+      EnvVar userPrincipal =
+          new EnvVar(AppleKerberosUtilConstants.INIT_CONTAINER_ENV_KEY, proxyUser);
 
-      firstInitContainer.ifPresentOrElse(container -> {
-        if (container.getEnv() != null) {
-          container.getEnv().add(userPrincipal);
-        } else {
-          container.setEnv(Collections.singletonList(userPrincipal));
-        }
-      }, () -> {
-        String errMsg = "Secured HMS can't be used without having delegation-token-tool initContainer in appConfig";
-        logger.error(errMsg);
-        throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
-      });
+      firstInitContainer.ifPresentOrElse(
+          container -> {
+            if (container.getEnv() != null) {
+              container.getEnv().add(userPrincipal);
+            } else {
+              container.setEnv(Collections.singletonList(userPrincipal));
+            }
+          },
+          () -> {
+            String errMsg =
+                "Secured HMS can't be used without having delegation-token-tool initContainer in appConfig";
+            logger.error(errMsg);
+            throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
+          });
 
       sparkSpec.getDriver().setInitContainers(initContainers);
 
@@ -160,7 +174,10 @@ public class AppleKerberosUtil {
       ctx.setRequestControls(null);
 
       NamingEnumeration<?> namingEnum =
-          ctx.search("cn=users,dc=apple,dc=com", "uid=" + acUserName + "@APPLECONNECT.APPLE.COM", getSimpleSearchControls());
+          ctx.search(
+              "cn=users,dc=apple,dc=com",
+              "uid=" + acUserName + "@APPLECONNECT.APPLE.COM",
+              getSimpleSearchControls());
 
       while (namingEnum.hasMore()) {
         SearchResult result = (SearchResult) namingEnum.next();

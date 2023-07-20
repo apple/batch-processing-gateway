@@ -34,8 +34,7 @@ public class Volume {
   private CSIVolumeSource csi;
   private EmptyDirVolumeSource emptyDir;
 
-  public Volume() {
-  }
+  public Volume() {}
 
   public Volume(String name, HostPathVolumeSource hostPath) {
     this.name = name;

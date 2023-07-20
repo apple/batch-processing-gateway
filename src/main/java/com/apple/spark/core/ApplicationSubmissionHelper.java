@@ -574,12 +574,13 @@ public class ApplicationSubmissionHelper {
       AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
       if (queueConfig != null && queueConfig.getDriverNodeLabelValues() != null) {
         for (String nodeLabelValue : queueConfig.getDriverNodeLabelValues()) {
-          if ( nodeArch != null && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
-            if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)){
+          if (nodeArch != null
+              && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
+            if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
               res.add(nodeLabelValue);
             }
           } else {
-            if (!INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains) ) {
+            if (!INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
               res.add(nodeLabelValue);
             }
           }
@@ -626,7 +627,8 @@ public class ApplicationSubmissionHelper {
       AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
       if (queueConfig != null && queueConfig.getExecutorSpotNodeLabelValues() != null) {
         for (String nodeLabelValue : queueConfig.getExecutorSpotNodeLabelValues()) {
-          if ( nodeArch != null && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
+          if (nodeArch != null
+              && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
             if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
               res.add(nodeLabelValue);
             }
@@ -665,7 +667,8 @@ public class ApplicationSubmissionHelper {
       AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
       if (queueConfig != null && queueConfig.getExecutorNodeLabelValues() != null) {
         for (String nodeLabelValue : queueConfig.getExecutorNodeLabelValues()) {
-          if (nodeArch !=null && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
+          if (nodeArch != null
+              && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
             if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
               res.add(nodeLabelValue);
             }
@@ -816,12 +819,10 @@ public class ApplicationSubmissionHelper {
 
       if (request.getSpotInstance()) {
         executorNodeLabelValues =
-            getExecutorSpotNodeLabelValuesForQueue(
-                appConfig, parentQueue, request.getNodeArch());
+            getExecutorSpotNodeLabelValuesForQueue(appConfig, parentQueue, request.getNodeArch());
       } else {
         executorNodeLabelValues =
-            getExecutorNodeLabelValuesForQueue(
-                appConfig, parentQueue, request.getNodeArch());
+            getExecutorNodeLabelValuesForQueue(appConfig, parentQueue, request.getNodeArch());
       }
 
       String nodeLabelKey = getExecutorNodeLabelKeyForQueue(appConfig, parentQueue);

@@ -85,8 +85,8 @@ public class SubmitApplicationRequest {
   private boolean gravitonInstance;
 
   @Schema(
-          description =
-                  "To set instance architecture that schedules all Spark pods on them, like arm64 and amd64")
+      description =
+          "To set instance architecture that schedules all Spark pods on them, like arm64 and amd64")
   private String nodeArch;
 
   @Schema(

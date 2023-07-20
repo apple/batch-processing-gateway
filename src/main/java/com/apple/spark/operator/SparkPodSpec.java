@@ -42,7 +42,7 @@ public class SparkPodSpec {
   private List<EnvVar> env;
   private Map<String, String> labels;
   private Map<String, String> annotations;
-  
+
   @Hidden private Long terminationGracePeriodSeconds;
   @Hidden private String serviceAccount;
   @Hidden private List<VolumeMount> volumeMounts;

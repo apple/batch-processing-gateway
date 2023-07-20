@@ -21,7 +21,6 @@ package com.apple.spark.operator;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -36,8 +35,7 @@ public class InitContainer {
   private List<String> args;
   private SecurityContext securityContext;
 
-  public InitContainer() {
-  }
+  public InitContainer() {}
 
   public InitContainer(String name, String image) {
     this.name = name;
@@ -59,7 +57,6 @@ public class InitContainer {
   public void setImage(String image) {
     this.image = image;
   }
-
 
   public List<VolumeMount> getVolumeMounts() {
     return volumeMounts;
