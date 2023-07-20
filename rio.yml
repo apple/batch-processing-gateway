@@ -179,10 +179,11 @@ pipelines:
   - name: dpi-skate-publish-os-chart
     branchName: release
     timeout: 95
-    env:
-      HELM_REPO: "apple-aiml-skate"
-      VERSION: "$(cat helm/batch-processing-gateway/VERSION).#{}"
-      HELM_VERSION: "3.12.1"
+    machine:
+      env:
+        HELM_REPO: "apple-aiml-skate"
+        VERSION: "$(cat helm/batch-processing-gateway/VERSION).#{}"
+        HELM_VERSION: "3.12.1"
     build:
       template: freestyle:v4:publish
       steps:
