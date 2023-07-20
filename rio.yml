@@ -175,3 +175,28 @@ pipelines:
         - publish:
             - repo: apple-helm-release-local
 
+
+  - name: dpi-skate-publish-os-chart
+    branchName: main
+    timeout: 95
+    env:
+      HELM_REPO: "apple-aiml-skate"
+      VERSION: "$(cat helm/batch-processing-gateway/VERSION).#{}"
+      HELM_VERSION: "3.12.1"
+    build:
+      template: freestyle:v4:publish
+      steps:
+        - mkdir -p .out/${HELM_REPO}
+        - wget -qO- https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz | tar xvz
+        - mv linux-amd64/helm /usr/bin/helm
+        - helm version
+        - helm package --destination=.out/${HELM_REPO} --version=${VERSION} charts/helm/batch-processing-gateway
+        - ci stage-lib ".out/**"
+    package:
+      version: "${VERSION}"
+      freeform:
+        - publish:
+            - repo: apple-helm-release-local
+    finally:
+      tag:
+        enabled: true

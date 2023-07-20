@@ -1,4 +1,5 @@
 appleAuth: true
+appleAuthSecretName: apple-connect-secret
 
 image:
   registry: docker.apple.com
@@ -23,6 +24,7 @@ rbac:
 
 serviceAccounts:
   batchProcessingGateway:
+    create: "true"
     name: "batch-processing-gateway-sa"
     eksServiceAccountArn: "arn:aws:iam::xxxxxxxxx:role/xxx"
 
@@ -142,3 +144,6 @@ plainConfig:
 # For Swagger UI which visualizes API specs.
 swagger:
   image: 'docker.apple.com/aiml-dp/automation-tool:swaggerapi_swagger-ui_v4.14.0_amd64'
+
+networkPolicies:
+  create: false
