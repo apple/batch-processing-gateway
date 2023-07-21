@@ -415,8 +415,8 @@
               "annotations": {
                 "whisper.apple.com/bucket": "${execution.trigger.parameters.whisper_bucket}",
                 "whisper.apple.com/namespace": "${execution.trigger.parameters.whisper_namespace}",
-                "whisper.apple.com/secretMatch": "^og\\d\\d-(\\w+)-(\\w+)-\\d\\d-(.*)$",
-                "whisper.apple.com/secretRepl": "\\3"
+                "whisper.apple.com/secretMatch": "^(og\\d{2}(?:\\d{2})?)-(\\w+)-(\\w+)-(\\d{2})-(.*)$",
+                "whisper.apple.com/secretRepl": "\\5"
               },
               "name": "skate-rds-secret",
               "namespace": "skate"
