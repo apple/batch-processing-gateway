@@ -8,14 +8,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import io.dropwizard.util.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.net.http.HttpResponse;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -30,6 +31,16 @@ public class IntegrationTestHelper {
   private static final Logger logger = LoggerFactory.getLogger(IntegrationTestHelper.class);
   private static final String authHeaderName = "X-Appleconnect-Acaccountname";
   private static final String authHeaderValue = "raimldpi";
+
+  public static byte[] getResourceAsBytes(String resourceUrl) throws IOException {
+    try (InputStream is = IntegrationTestHelper.class.getResourceAsStream(resourceUrl)) {
+      return Objects.requireNonNull(is).readAllBytes();
+    }
+  }
+
+  public static String getResourceAsString(String resourceUrl, Charset charset) throws IOException {
+    return new String(getResourceAsBytes(resourceUrl), charset);
+  }
 
   public static void runSparkApplication(
       String serviceRootUrl,
@@ -175,8 +186,8 @@ public class IntegrationTestHelper {
     }
 
     // Use json request file as a request template
-    URL resourceUrl = IntegrationTestHelper.class.getResource(requestTemplate);
-    String submitApplicationRequestText = Resources.toString(resourceUrl, StandardCharsets.UTF_8);
+    String submitApplicationRequestText =
+        getResourceAsString(requestTemplate, StandardCharsets.UTF_8);
 
     // Set application files
     SubmitApplicationRequest submitApplicationRequest =

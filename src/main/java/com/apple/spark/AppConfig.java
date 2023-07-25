@@ -23,7 +23,7 @@ import com.apple.spark.core.ConfigValue;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.dropwizard.Configuration;
+import io.dropwizard.core.Configuration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

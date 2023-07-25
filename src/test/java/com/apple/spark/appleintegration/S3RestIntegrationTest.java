@@ -1,5 +1,7 @@
 package com.apple.spark.appleintegration;
 
+import static com.apple.spark.appleintegration.IntegrationTestHelper.getResourceAsBytes;
+
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -8,11 +10,9 @@ import com.amazonaws.util.IOUtils;
 import com.apple.spark.api.UploadS3Response;
 import com.apple.spark.util.HttpUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dropwizard.util.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,9 +48,7 @@ public class S3RestIntegrationTest {
 
   @Test
   public void uploadFileWithoutFolder() throws IOException {
-    URL resourceUrl =
-        this.getClass().getResource("/SubmitSparkApplicationRequest_python_example.json");
-    byte[] resourceBytes = Resources.toByteArray(resourceUrl);
+    byte[] resourceBytes = getResourceAsBytes("/SubmitSparkApplicationRequest_python_example.json");
 
     String s3ObjectKeyName = "s3-upload-integration-test-file.binary";
     final String uploadUrl = String.format("%s/s3/%s", serviceRootUrl, s3ObjectKeyName);
@@ -59,9 +57,7 @@ public class S3RestIntegrationTest {
 
   @Test
   public void uploadFileWithFolder() throws IOException {
-    URL resourceUrl =
-        this.getClass().getResource("/SubmitSparkApplicationRequest_python_example.json");
-    byte[] resourceBytes = Resources.toByteArray(resourceUrl);
+    byte[] resourceBytes = getResourceAsBytes("/SubmitSparkApplicationRequest_python_example.json");
 
     String s3ObjectKeyName = "s3-upload-integration-test-file.binary";
     String uploadUrl = String.format("%s/s3/%s?folder=", serviceRootUrl, s3ObjectKeyName);

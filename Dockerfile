@@ -28,7 +28,9 @@ RUN unzip apache-maven-3.8.8-bin.zip
 RUN rm apache-maven-3.8.8-bin.zip
 
 # Package
-RUN apache-maven-3.8.8/bin/mvn clean package -Dmaven.test.skip
+RUN apache-maven-3.8.8/bin/mvn clean package -Dmaven.test.skip && \
+    rm -rf /root/.m2/repository/org/codehaus/plexus/plexus-utils && \
+    rm -rf /root/.m2/repository/org/apache/maven/shared/maven-shared-utils
 
 EXPOSE 8080 8080
 
