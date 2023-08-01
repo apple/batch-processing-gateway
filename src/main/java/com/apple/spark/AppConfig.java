@@ -547,9 +547,9 @@ public class AppConfig extends Configuration {
     private Long maxRunningMillis;
     private String driverNodeLabelKey;
     private String executorNodeLabelKey;
+    private String executorSpotNodeLabelKey;
     private List<String> driverNodeLabelValues;
     private List<String> executorNodeLabelValues;
-
     private List<String> executorSpotNodeLabelValues;
     private double driverCPUBufferRatio = 1.0;
     private double executorCPUBufferRatio = 1.0;
@@ -694,6 +694,14 @@ public class AppConfig extends Configuration {
 
     public void setSupportGpu(Boolean supportGpu) {
       this.supportGpu = supportGpu;
+    }
+
+    public String getExecutorSpotNodeLabelKey() {
+      return executorSpotNodeLabelKey;
+    }
+
+    public void setExecutorSpotNodeLabelKey(String executorSpotNodeLabelKey) {
+      this.executorSpotNodeLabelKey = executorSpotNodeLabelKey;
     }
   }
 

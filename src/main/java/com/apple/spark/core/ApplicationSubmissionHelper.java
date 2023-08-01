@@ -25,6 +25,8 @@ import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_SPARK_DEFAUL
 import static com.apple.spark.core.Constants.*;
 import static com.apple.spark.core.MonitoringConstants.*;
 import static com.apple.spark.core.SparkConstants.*;
+import static com.apple.spark.core.SparkPodNodeAffinityHelper.*;
+import static com.apple.spark.core.SparkPodNodeAffinityHelper.createNodeSelectorTermForSparkPods;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmitApplicationRequest;
@@ -490,27 +492,23 @@ public class ApplicationSubmissionHelper {
     // Driver affinity is for all drivers to share the same node group, with only scaling up
     // this is to prevent driver pods from being killed when nodes are being scaling down
     if (driverSpec.getAffinity() == null) {
-      List<String> driverNodeLabelValues =
-          getDriverNodeLabelValuesForQueue(appConfig, parentQueue, request.getNodeArch());
-      String nodeLabelKey = getDriverNodeLabelKeyForQueue(appConfig, parentQueue);
-      if (driverNodeLabelValues.size() > 0) {
-        // set hard requiredDuringSchedulingIgnoredDuringExecutionTerm to driver
-        NodeSelectorRequirement nodeSelectorRequirement =
-            new NodeSelectorRequirement(
-                nodeLabelKey,
-                NodeSelectorOperator.NodeSelectorOpIn.toString(),
-                driverNodeLabelValues.toArray(new String[0])); // set "spark_driver" as nodeselctor
-
-        NodeSelectorTerm nodeSelectorTermOnDriver =
-            new NodeSelectorTerm(new NodeSelectorRequirement[] {nodeSelectorRequirement});
-
-        RequiredDuringSchedulingIgnoredDuringExecutionTerm requiredSchedulingTerm =
+      // attach required affinity only to executor
+      NodeSelectorTerm nodeSelectorTermOnDriver =
+          createNodeSelectorTermForSparkPods(
+              appConfig,
+              parentQueue,
+              true,
+              !request.getSpotInstance(),
+              request.getNodeArch(),
+              isGpuEnabled(request));
+      if (nodeSelectorTermOnDriver != null
+          && nodeSelectorTermOnDriver.getMatchExpressions() != null) {
+        RequiredDuringSchedulingIgnoredDuringExecutionTerm requiredSchedulingTermOnDriver =
             new RequiredDuringSchedulingIgnoredDuringExecutionTerm(
                 new NodeSelectorTerm[] {nodeSelectorTermOnDriver});
 
-        // attach required affinity only to driver
-        NodeAffinity nodeAffinity = new NodeAffinity(requiredSchedulingTerm);
-        driverSpec.setAffinity(new Affinity(nodeAffinity));
+        NodeAffinity nodeAffinityOnDriver = new NodeAffinity(requiredSchedulingTermOnDriver);
+        driverSpec.setAffinity(new Affinity(nodeAffinityOnDriver));
       }
     }
 
@@ -551,46 +549,6 @@ public class ApplicationSubmissionHelper {
     return DRIVER_MEM_BUFFER_RATIO;
   }
 
-  private static String getDriverNodeLabelKeyForQueue(AppConfig appConfig, String queue) {
-    Optional<AppConfig.QueueConfig> queueConfigOptional =
-        appConfig.getQueues().stream().filter(t -> t.getName().equals(queue)).findFirst();
-
-    if (queueConfigOptional.isPresent()) {
-      AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
-      if (queueConfig != null && queueConfig.getDriverNodeLabelKey() != null) {
-        return queueConfig.getDriverNodeLabelKey();
-      }
-    }
-    return DEFAULT_DRIVER_NODE_LABEL_KEY;
-  }
-
-  private static List<String> getDriverNodeLabelValuesForQueue(
-      AppConfig appConfig, String queue, String nodeArch) {
-    Optional<AppConfig.QueueConfig> queueConfigOptional =
-        appConfig.getQueues().stream().filter(t -> t.getName().equals(queue)).findFirst();
-    List<String> res = new ArrayList<>();
-
-    if (queueConfigOptional.isPresent()) {
-      AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
-      if (queueConfig != null && queueConfig.getDriverNodeLabelValues() != null) {
-        for (String nodeLabelValue : queueConfig.getDriverNodeLabelValues()) {
-          if (nodeArch != null
-              && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
-            if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
-              res.add(nodeLabelValue);
-            }
-          } else {
-            if (!INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
-              res.add(nodeLabelValue);
-            }
-          }
-        }
-        if (res.size() == 0) res.addAll(queueConfig.getDriverNodeLabelValues());
-      }
-    }
-    return res;
-  }
-
   private static double getExecutorMemBufferForQueue(AppConfig appConfig, String queue) {
     Optional<AppConfig.QueueConfig> queueConfigOptional =
         appConfig.getQueues().stream().filter(t -> t.getName().equals(queue)).findFirst();
@@ -615,73 +573,6 @@ public class ApplicationSubmissionHelper {
       }
     }
     return EXECUTOR_CPU_BUFFER_RATIO;
-  }
-
-  private static List<String> getExecutorSpotNodeLabelValuesForQueue(
-      AppConfig appConfig, String queue, String nodeArch) {
-    Optional<AppConfig.QueueConfig> queueConfigOptional =
-        appConfig.getQueues().stream().filter(t -> t.getName().equals(queue)).findFirst();
-    List<String> res = new ArrayList<>();
-
-    if (queueConfigOptional.isPresent()) {
-      AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
-      if (queueConfig != null && queueConfig.getExecutorSpotNodeLabelValues() != null) {
-        for (String nodeLabelValue : queueConfig.getExecutorSpotNodeLabelValues()) {
-          if (nodeArch != null
-              && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
-            if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
-              res.add(nodeLabelValue);
-            }
-          } else {
-            if (!INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
-              res.add(nodeLabelValue);
-            }
-          }
-        }
-        if (res.size() == 0) res.addAll(queueConfig.getExecutorSpotNodeLabelValues());
-      }
-    }
-    return res;
-  }
-
-  private static String getExecutorNodeLabelKeyForQueue(AppConfig appConfig, String queue) {
-    Optional<AppConfig.QueueConfig> queueConfigOptional =
-        appConfig.getQueues().stream().filter(t -> t.getName().equals(queue)).findFirst();
-
-    if (queueConfigOptional.isPresent()) {
-      AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
-      if (queueConfig != null && queueConfig.getExecutorNodeLabelKey() != null) {
-        return queueConfig.getExecutorNodeLabelKey();
-      }
-    }
-    return DEFAULT_EXECUTOR_NODE_LABEL_KEY;
-  }
-
-  private static List<String> getExecutorNodeLabelValuesForQueue(
-      AppConfig appConfig, String queue, String nodeArch) {
-    Optional<AppConfig.QueueConfig> queueConfigOptional =
-        appConfig.getQueues().stream().filter(t -> t.getName().equals(queue)).findFirst();
-    List<String> res = new ArrayList<>();
-
-    if (queueConfigOptional.isPresent()) {
-      AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
-      if (queueConfig != null && queueConfig.getExecutorNodeLabelValues() != null) {
-        for (String nodeLabelValue : queueConfig.getExecutorNodeLabelValues()) {
-          if (nodeArch != null
-              && INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeArch::contains)) {
-            if (INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
-              res.add(nodeLabelValue);
-            }
-          } else {
-            if (!INSTANCE_ARCH_ARM_NODE_LABEL_SET.stream().anyMatch(nodeLabelValue::contains)) {
-              res.add(nodeLabelValue);
-            }
-          }
-        }
-        if (res.size() == 0) res.addAll(queueConfig.getExecutorNodeLabelValues());
-      }
-    }
-    return res;
   }
 
   private static double getNumFromRequestStr(String resourcesStr) {
@@ -815,33 +706,22 @@ public class ApplicationSubmissionHelper {
     }
 
     if (executorSpec.getAffinity() == null) {
-      List<String> executorNodeLabelValues = new ArrayList<>();
+      // attach required affinity only to executor
+      NodeSelectorTerm nodeSelectorTermOnExecutor =
+          createNodeSelectorTermForSparkPods(
+              appConfig,
+              parentQueue,
+              false,
+              !request.getSpotInstance(),
+              request.getNodeArch(),
+              isGpuEnabled(request));
 
-      if (request.getSpotInstance()) {
-        executorNodeLabelValues =
-            getExecutorSpotNodeLabelValuesForQueue(appConfig, parentQueue, request.getNodeArch());
-      } else {
-        executorNodeLabelValues =
-            getExecutorNodeLabelValuesForQueue(appConfig, parentQueue, request.getNodeArch());
-      }
-
-      String nodeLabelKey = getExecutorNodeLabelKeyForQueue(appConfig, parentQueue);
-      if (executorNodeLabelValues != null && executorNodeLabelValues.size() > 0) {
-        // set hard requiredDuringSchedulingIgnoredDuringExecutionTerm to executor
-        NodeSelectorRequirement nodeSelectorRequirement =
-            new NodeSelectorRequirement(
-                nodeLabelKey,
-                NodeSelectorOperator.NodeSelectorOpIn.toString(),
-                executorNodeLabelValues.toArray(new String[0]));
-
-        NodeSelectorTerm nodeSelectorTermOnExecutor =
-            new NodeSelectorTerm(new NodeSelectorRequirement[] {nodeSelectorRequirement});
-
+      if (nodeSelectorTermOnExecutor != null
+          && nodeSelectorTermOnExecutor.getMatchExpressions() != null) {
         RequiredDuringSchedulingIgnoredDuringExecutionTerm requiredSchedulingTermOnExecutor =
             new RequiredDuringSchedulingIgnoredDuringExecutionTerm(
                 new NodeSelectorTerm[] {nodeSelectorTermOnExecutor});
 
-        // attach required affinity only to executor
         NodeAffinity nodeAffinityOnExecutor = new NodeAffinity(requiredSchedulingTermOnExecutor);
         executorSpec.setAffinity(new Affinity(nodeAffinityOnExecutor));
       }
