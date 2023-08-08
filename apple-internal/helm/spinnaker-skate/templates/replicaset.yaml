@@ -64,6 +64,9 @@ spec:
               value: "8125"
             - name: AWS_STS_REGIONAL_ENDPOINTS
               value: "regional"
+            - name: NOTARY_ENABLED
+              value: {{ .Values.notary.notaryEnabled | quote }}
+{{- if not .Values.notary.notaryEnabled }}
         - name: skate-auth
           image: '{{ .Values.appleConnect.proxyImage.registry }}/{{ .Values.appleConnect.proxyImage.repository }}:{{ .Values.appleConnect.proxyImage.tag }}'
           args:
@@ -82,6 +85,31 @@ spec:
           ports:
             - containerPort: 9090
               protocol: TCP
+{{- else }}
+        - name: skate-auth
+          image: {{ .Values.notary.proxyImage}}
+          command: ["/app/notary-proxy"]
+          ports:
+            - containerPort: 9090
+              name: web
+          env:
+            - name: PORT
+              value: "9090"
+            - name: TURI_DIRECTORY_API_KEY # BJXDGZRWbkN6sazVRHvdnY9F environment variable that notary proxy looks for turi directory api key
+              valueFrom:
+                secretKeyRef: # references the Kubernetes secret we will create later
+                  name: notary-proxy
+                  key: TURI_DIRECTORY_API_KEY
+            - name: IDMS_APP_ADMIN_PASSWORD # environment variable that notary proxy looks for the IdMS app admin password
+              valueFrom:
+                secretKeyRef:
+                  name: notary-proxy
+                  key: IDMS_APP_ADMIN_PASSWORD
+          volumeMounts: # volume mounts the notary proxy config into the proxy container
+            - name: notary-proxy-configs
+              mountPath: /app/configs/notary-proxy.yml
+              subPath: notary-proxy.yml
+{{- end }}
       volumes:
         - name: configuration
           configMap:
@@ -92,3 +120,8 @@ spec:
         - name: spark-prometheus-configuration
           configMap:
             name: 'spark-prometheus'
+{{- if .Values.notary.notaryEnabled }}
+        - name: notary-proxy-configs
+          configMap:
+            name: notary-proxy-config
+{{- end }}
