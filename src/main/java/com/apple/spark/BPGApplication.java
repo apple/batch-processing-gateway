@@ -22,6 +22,8 @@ package com.apple.spark;
 import static com.apple.spark.core.Constants.QUEUE_INFO;
 import static com.apple.spark.core.Constants.SERVICE_ABBR;
 
+import com.apple.spark.appleinternal.notary.security.NotaryAuthFilter;
+import com.apple.spark.appleinternal.notary.security.NotaryUserNameAuthenticator;
 import com.apple.spark.core.*;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.health.BPGHealthCheck;
@@ -60,18 +62,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BPGApplication extends Application<AppConfig> {
-
   private static final Logger logger = LoggerFactory.getLogger(BPGApplication.class);
 
   private static final String MONITOR_APPLICATION_SYSTEM_PROPERTY_NAME = "monitorApplication";
+  private static final String NOTARY_APPLICATION_SYSTEM_PROPERTY_NAME = "notaryApplication";
 
   private final boolean monitorApplication;
+  private final boolean notaryApplication;
 
   public BPGApplication() {
-    this(false);
+    this(false, false);
   }
 
   public BPGApplication(boolean monitorApplication) {
+    this(false, monitorApplication);
+  }
+
+  public BPGApplication(boolean notaryApplication, boolean monitorApplication) {
+    this.notaryApplication = notaryApplication;
     this.monitorApplication = monitorApplication;
   }
 
@@ -82,7 +90,11 @@ public class BPGApplication extends Application<AppConfig> {
     String value = System.getProperty(MONITOR_APPLICATION_SYSTEM_PROPERTY_NAME);
     boolean monitorApplication = value != null && value.equalsIgnoreCase("true");
 
-    new BPGApplication(monitorApplication).run(args);
+    String notaryAppProperty = System.getProperty(NOTARY_APPLICATION_SYSTEM_PROPERTY_NAME);
+    boolean notaryApplication =
+        notaryAppProperty != null && notaryAppProperty.equalsIgnoreCase("true");
+
+    new BPGApplication(notaryApplication, monitorApplication).run(args);
   }
 
   @Override
@@ -147,9 +159,20 @@ public class BPGApplication extends Application<AppConfig> {
             .setUnauthorizedHandler(new UserUnauthorizedHandler())
             .buildAuthFilter();
 
+    // To accept a notary token
+    NotaryAuthFilter<User> notaryAuthFilter =
+        new NotaryAuthFilter.Builder<User>()
+            .setAuthenticator(
+                new NotaryUserNameAuthenticator(
+                    configuration.getAllowedUsers(), configuration.getBlockedUsers()))
+            .setRealm(Constants.REALM)
+            .setUnauthorizedHandler(new UserUnauthorizedHandler())
+            .buildAuthFilter();
+
     // The auth will pass if any of the auth filters pass
     ChainedAuthFilter<BasicCredentials, User> chainedAuthFilter =
-        new ChainedAuthFilter<>(Arrays.asList(userNameAuthFilter, basicCredentialAuthFilter));
+        new ChainedAuthFilter<>(
+            Arrays.asList(userNameAuthFilter, basicCredentialAuthFilter, notaryAuthFilter));
 
     environment.jersey().register(new AuthDynamicFeature(chainedAuthFilter));
 

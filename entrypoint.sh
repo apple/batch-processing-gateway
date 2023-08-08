@@ -4,8 +4,10 @@ max_heap_size=${MAX_HEAP_SIZE:--Xmx20G}
 config_file_path=${CONFIG_FILE_PATH:-/etc/app_config/app-config.yaml}
 gz_file_path=${GZ_FILE_PATH:-/app/app-config.gz}
 app_monitor_enabled=${APP_MONITOR_ENABLED:-false}
+notary_enabled=${NOTARY_ENABLED:-false}
 
 monitor_app_property="-DmonitorApplication=true"
+notary_app_property="-DnotaryApplication=true"
 
 dir=$(dirname $config_file_path)
 mkdir -p ${dir}
@@ -27,6 +29,12 @@ JAVA_OPT="${max_heap_size} \
 
 if [ "${app_monitor_enabled,,}" == "true" ]; then
    JAVA_OPT="${JAVA_OPT} ${monitor_app_property}"
+fi
+
+if [[ "${notary_enabled,,}" == "true" ]]; then
+    JAVA_OPT="${JAVA_OPT} ${notary_app_property}"
+else
+    echo "Notary disabled not a notary application"
 fi
 
 # Start Application

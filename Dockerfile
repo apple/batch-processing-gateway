@@ -27,6 +27,9 @@ RUN curl https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-
 RUN unzip apache-maven-3.8.8-bin.zip
 RUN rm apache-maven-3.8.8-bin.zip
 
+# Apple CA Certs for Notary
+RUN curl -k https://pages.github.pie.apple.com/crypto-services/trust-apple-corp-root-cas/trust_apple_corp_root_cas.sh | bash
+
 # Package
 RUN apache-maven-3.8.8/bin/mvn clean package -Dmaven.test.skip && \
     rm -rf /root/.m2/repository/org/codehaus/plexus/plexus-utils && \
