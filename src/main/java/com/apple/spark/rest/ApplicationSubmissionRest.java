@@ -38,6 +38,8 @@ import com.apple.spark.api.SubmitApplicationResponse;
 import com.apple.spark.appleinternal.AppleCostAttrUtils;
 import com.apple.spark.appleinternal.AppleKerberosUtil;
 import com.apple.spark.appleinternal.AppleWhisperUtil;
+import com.apple.spark.appleinternal.notary.NotaryNarrativeTuriUtil;
+import com.apple.spark.appleinternal.notary.NotaryPersonIdUtil;
 import com.apple.spark.core.*;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.crd.costattrib.CostAttributionSpec;
@@ -90,6 +92,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
@@ -200,6 +204,7 @@ public class ApplicationSubmissionRest extends RestBase {
               required = true,
               content = @Content(schema = @Schema(implementation = SubmitApplicationRequest.class)))
           String requestBody,
+      @Context ContainerRequestContext requestContext,
       @Parameter(
               description =
                   "options: application/json, text/yaml, or leave it empty for API to figure out")
@@ -225,7 +230,7 @@ public class ApplicationSubmissionRest extends RestBase {
         clientVersion);
 
     return timerMetrics.record(
-        () -> submitApplicationImpl(requestBody, contentType, user, dagUser),
+        () -> submitApplicationImpl(requestBody, requestContext, contentType, user, dagUser),
         REQUEST_LATENCY_METRIC_NAME,
         Tag.of("name", "submit_application"),
         Tag.of("user", getUserTagValue(user)),
@@ -233,7 +238,11 @@ public class ApplicationSubmissionRest extends RestBase {
   }
 
   private SubmitApplicationResponse submitApplicationImpl(
-      String requestBody, String contentType, User user, String dagUser) {
+      String requestBody,
+      ContainerRequestContext requestContext,
+      String contentType,
+      User user,
+      String dagUser) {
     SubmitApplicationRequest request =
         ApplicationSubmissionHelper.parseSubmitRequest(requestBody, contentType);
 
@@ -352,7 +361,14 @@ public class ApplicationSubmissionRest extends RestBase {
     logDao.logApplicationSubmission(submissionId, proxyUser, request);
     SubmitApplicationResponse response =
         submitSparkCRD(
-            sparkCluster, submissionId, sparkSpec, request, queue, parentQueue, proxyUser);
+            sparkCluster,
+            submissionId,
+            sparkSpec,
+            request,
+            queue,
+            parentQueue,
+            proxyUser,
+            requestContext);
     return response;
   }
 
@@ -363,7 +379,8 @@ public class ApplicationSubmissionRest extends RestBase {
       SubmitApplicationRequest request,
       String queue,
       String parentQueue,
-      String proxyUser) {
+      String proxyUser,
+      ContainerRequestContext requestContext) {
     com.codahale.metrics.Timer timer =
         registry.timer(this.getClass().getSimpleName() + ".submitApplication.k8s-time");
 
@@ -490,6 +507,27 @@ public class ApplicationSubmissionRest extends RestBase {
           queueConfig = optional.get();
         }
       }
+
+      // Apple Internal Notary mTLS support for BPG
+      final String NOTARY_APPLICATION_SYSTEM_PROPERTY_NAME = "notaryApplication";
+      String notaryAppProperty = System.getProperty(NOTARY_APPLICATION_SYSTEM_PROPERTY_NAME);
+      boolean notaryApplication =
+          notaryAppProperty != null && notaryAppProperty.equalsIgnoreCase("true");
+
+      if (notaryApplication) {
+        try {
+          String personId = NotaryPersonIdUtil.extractPersonId(requestContext).get();
+          // set the dsid annotation
+          NotaryNarrativeTuriUtil.addNotaryNarrativeTuriAnnotation(sparkSpec, personId);
+          // set up Turi Narrative volume
+          NotaryNarrativeTuriUtil.addNotaryNarrativeTuriVolume(sparkSpec, appConfig, personId);
+          // set mtls certificate and key location as env var of pods
+          NotaryNarrativeTuriUtil.addNotaryNarrativeEnvVar(sparkSpec);
+        } catch (Exception e) {
+          logger.warn("Failed to create mTLS volume, annotation and environment variable ", e);
+        }
+      }
+
       AwsCredentialSparkConfigProvider.addAwsCredentialSparkConfig(sparkSpec, queueConfig);
       CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
 
