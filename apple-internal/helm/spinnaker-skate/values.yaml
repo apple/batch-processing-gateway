@@ -73,28 +73,20 @@ skate:
 whisper:
   # -- Create a secret for whisper
   create: false
-    # -- Whisper Namespace
+  # -- Whisper Namespace
   namespace: ""
-    # -- Whisper Bucket
+  # -- Whisper Bucket
   bucket: ""
 
 notary:
   # -- Enable notary authentication for spark service
   notaryEnabled: false
-  # -- notary application id
-  appId: ""
-  # -- notary application password
-  appPassword: ""
-  # -- notary application namespace
-  appNameSpace: ""
   # -- tui directory key
   turiKey: ""
-  # -- aws kms encryption key
-  kmsKey: ""
   proxyImage: docker.apple.com/polymer/notary-proxy:latest
   proxyGroupIDsFilter:
   proxyAllowedGroupIDList:
   proxyAllowedApplicationIDList:
   proxyAudienceList:
     - aprn:apple:turi::notary:application-group:turi-platform
-    - aprn:apple:turi::notary:application-group:polymer
+    - aprn:apple:turi::notary:application-group:aiml-data-platform
