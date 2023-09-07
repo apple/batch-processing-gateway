@@ -1,21 +1,27 @@
 package com.apple.spark.appleinternal.notary.security;
 
 import com.apple.spark.appleinternal.notary.NotaryConstants;
+import com.apple.spark.appleinternal.notary.NotaryDirectoryService;
+import com.apple.turi.directory.DirectoryServiceException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.basic.BasicCredentials;
-import io.dropwizard.logback.shaded.checkerframework.checker.nullness.qual.Nullable;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
+import javax.annotation.Nullable;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.SecurityContext;
 import org.apache.commons.lang3.StringUtils;
 
 public class NotaryAuthFilter<P extends Principal> extends AuthFilter<BasicCredentials, P> {
-  public NotaryAuthFilter() {}
+  private NotaryDirectoryService notaryDirectoryService;
+
+  public NotaryAuthFilter(NotaryDirectoryService notaryDirectoryService) {
+    this.notaryDirectoryService = notaryDirectoryService;
+  }
 
   /**
    * Filter method called before a request has been dispatched to a resource. by the pre-match
@@ -27,7 +33,12 @@ public class NotaryAuthFilter<P extends Principal> extends AuthFilter<BasicCrede
   @Override
   public void filter(ContainerRequestContext requestContext) throws IOException {
 
-    BasicCredentials credentials = getNotaryCredentials(requestContext);
+    BasicCredentials credentials = null;
+    try {
+      credentials = getNotaryCredentials(requestContext);
+    } catch (DirectoryServiceException e) {
+      throw new WebApplicationException(e);
+    }
     // @TODO:  Remove this log statement or make it debug
     logger.debug("Notary Credentials: {}", credentials);
 
@@ -38,17 +49,24 @@ public class NotaryAuthFilter<P extends Principal> extends AuthFilter<BasicCrede
 
   public static class Builder<P extends Principal>
       extends AuthFilterBuilder<BasicCredentials, P, NotaryAuthFilter<P>> {
+    private NotaryDirectoryService notaryDirectoryService;
 
     public Builder() {}
 
+    public Builder<P> setNotaryDirectoryService(NotaryDirectoryService notaryDirectoryService) {
+      this.notaryDirectoryService = notaryDirectoryService;
+      return this;
+    }
+
     @Override
     protected NotaryAuthFilter<P> newInstance() {
-      return new NotaryAuthFilter<>();
+      return new NotaryAuthFilter<>(this.notaryDirectoryService);
     }
   }
 
   @Nullable
-  private BasicCredentials getNotaryCredentials(ContainerRequestContext requestContext) {
+  private BasicCredentials getNotaryCredentials(ContainerRequestContext requestContext)
+      throws DirectoryServiceException {
     boolean isNotaryApplication = isNotaryEnabled();
     String username = "";
     String password = "";
@@ -71,7 +89,7 @@ public class NotaryAuthFilter<P extends Principal> extends AuthFilter<BasicCrede
   }
 
   /**
-   * For X-Notary-IdentityType = person, user-header key is X-Notary-Acaccountname For
+   * For X-Notary-IdentityType = person, user-header key is X-Notary-Acaccountname. For
    * X-Notary-IdentityType = application , check if source application is Notary application. If
    * not, get user identity from X-Notary-Claims. Notary forwards the header key
    * X-Notary-Acaccountname for Notary Person, DAW person and A3 application identity type.
@@ -80,7 +98,8 @@ public class NotaryAuthFilter<P extends Principal> extends AuthFilter<BasicCrede
    *     information.
    * @return username retrieved from request.
    */
-  private Optional<String> getUserFromHeaderKey(ContainerRequestContext requestContext) {
+  private Optional<String> getUserFromHeaderKey(ContainerRequestContext requestContext)
+      throws DirectoryServiceException {
     Optional<String> identityType =
         getHeaderValue(requestContext, NotaryConstants.NOTARY_IDENTITY_TYPE_HEADER_KEY);
     Optional<String> userName;
@@ -103,6 +122,43 @@ public class NotaryAuthFilter<P extends Principal> extends AuthFilter<BasicCrede
   }
 
   /**
+   * For notary app-to-app requests, extract Person Id of the application submitted requests from
+   * the Notary claims header object. 'X-Notary-Claims: {'X-Notary-App-Person-Id': '12345',
+   * 'X-Notary-Acaccountname': 'mingcui_yang'}
+   *
+   * @param requestContext the request context from which to extract the Notary claims header.
+   * @return an Optional containing the personId if found, or empty Optional otherwise.
+   */
+  private Optional<Long> getApplicationPersonIdFromClaims(ContainerRequestContext requestContext) {
+    // Get the value of the 'X-Notary-Claims' header
+    Optional<String> notaryClaims =
+        getHeaderValue(requestContext, NotaryConstants.NOTARY_CLAIMS_HEADER_KEY);
+    logger.debug("NotaryClaims: {}", notaryClaims);
+    // Check if 'notaryClaimsHeader' is present or empty
+    if (notaryClaims.isEmpty()) {
+      logger.debug("Notary claims header is empty");
+      return Optional.empty();
+    }
+
+    // Parse the JSON string to a JSON object
+    ObjectMapper objectMapper = new ObjectMapper();
+    JsonNode jsonObj;
+    try {
+      jsonObj = objectMapper.readTree(notaryClaims.get());
+    } catch (IOException e) {
+      logger.error("Error parsing notary claims header", e);
+      return Optional.empty();
+    }
+    JsonNode personIdJsonNode = jsonObj.get(NotaryConstants.NOTARY_APP_PERSON_ID_KEY);
+    if (personIdJsonNode == null || !personIdJsonNode.isTextual()) {
+      logger.error("Notary claims header does not contain user");
+      return Optional.empty();
+    }
+    String personId = personIdJsonNode.asText();
+    return Optional.of(Long.parseLong(personId));
+  }
+
+  /**
    * Retrieves the username of the authenticated user in the notary application.
    *
    * @param requestContext The container request context containing the necessary request
@@ -110,17 +166,21 @@ public class NotaryAuthFilter<P extends Principal> extends AuthFilter<BasicCrede
    * @return An Optional<String> object containing the username if present, or an empty Optional
    *     otherwise
    */
-  private Optional<String> getNotaryApplicationUser(ContainerRequestContext requestContext) {
+  private Optional<String> getNotaryApplicationUser(ContainerRequestContext requestContext)
+      throws DirectoryServiceException {
     // Default notary admin user
     Optional<String> notaryAdminUserName = Optional.of(NotaryConstants.NOTARY_ADMIN_USER_NAME);
-    Optional<String> userName;
+    Optional<String> userName = Optional.empty();
 
     if (isNotaryApplication(requestContext)) {
       // If it's a request from Notary application, use the default notary app admin username
       userName = notaryAdminUserName;
     } else {
-      // Retrieve the authenticated user from the claims header of the request
-      userName = getApplicationUserFromClaims(requestContext);
+      Optional<Long> personId = getApplicationPersonIdFromClaims(requestContext);
+      if (notaryDirectoryService.checkIfPersonIdInAllowedGroups(personId.get())) {
+        // Retrieve the authenticated user from the claims header of the request
+        userName = getApplicationUserFromClaims(requestContext);
+      }
     }
 
     return userName;

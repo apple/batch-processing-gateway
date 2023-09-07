@@ -2,12 +2,15 @@ package com.apple.spark.appleinternal.notary.security;
 
 import static org.mockito.Mockito.when;
 
+import com.apple.spark.AppConfig;
 import com.apple.spark.appleinternal.notary.NotaryConstants;
+import com.apple.spark.appleinternal.notary.NotaryDirectoryService;
 import com.apple.spark.core.Constants;
 import com.apple.spark.security.User;
 import com.apple.spark.security.UserUnauthorizedHandler;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -27,13 +30,24 @@ public class NotaryAuthFilterTest {
   @Mock private ContainerRequestContext requestContext;
   private NotaryAuthFilter<User> notaryAuthFilter;
   private UriInfo uriInfo;
+  private static AppConfig appconfi;
 
   @Before
   public void setUp() {
-    Set<String> allowedUsers = Set.of("allowedUsers1", "allowedUsers2", "allowedUsers3");
+    Set<String> allowedUsers =
+        Set.of("mingcui_yang", "allowedUsers1", "allowedUsers2", "allowedUsers3");
     Set<String> blockedUsers = Set.of("blockedUsers1", "blockedUsers2", "blockedUsers3");
+    appconfi = new AppConfig();
+    AppConfig.NotaryAppConfig notary = new AppConfig.NotaryAppConfig();
+    notary.setTuriDirectoryApiKey("BJXDGZRWbkN6sazVRHvdnY9F");
+    List<Long> proxyAllowedGroups = new ArrayList<>();
+    proxyAllowedGroups.add(8609568L);
+    notary.setProxyAllowedGroupIDList(proxyAllowedGroups);
+    appconfi.setNotary(notary);
+    NotaryDirectoryService notaryDirectoryService = new NotaryDirectoryService(appconfi);
     notaryAuthFilter =
         new NotaryAuthFilter.Builder<User>()
+            .setNotaryDirectoryService(notaryDirectoryService)
             .setAuthenticator(new NotaryUserNameAuthenticator(allowedUsers, blockedUsers))
             .setRealm(Constants.REALM)
             .setUnauthorizedHandler(new UserUnauthorizedHandler())
@@ -154,9 +168,25 @@ public class NotaryAuthFilterTest {
         .thenReturn(NotaryConstants.NOTARY_APPLICATION_IDENTITY_TYPE);
     when(requestContext.getHeaderString(NotaryConstants.NOTARY_CLAIMS_HEADER_KEY))
         .thenReturn(
-            "{\"X-Notary-App-Person-Id\":\"12345\", \"X-Notary-Acaccountname\":\"allowedUsers1\"}");
+            "{\"X-Notary-App-Person-Id\":\"2701123238\", \"X-Notary-Acaccountname\":\"mingcui_yang\"}");
     when(requestContext.getUriInfo()).thenReturn(uriInfo);
     notaryAuthFilter.filter(requestContext);
+  }
+
+  @Test
+  public void testGetUserFromHeaderKey_notaryA3_notAllowedUser() throws IOException {
+    System.setProperty(NotaryConstants.NOTARY_APPLICATION_SYSTEM_PROPERTY_NAME, "true");
+    when(requestContext.getHeaderString(NotaryConstants.NOTARY_IDENTITY_TYPE_HEADER_KEY))
+        .thenReturn(NotaryConstants.NOTARY_APPLICATION_IDENTITY_TYPE);
+    when(requestContext.getHeaderString(NotaryConstants.NOTARY_CLAIMS_HEADER_KEY))
+        .thenReturn(
+            "{\"X-Notary-App-Person-Id\":\"123457\", \"X-Notary-Acaccountname\":\"mingcui_yang\"}");
+    when(requestContext.getUriInfo()).thenReturn(uriInfo);
+    try {
+      notaryAuthFilter.filter(requestContext);
+    } catch (Exception e) {
+      Assert.assertEquals(e.getMessage(), "HTTP 401 Unauthorized");
+    }
   }
 
   @Test
@@ -170,7 +200,7 @@ public class NotaryAuthFilterTest {
   }
 
   @Test
-  public void testNotaryUser() throws IOException {
+  public void testNotaryServiceUser() throws IOException {
     System.setProperty(NotaryConstants.NOTARY_APPLICATION_SYSTEM_PROPERTY_NAME, "true");
     when(requestContext.getHeaderString(NotaryConstants.NOTARY_IDENTITY_TYPE_HEADER_KEY))
         .thenReturn(NotaryConstants.NOTARY_APPLICATION_IDENTITY_TYPE);

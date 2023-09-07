@@ -23,11 +23,13 @@ import com.apple.spark.core.ConfigValue;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.core.Configuration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.validation.Valid;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AppConfig extends Configuration {
@@ -43,7 +45,6 @@ public class AppConfig extends Configuration {
 
   private String s3Bucket;
   private String s3Folder;
-
   private String sparkLogS3Bucket;
   private String sparkLogIndex;
   private String gatewayNamespace;
@@ -52,7 +53,6 @@ public class AppConfig extends Configuration {
   private String gatewayDns;
   private String eksCluster;
   private String sparkHistoryUrl;
-
   private List<String> allowedUsers;
   private List<String> blockedUsers;
   private List<String> adminUsers;
@@ -761,6 +761,65 @@ public class AppConfig extends Configuration {
 
     public String getPasswordDecodedValue() {
       return ConfigValue.tryGetEncodedSecretValue(password);
+    }
+  }
+
+  /** Apple Internal Notary related configs. */
+  @Valid private NotaryAppConfig notary;
+
+  public NotaryAppConfig getNotary() {
+    return notary;
+  }
+
+  public void setNotary(NotaryAppConfig notary) {
+    this.notary = notary;
+  }
+
+  public static class NotaryAppConfig {
+    @JsonProperty private String appNameSpace;
+    @JsonProperty private String turiDirectoryApiKey;
+    @JsonProperty private List<Long> proxyAllowedGroupIDList;
+    @JsonProperty private String narrativeTuriPodDomain;
+    @JsonProperty private Integer aacRateLimit;
+
+    public Integer getAacRateLimit() {
+      return aacRateLimit;
+    }
+
+    public void setAacRateLimit(Integer aacRateLimit) {
+      this.aacRateLimit = aacRateLimit;
+    }
+
+    public String getNarrativeTuriPodDomain() {
+      return narrativeTuriPodDomain;
+    }
+
+    public void setNarrativeTuriPodDomain(String narrativeTuriPodDomain) {
+      this.narrativeTuriPodDomain = narrativeTuriPodDomain;
+    }
+
+    public String getAppNameSpace() {
+      return appNameSpace;
+    }
+
+    public void setAppNameSpace(String appNameSpace) {
+      this.appNameSpace = appNameSpace;
+    }
+
+    public String getTuriDirectoryApiKey() {
+      return turiDirectoryApiKey;
+    }
+
+    public void setTuriDirectoryApiKey(String turiDirectoryApiKey) {
+      this.turiDirectoryApiKey = turiDirectoryApiKey;
+    }
+
+    public List<Long> getProxyAllowedGroupIDList() {
+      return proxyAllowedGroupIDList;
+    }
+
+    public void setProxyAllowedGroupIDList(List<Long> proxyAllowedGroupIDList) {
+      this.proxyAllowedGroupIDList = proxyAllowedGroupIDList;
     }
   }
 }

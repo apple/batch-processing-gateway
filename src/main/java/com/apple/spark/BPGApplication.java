@@ -22,6 +22,7 @@ package com.apple.spark;
 import static com.apple.spark.core.Constants.QUEUE_INFO;
 import static com.apple.spark.core.Constants.SERVICE_ABBR;
 
+import com.apple.spark.appleinternal.notary.NotaryDirectoryService;
 import com.apple.spark.appleinternal.notary.security.NotaryAuthFilter;
 import com.apple.spark.appleinternal.notary.security.NotaryUserNameAuthenticator;
 import com.apple.spark.core.*;
@@ -69,6 +70,7 @@ public class BPGApplication extends Application<AppConfig> {
 
   private final boolean monitorApplication;
   private final boolean notaryApplication;
+  private NotaryDirectoryService notaryDirectoryService;
 
   public BPGApplication() {
     this(false, false);
@@ -107,6 +109,9 @@ public class BPGApplication extends Application<AppConfig> {
 
   @Override
   public void run(final AppConfig configuration, final Environment environment) {
+    // initialize TuriDirectoryService
+    notaryDirectoryService = new NotaryDirectoryService(configuration);
+
     String applicationContextPath = configuration.getApplicationContextPath();
     if (applicationContextPath == null || applicationContextPath.isEmpty()) {
       applicationContextPath = Constants.DEFAULT_APPLICATION_CONTEXT_PATH;
@@ -162,6 +167,7 @@ public class BPGApplication extends Application<AppConfig> {
     // To accept a notary token
     NotaryAuthFilter<User> notaryAuthFilter =
         new NotaryAuthFilter.Builder<User>()
+            .setNotaryDirectoryService(notaryDirectoryService)
             .setAuthenticator(
                 new NotaryUserNameAuthenticator(
                     configuration.getAllowedUsers(), configuration.getBlockedUsers()))

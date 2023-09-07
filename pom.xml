@@ -148,11 +148,6 @@
             <version>6.5.0</version>
         </dependency>
         <dependency>
-            <groupId>com.apple.turi</groupId>
-            <artifactId>notary-client</artifactId>
-            <version>0.4.2</version>
-        </dependency>
-        <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-statsd</artifactId>
             <version>1.9.4</version>
