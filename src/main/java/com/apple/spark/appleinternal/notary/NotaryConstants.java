@@ -20,7 +20,6 @@ public class NotaryConstants {
   public static final String NOTARY_APP_NAME = "notary";
   public static final int DEFAULT_PERMITS_PER_SECOND = 10000;
   public static final List<String> NOTARY_ADMIN_USERS = List.of(NOTARY_ADMIN_USER_NAME);
-  public static final String BPG_NOTARY_TOKEN_ENV_VAR = "NOTARY_ACTOR_TOKEN";
   public static final String SERVICE_ABBR = "skate";
   public static final String NARRATIVE_TURI_ANNO_PERSON_ID_KEY =
       "turi-narrative.corp.apple.com/delegated-person-id";

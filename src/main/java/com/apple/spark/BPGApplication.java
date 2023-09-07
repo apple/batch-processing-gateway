@@ -22,6 +22,7 @@ package com.apple.spark;
 import static com.apple.spark.core.Constants.QUEUE_INFO;
 import static com.apple.spark.core.Constants.SERVICE_ABBR;
 
+import com.apple.spark.appleinternal.notary.ActorAssumabilityCheckRest;
 import com.apple.spark.appleinternal.notary.NotaryDirectoryService;
 import com.apple.spark.appleinternal.notary.security.NotaryAuthFilter;
 import com.apple.spark.appleinternal.notary.security.NotaryUserNameAuthenticator;
@@ -143,6 +144,14 @@ public class BPGApplication extends Application<AppConfig> {
     environment.jersey().register(healthcheckRest);
 
     environment.jersey().register(new ThrowableExceptionMapper(environment.metrics()));
+
+    // Actor Assumability endpoint only exists for BPG application that onboarded as notary
+    // application.
+    if (notaryApplication) {
+      final ActorAssumabilityCheckRest actorAssumabilityCheckRest =
+          new ActorAssumabilityCheckRest(configuration, meterRegistry);
+      environment.jersey().register(actorAssumabilityCheckRest);
+    }
 
     // To accept a username header
     UserNameAuthFilter<User> userNameAuthFilter =
