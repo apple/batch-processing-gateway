@@ -13,10 +13,10 @@ import com.apple.spark.operator.InitContainer;
 import com.apple.spark.operator.SparkApplicationSpec;
 import com.apple.spark.util.TimerMetricContainer;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.ws.rs.WebApplicationException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import javax.ws.rs.WebApplicationException;
 import org.junit.Assert;
 import org.junit.Test;
 

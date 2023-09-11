@@ -13,6 +13,8 @@ import io.fabric8.kubernetes.api.model.CSIVolumeSource;
 import io.fabric8.kubernetes.api.model.EmptyDirVolumeSource;
 import io.leangen.geantyref.TypeToken;
 import io.micrometer.core.instrument.Tag;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import java.util.*;
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attributes;
@@ -20,8 +22,6 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.InitialLdapContext;
 import javax.naming.ldap.LdapContext;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

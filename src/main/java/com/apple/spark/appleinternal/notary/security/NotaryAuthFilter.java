@@ -7,13 +7,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.basic.BasicCredentials;
+import io.dropwizard.logback.shaded.checkerframework.checker.nullness.qual.Nullable;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.*;
-import javax.annotation.Nullable;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.SecurityContext;
 import org.apache.commons.lang3.StringUtils;
 
 public class NotaryAuthFilter<P extends Principal> extends AuthFilter<BasicCredentials, P> {

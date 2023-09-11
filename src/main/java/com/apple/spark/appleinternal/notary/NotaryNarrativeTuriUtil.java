@@ -8,11 +8,11 @@ import com.apple.spark.operator.SparkApplicationSpec;
 import com.apple.spark.operator.Volume;
 import com.apple.spark.operator.VolumeMount;
 import io.fabric8.kubernetes.api.model.CSIVolumeSource;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -16,11 +16,13 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <dropwizard.version>3.0.1</dropwizard.version>
+        <dropwizard.version>4.0.1</dropwizard.version>
         <dropwizard.metrics.version>4.2.12</dropwizard.metrics.version>
         <mainClass>com.apple.spark.BPGApplication</mainClass>
         <spotless.version>2.27.1</spotless.version>
         <swagger.version>2.2.15</swagger.version>
+        <javax.servlet.version>3.1.0</javax.servlet.version>
+        <ranger.version>2.4.0</ranger.version>
     </properties>
 
     <repositories>
@@ -250,6 +252,26 @@
             <artifactId>junit</artifactId>
             <version>4.13.2</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>${javax.servlet.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ranger</groupId>
+            <artifactId>ranger-plugins-common</artifactId>
+            <version>${ranger.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.codehaus.jackson</groupId>
+                    <artifactId>jackson-mapper-asl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 

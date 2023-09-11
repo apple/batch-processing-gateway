@@ -21,8 +21,8 @@ package com.apple.spark.security;
 
 import com.google.common.collect.ImmutableMap;
 import io.dropwizard.auth.UnauthorizedHandler;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Response;
 
 public class UserUnauthorizedHandler implements UnauthorizedHandler {
 

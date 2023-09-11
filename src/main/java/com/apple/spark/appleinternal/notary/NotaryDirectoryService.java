@@ -7,11 +7,11 @@ import com.apple.turi.directory.IsMemberRequest;
 import com.apple.turi.directory.IsMemberResponse;
 import com.apple.turi.directory.Person;
 import com.apple.turi.directory.PersonInfoRequest;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

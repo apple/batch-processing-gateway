@@ -23,11 +23,11 @@ import com.apple.spark.util.JwtUtils;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

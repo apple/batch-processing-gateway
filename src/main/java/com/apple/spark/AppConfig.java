@@ -25,11 +25,11 @@ import com.apple.spark.operator.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.core.Configuration;
+import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.validation.Valid;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AppConfig extends Configuration {

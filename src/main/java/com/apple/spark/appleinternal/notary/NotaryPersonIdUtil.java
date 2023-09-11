@@ -6,11 +6,11 @@ import com.apple.spark.operator.ExecutorSpec;
 import com.apple.spark.operator.SparkApplicationSpec;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.container.ContainerRequestContext;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.container.ContainerRequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
