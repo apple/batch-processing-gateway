@@ -38,6 +38,7 @@ import com.apple.spark.api.SubmitApplicationResponse;
 import com.apple.spark.appleinternal.AppleCostAttrUtils;
 import com.apple.spark.appleinternal.AppleKerberosUtil;
 import com.apple.spark.appleinternal.AppleWhisperUtil;
+import com.apple.spark.appleinternal.notary.ConductorUtil;
 import com.apple.spark.appleinternal.notary.NotaryNarrativeTuriUtil;
 import com.apple.spark.appleinternal.notary.NotaryPersonIdUtil;
 import com.apple.spark.core.*;
@@ -523,6 +524,8 @@ public class ApplicationSubmissionRest extends RestBase {
           NotaryNarrativeTuriUtil.addNotaryNarrativeTuriVolume(sparkSpec, appConfig, personId);
           // set mtls certificate and key location as env var of pods
           NotaryNarrativeTuriUtil.addNotaryNarrativeEnvVar(sparkSpec);
+          // set Conductor Endpoint as Env var
+          ConductorUtil.setConductorEndpoint(appConfig, sparkSpec);
         } catch (Exception e) {
           logger.warn("Failed to create mTLS volume, annotation and environment variable ", e);
         }

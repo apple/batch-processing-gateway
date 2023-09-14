@@ -822,4 +822,27 @@ public class AppConfig extends Configuration {
       this.proxyAllowedGroupIDList = proxyAllowedGroupIDList;
     }
   }
+
+  /** Apple Internal Conductor related configs. */
+  @Valid private ConductorConfig conductor;
+
+  public ConductorConfig getConductor() {
+    return conductor;
+  }
+
+  public void setConductor(ConductorConfig conductor) {
+    this.conductor = conductor;
+  }
+
+  public static class ConductorConfig {
+    @JsonProperty private String conductorEndpoint;
+
+    public String getConductorEndpoint() {
+      return conductorEndpoint;
+    }
+
+    public void setConductorEndpoint(String conductorEndpoint) {
+      this.conductorEndpoint = conductorEndpoint;
+    }
+  }
 }

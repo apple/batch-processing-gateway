@@ -31,4 +31,5 @@ public class NotaryConstants {
   public static final String MTLS_CRT_LOCATION_VAL = "/turi-identity/tls.crt";
   public static final String MTLS_KEY_LOCATION_KEY = "NOTARY_MTLS_KEY_FILE";
   public static final String MTLS_KEY_LOCATION_VAL = "/turi-identity/tls.key";
+  public static final String CONDUCTOR_ENDPOINT_KEY = "CONDUCTOR_ENDPOINT";
 }
