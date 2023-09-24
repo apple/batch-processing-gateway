@@ -23,7 +23,7 @@ import static com.apple.spark.core.SparkConstants.RUNNING_STATE;
 import static com.apple.spark.core.SparkConstants.SUBMITTED_STATE;
 
 import com.apple.spark.core.Constants;
-import com.apple.spark.operator.SparkApplicationResource;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationStatus;
 import com.apple.spark.util.DateTimeUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -39,7 +39,7 @@ public class SubmissionStatus {
   private String applicationState;
   private String applicationErrorMessage;
 
-  public void copyFrom(SparkApplicationResource sparkApplicationResource) {
+  public void copyFrom(SparkApplication sparkApplicationResource) {
     Long creationTime =
         DateTimeUtils.parseOrNull(sparkApplicationResource.getMetadata().getCreationTimestamp());
     this.setCreationTime(creationTime);

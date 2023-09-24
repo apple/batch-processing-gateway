@@ -34,7 +34,7 @@ import com.apple.spark.clients.sparkhistory.GetJobEnvironmentResponse;
 import com.apple.spark.core.KubernetesHelper;
 import com.apple.spark.core.LogDao;
 import com.apple.spark.core.RestStreamingOutput;
-import com.apple.spark.operator.SparkApplicationResource;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ExceptionUtils;
 import com.codahale.metrics.MetricRegistry;
@@ -192,7 +192,7 @@ public class ApplicationGetLogRest extends RestBase {
       // If s3only is true, skip searching EKS.
       if (s3only.equalsIgnoreCase("false")) {
         try {
-          final SparkApplicationResource sparkApplicationResource = getSparkApplicationResource(id);
+          final SparkApplication sparkApplicationResource = getSparkApplicationResource(id);
           logStream = getLog(sparkApplicationResource, execId);
         } catch (Throwable ex) {
           ExceptionUtils.meterException();
@@ -300,7 +300,7 @@ public class ApplicationGetLogRest extends RestBase {
   }
 
   @ExceptionMetered(name = "RuntimeException", absolute = true, cause = RuntimeException.class)
-  private InputStream getLog(SparkApplicationResource sparkApplication, String execId) {
+  private InputStream getLog(SparkApplication sparkApplication, String execId) {
     if (sparkApplication == null) {
       logger.info("Cannot get log from EKS, spark application not found");
       return null;

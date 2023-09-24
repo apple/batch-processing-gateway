@@ -21,7 +21,7 @@ package com.apple.spark.core;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.operator.ApplicationState;
-import com.apple.spark.operator.SparkApplicationResource;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationStatus;
 import com.apple.spark.util.DateTimeUtils;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
@@ -42,8 +42,8 @@ public class RunningApplicationMonitorTest {
         new RunningApplicationMonitor(sparkCluster, timer, interval, new LoggingMeterRegistry());
     Assert.assertEquals(monitor.getApplicationCount(), 0);
 
-    SparkApplicationResource prevCRDState = new SparkApplicationResource();
-    SparkApplicationResource newCRDState = new SparkApplicationResource();
+    SparkApplication prevCRDState = new SparkApplication();
+    SparkApplication newCRDState = new SparkApplication();
     monitor.onUpdate(prevCRDState, newCRDState);
     Assert.assertEquals(monitor.getApplicationCount(), 0);
 
@@ -80,7 +80,7 @@ public class RunningApplicationMonitorTest {
 
   @Test
   public void getMaxRunningMillis() {
-    SparkApplicationResource sparkApplicationResource = new SparkApplicationResource();
+    SparkApplication sparkApplicationResource = new SparkApplication();
     Assert.assertEquals(
         RunningApplicationMonitor.getMaxRunningMillis(sparkApplicationResource),
         12 * 60 * 60 * 1000);

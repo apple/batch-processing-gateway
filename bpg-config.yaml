@@ -1,0 +1,118 @@
+defaultSparkConf:
+  spark.kubernetes.submission.connectionTimeout: 30000
+  spark.kubernetes.submission.requestTimeout: 30000
+  spark.kubernetes.driver.connectionTimeout: 30000
+  spark.kubernetes.driver.requestTimeout: 30000
+sparkClusters:
+  - weight: 100
+    id: minikube
+    eksCluster: arn:aws:eks:us-west-2:168594260668:cluster/og60-skate-eks-02
+    masterUrl: https://7EB14B8493566A806F42E3AC481303AA.gr7.us-west-2.eks.amazonaws.com
+    caCertDataSOPS: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1ekNDQWMrZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJeU1EUXhOVEl5TVRNeU1Gb1hEVE15TURReE1qSXlNVE15TUZvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTU5oCnpaZGpzazNYbFZtUDc3dlhXVE1xZlNHb3ZPTExTRjU3QUxnVFFGR2lOb3R6WjZvb3BEOStCeW5WWWhoRFpCdlkKV1NuRUN6dFVGSUZTd014STA3bnI2dERPYkk0cGQ1aUNjZzdUV2YzL1ZYMHNQTVNrbGpMUVNpQi9pSHdGSkNlWQpDQVo2cWtvZ29kbFErU0NzL29jYW9XSklBWUI4UmxkZzhQd0FpQ09hNGR5aGF1UlYvdng1WWovS05ucnJqaEZXCkZZZHdvMkRLM0U5OFUwa2VpUTc5QjJvK1pRNEhYZVNYRHczdi96enBLOVQ3ZmJzV2t5NXhYa1EvQU9aMHR3aFcKcmdQQXY3RWhPWTZzeDh1SWY3ZGVtQ1Z0T3lVMUsrYVJkclViekkyd2RpK1E5eEM3NmlDL1ZUbDdwK2I0UzI2UgpTbkc1bi9OWDJoVVdDa0piUXFFQ0F3RUFBYU5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZDbGZmZ1BKRERrcllKdlJOVFptUjRaaysxZU5NQTBHQ1NxR1NJYjMKRFFFQkN3VUFBNElCQVFDS3cwMzhRd1RXYlBvS2ZKZHExRFVuVENXZW1LalVkYlJFZEJyMWdSQ09IZGhyZHZ5UQphSGVkMUcyZDYrbHROeHQ1S1pYU0Q3N1FaRGM3Rk5BWFkrTTFnZGFLT01xaEJUZWkwd0l2VGoxYUdtZWhJRXd3Cm9NK0NmSmloRXFMVS9USGxOVG1zaVIxRG1vMHBkZzNzQWMza3pGZ0hPMEVvUk0xYWlDNUV6SzRqeU1QeXhVYUQKaGNQWkx1ZVE2L3hMckpHRmlCN1Jxai9jT0FyM2ticGJCVUFxYXY1N0V3UEVxbnJHOGQ1Lzd3V25uelk5MkloNgpIRDlwVWJLemF2MFhYVVJsRUZxVXVEbElXZDFCWkdNS1FMTjF0NGtkYy9MWEI5RjlqU055NklaVXQzTjJCTklRCm9pOVpYbHE0RFlLeFdFRUZjVUIrZ2FVK3QrcTVEaERQM04wbwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    userTokenSOPS: ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklqbHpOSEJxTFROTlVqZFFha3R5ZURGVFVDMUdSRmxaWlRSaGVqbDRNbnAxYkZWV2NIUlZRVVpDWHpnaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUp6Y0dGeWF5MWhjSEJzYVdOaGRHbHZibk1pTENKcmRXSmxjbTVsZEdWekxtbHZMM05sY25acFkyVmhZMk52ZFc1MEwzTmxZM0psZEM1dVlXMWxJam9pYkc5allXd3RjM0JoY21zdGIzQmxjbUYwYjNJdGMzQmhjbXN0ZEc5clpXNHRiV3h3Y1cwaUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNXVZVzFsSWpvaWJHOWpZV3d0YzNCaGNtc3RiM0JsY21GMGIzSXRjM0JoY21zaUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNTFhV1FpT2lJek1qY3dPRGxqWWkwMU1XSm1MVFF3T0dVdE9XTTBaUzFsT0RjMllXSTRZamhpTWpVaUxDSnpkV0lpT2lKemVYTjBaVzA2YzJWeWRtbGpaV0ZqWTI5MWJuUTZjM0JoY21zdFlYQndiR2xqWVhScGIyNXpPbXh2WTJGc0xYTndZWEpyTFc5d1pYSmhkRzl5TFhOd1lYSnJJbjAuTDNCcTk2X3c2dlVQOVVYNnVzQmtvVFpzSVVJX0ZHbm9URFdxOHFRWVFPcnBXUkxqSkUzV0N5ZGxpS1QweWdZbmdfa1FhZ3J1VG1Mb2ZDeUc1dXBrMGd0UEllQi1Nel9aUlhXaldYdkRvME9yb0E0WFhzd1VsMnpSSkx2TEwzRlkwMWJWSXZVd0ZiSmpSNUhKdUtHa2o2U1haQ2ZxdVZRNHJPaDhqUWdJZkk4V2hMRGJlS2F5ZU16Rm5XS1lpdlpocllaeElQMzcteHJUY0V0NW9tZTVYR2hzZXh3UGhJRUdhY2E4NW1MbmV1czU5ZmhYdUhyNERrc3RURDFLYWhZaTBJMnFsdWtYdmtvbVdNRjVidDRwWTV5MkpVV3BXbTB2cHhOc3lPRDRUN01FZ2ZETkhwRDhmYUdVXzRzZlNLTkhXQkpaOEU0cG9PV1FZYko2WU9tM1V3
+    userName: spark-operator
+    sparkApplicationNamespace: spark-applications
+    sparkServiceAccount: local-spark-operator-spark
+    sparkVersions:
+      - "3.2"
+    queues:
+      - poc
+    ttlSeconds: 259200
+    sparkUIUrl: http://localhost:8080
+    batchScheduler: yunikorn
+    sparkConf:
+      spark.kubernetes.executor.podNamePrefix: '{spark-application-resource-name}'
+      spark.eventLog.enabled: "true"
+      spark.eventLog.dir: s3a://bpg/eventlog
+      spark.history.fs.logDirectory: s3a://bpg/eventlog
+      spark.sql.warehouse.dir: s3a://bpg/warehouse
+      spark.sql.catalogImplementation: hive
+      spark.jars.ivy: /opt/spark/work-dir/.ivy2
+      spark.hadoop.fs.s3a.connection.ssl.enabled: false
+      spark.hadoop.fs.s3a.access.key: claudia_sun
+      spark.hadoop.fs.s3a.secret.key: ad4ae70b65b67ad6a47026b9f128215a0200f7a3bd371d2e9a10f5a482397569
+      spark.hadoop.fs.s3a.endpoint: 10.100.223.0:9878
+      spark.hadoop.fs.s3a.impl: org.apache.hadoop.fs.s3a.S3AFileSystem
+      spark.hadoop.fs.s3a.change.detection.version.required: false
+      spark.hadoop.fs.s3a.change.detection.mode: none
+      spark.hadoop.fs.s3a.fast.upload: true
+      spark.jars.packages: org.apache.hadoop:hadoop-aws:3.2.2
+      spark.hadoop.fs.s3a.aws.credentials.provider: org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider
+    sparkUIOptions:
+      ServicePort: 4040
+      ingressAnnotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+        nginx.ingress.kubernetes.io/proxy-redirect-from: http://$host/
+        nginx.ingress.kubernetes.io/proxy-redirect-to: /spark-applications-4/{spark-application-resource-name}/
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          proxy_set_header Accept-Encoding ""; # disable compression
+          sub_filter_last_modified off;
+          sub_filter '<head>' '<head> <base href="/spark-applications-4/{spark-application-resource-name}/">'; # add base url
+          sub_filter 'href="/' 'href="'; # remove absolute URL path so base url applies
+          sub_filter 'src="/' 'src="'; # remove absolute URL path so base url applies
+
+          sub_filter '/{{num}}/jobs/' '/jobs/';
+
+          sub_filter "setUIRoot('')" "setUIRoot('/spark-applications-4/{spark-application-resource-name}/')"; # Set UI root for JS scripts
+          sub_filter "document.baseURI.split" "document.documentURI.split"; # Executors page issue fix
+          sub_filter_once off;
+      ingressTLS:
+        - hosts:
+            - localhost
+          secretName: localhost-tls-secret
+    driver:
+      env:
+        - name: STATSD_SERVER_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: STATSD_SERVER_PORT
+          value: "8125"
+    executor:
+      env:
+        - name: STATSD_SERVER_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: STATSD_SERVER_PORT
+          value: "8125"
+sparkImages:
+  - name: apache/spark-py:v3.2.2
+    types:
+      - Python
+    version: "3.2"
+  - name: apache/spark:v3.2.2
+    types:
+      - Java
+      - Scala
+    version: "3.2"
+s3Bucket: bpg
+s3Folder: uploaded
+sparkLogS3Bucket: bpg
+sparkLogIndex: index/index.txt
+batchFileLimit: 2016
+sparkHistoryDns: localhost
+gatewayDns: localhost
+sparkHistoryUrl: http://localhost:8088
+allowedUsers:
+  - '*'
+blockedUsers: []
+queues:
+  - name: poc
+    maxRunningMillis: 21600000
+queueTokenSOPS: {}
+dbStorageSOPS:
+  connectionString: jdbc:postgresql://localhost:5432/bpg?useUnicode=yes&characterEncoding=UTF-8&useLegacyDatetimeCode=false&connectTimeout=10000&socketTimeout=30000
+  user: bpg
+  password: samplepass
+statusCacheExpireMillis: 9000
+server:
+  applicationConnectors:
+    - type: http
+      port: 8080
+logging:
+  level: INFO
+  loggers:
+    com.apple.spark: INFO
+sops: {}

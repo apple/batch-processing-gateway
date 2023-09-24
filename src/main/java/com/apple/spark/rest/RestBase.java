@@ -23,8 +23,7 @@ import com.apple.spark.AppConfig;
 import com.apple.spark.core.ApplicationSubmissionHelper;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.KubernetesHelper;
-import com.apple.spark.operator.SparkApplicationResource;
-import com.apple.spark.operator.SparkApplicationResourceDoneable;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationResourceList;
 import com.apple.spark.util.CounterMetricContainer;
 import com.apple.spark.util.TimerMetricContainer;
@@ -33,7 +32,9 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.util.concurrent.RateLimiter;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
@@ -114,23 +115,23 @@ public class RestBase {
     return sparkClusterOptional.get();
   }
 
-  protected SparkApplicationResource getSparkApplicationResource(String submissionId) {
+  protected SparkApplication getSparkApplicationResource(String submissionId) {
     AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
     com.codahale.metrics.Timer timer =
         registry.timer(this.getClass().getSimpleName() + ".getSparkApplicationResource.k8s-time");
-    try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
-        com.codahale.metrics.Timer.Context context = timer.time()) {
-      CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
-      SparkApplicationResource sparkApplication =
-          client
-              .customResources(
-                  crdContext,
-                  SparkApplicationResource.class,
-                  SparkApplicationResourceList.class,
-                  SparkApplicationResourceDoneable.class)
-              .inNamespace(sparkCluster.getSparkApplicationNamespace())
-              .withName(submissionId)
-              .get();
+    try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
+         com.codahale.metrics.Timer.Context context = timer.time()) {
+
+      MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
+              sparkApplicationClient =
+              client.resources(SparkApplication.class, SparkApplicationResourceList.class);
+
+      SparkApplication sparkApplication =
+              sparkApplicationClient
+                      .inNamespace(sparkCluster.getSparkApplicationNamespace())
+                      .withName(submissionId)
+                      .get();
+
       context.stop();
       if (sparkApplication == null) {
         throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -151,17 +152,15 @@ public class RestBase {
             this.getClass().getSimpleName() + ".getSparkApplicationResourcesByUser.k8s-time");
     try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
         com.codahale.metrics.Timer.Context context = timer.time()) {
-      CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
+      MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
+              sparkApplicationClient =
+              client.resources(SparkApplication.class, SparkApplicationResourceList.class);
+
       SparkApplicationResourceList list =
-          client
-              .customResources(
-                  crdContext,
-                  SparkApplicationResource.class,
-                  SparkApplicationResourceList.class,
-                  SparkApplicationResourceDoneable.class)
-              .inNamespace(sparkCluster.getSparkApplicationNamespace())
-              .withLabel(labelName, labelValue)
-              .list();
+              sparkApplicationClient
+                      .inNamespace(sparkCluster.getSparkApplicationNamespace())
+                      .withLabel(labelName, labelValue)
+                      .list();
       context.stop();
       if (list == null) {
         return new SparkApplicationResourceList();
@@ -176,16 +175,13 @@ public class RestBase {
         registry.timer(this.getClass().getSimpleName() + ".getSparkApplicationResources.k8s-time");
     try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
         com.codahale.metrics.Timer.Context context = timer.time()) {
-      CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
+      MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
+              sparkApplicationClient =
+              client.resources(SparkApplication.class, SparkApplicationResourceList.class);
+
       SparkApplicationResourceList list =
-          client
-              .customResources(
-                  crdContext,
-                  SparkApplicationResource.class,
-                  SparkApplicationResourceList.class,
-                  SparkApplicationResourceDoneable.class)
-              .inNamespace(sparkCluster.getSparkApplicationNamespace())
-              .list();
+              sparkApplicationClient.inNamespace(sparkCluster.getSparkApplicationNamespace()).list();
+
       context.stop();
       if (list == null) {
         return new SparkApplicationResourceList();

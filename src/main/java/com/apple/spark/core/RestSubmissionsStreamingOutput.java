@@ -21,7 +21,7 @@ package com.apple.spark.core;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmissionSummary;
-import com.apple.spark.operator.SparkApplicationResource;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationResourceList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -39,12 +39,12 @@ public abstract class RestSubmissionsStreamingOutput extends RestStreamingOutput
     if (list == null) {
       return;
     }
-    List<SparkApplicationResource> sparkApplicationResources = list.getItems();
+    List<SparkApplication> sparkApplicationResources = list.getItems();
     if (sparkApplicationResources == null) {
       return;
     }
     ObjectMapper objectMapper = new ObjectMapper();
-    for (SparkApplicationResource sparkApplicationResource : sparkApplicationResources) {
+    for (SparkApplication sparkApplicationResource : sparkApplicationResources) {
       SubmissionSummary submission = new SubmissionSummary();
       submission.copyFrom(sparkApplicationResource, sparkCluster, appConfig);
       String str = objectMapper.writeValueAsString(submission);

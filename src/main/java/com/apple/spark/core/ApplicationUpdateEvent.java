@@ -20,13 +20,13 @@
 package com.apple.spark.core;
 
 import com.apple.spark.AppConfig;
-import com.apple.spark.operator.SparkApplicationResource;
+import com.apple.spark.operator.SparkApplication;
 
 /** The event generated whenever there's CRD update from an application. */
 public class ApplicationUpdateEvent {
 
-  private final SparkApplicationResource prevCRDState;
-  private final SparkApplicationResource newCRDState;
+  private final SparkApplication prevCRDState;
+  private final SparkApplication newCRDState;
 
   // The runningApplicationMonitor instance corresponding to the specific Spark cluster
   private final RunningApplicationMonitor runningApplicationMonitor;
@@ -36,8 +36,8 @@ public class ApplicationUpdateEvent {
 
   public ApplicationUpdateEvent(
       AppConfig.SparkCluster sparkCluster,
-      SparkApplicationResource prevCRDState,
-      SparkApplicationResource newCRDState,
+      SparkApplication prevCRDState,
+      SparkApplication newCRDState,
       RunningApplicationMonitor runningApplicationMonitor) {
     this.prevCRDState = prevCRDState;
     this.newCRDState = newCRDState;
@@ -45,11 +45,11 @@ public class ApplicationUpdateEvent {
     this.runningApplicationMonitor = runningApplicationMonitor;
   }
 
-  public SparkApplicationResource getPrevCRDState() {
+  public SparkApplication getPrevCRDState() {
     return prevCRDState;
   }
 
-  public SparkApplicationResource getNewCRDState() {
+  public SparkApplication getNewCRDState() {
     return newCRDState;
   }
 
