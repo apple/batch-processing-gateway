@@ -951,27 +951,45 @@ public class ApplicationSubmissionRest extends RestBase {
                   throws IOException, WebApplicationException {
                 logger.info("Streaming log for submission {}", submissionId);
                 try {
+                  Optional<MicroTime> eventTimeOptional;
+                  Optional<String> lastTimestampOptional;
                   writeLine(outputStream, "--- Spark Spec ---");
                   writeLine(outputStream, sparkApplicationSpecYaml);
                   outputStream.flush();
 
-                  writeLine(outputStream, "--- Spark Application Events ---");
+                  writeLine(
+                      outputStream,
+                      "--- Spark Application Events (eventTime, lastTimestamp, type, reason, message) ---");
                   for (Event event : sparkApplicationEvents) {
+                    eventTimeOptional = Optional.ofNullable(event.getEventTime());
+                    lastTimestampOptional = Optional.ofNullable(event.getLastTimestamp());
                     writeLine(
                         outputStream,
                         String.format(
-                            "%s %s %s",
-                            event.getEventTime().getTime(), event.getReason(), event.getMessage()));
+                            "%-27s %-20s %-8s %-30s %s",
+                            eventTimeOptional.isPresent() ? event.getEventTime().getTime() : "NULL",
+                            lastTimestampOptional.isPresent() ? event.getLastTimestamp() : "NULL",
+                            event.getType(),
+                            event.getReason(),
+                            event.getMessage()));
                   }
                   outputStream.flush();
 
-                  writeLine(outputStream, "--- Spark Driver Events ---");
+                  writeLine(
+                      outputStream,
+                      "--- Spark Driver Events (eventTime, lastTimestamp, type, reason, message) ---");
                   for (Event event : driverEvents) {
+                    eventTimeOptional = Optional.ofNullable(event.getEventTime());
+                    lastTimestampOptional = Optional.ofNullable(event.getLastTimestamp());
                     writeLine(
                         outputStream,
                         String.format(
-                            "%s %s %s",
-                            event.getEventTime().getTime(), event.getReason(), event.getMessage()));
+                            "%-27s %-20s %-8s %-30s %s",
+                            eventTimeOptional.isPresent() ? event.getEventTime().getTime() : "NULL",
+                            lastTimestampOptional.isPresent() ? event.getLastTimestamp() : "NULL",
+                            event.getType(),
+                            event.getReason(),
+                            event.getMessage()));
                   }
                   outputStream.flush();
 

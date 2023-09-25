@@ -119,6 +119,7 @@ public class ApplicationSubmissionRestIntegrationTest {
     // Check application status in DB
     boolean foundApplicationStatusInDB = false;
     long startTime = System.currentTimeMillis();
+    /* Below test are failing with Table "APPLICATION_SUBMISSION" not found (this database is empty)..Need to be investigated */
     while (System.currentTimeMillis() - startTime < 180000) {
       DBConnection dbConnection =
           new DBConnection(

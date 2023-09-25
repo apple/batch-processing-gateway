@@ -90,6 +90,7 @@ public class LogDaoTest {
         appName);
     logDao.updateExecutorInfo("submission3", executorCore, executorMemoryMb);
 
+    /* Below test are failing with "Null"..Need to be investigated */
     try (ResultSet resultSet = logDao.getJobInfoQuery("RUNNING", "all", 200, 7)) {
       Assert.assertTrue(resultSet.next());
       Assert.assertEquals(resultSet.getString("submission_id"), "submission3");
@@ -220,7 +221,7 @@ public class LogDaoTest {
     Assert.assertEquals(submission.getQueueToken(), "token1");
 
     logDao.logApplicationStatus("submission1", "RUNNING");
-
+    /* Below test is failing with "Null"..Need to be investigated */
     try (ResultSet resultSet = logDao.getJobInfoQuery("RUNNING", "all", 200, 7)) {
       Assert.assertTrue(resultSet.next());
       Assert.assertEquals(resultSet.getString("submission_id"), "submission1");

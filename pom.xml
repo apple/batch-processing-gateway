@@ -98,6 +98,13 @@
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <!-- Exclude JUnit 5 dependencies from dropwizard-testing -->
+                <exclusion>
+                    <groupId>org.junit.jupiter</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
@@ -225,16 +232,25 @@
             <artifactId>jdbi3-core</artifactId>
             <version>3.27.0</version>
         </dependency>
+        <!--
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
             <version>4.8.0</version>
             <scope>test</scope>
+            <exclusions>
+                <!-- Exclude JUnit 5 dependencies from dropwizard-testing -->
+                <exclusion>
+                    <groupId>org.junit.jupiter</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
@@ -295,7 +311,8 @@
                 <version>3.0.0-M7</version>
                 <configuration>
                     <excludes>
-                        <exclude>**/*IntegrationTest</exclude>
+                        <exclude>**/*IntegrationTest*</exclude>
+                        <exclude>**/*SkateTestSupport*</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -305,7 +322,8 @@
                 <version>3.0.0-M5</version>
                 <configuration>
                     <includes>
-                        <include>**/*</include>
+                        <include>**/*IntegrationTest*</include>
+                        <include>**/*SkateTestSupport*</include>
                     </includes>
                     <excludes>
                         <!-- S3RestIntegrationTest need to set up AWS credential, ignore it for now -->
