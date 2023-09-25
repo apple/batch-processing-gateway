@@ -19,11 +19,11 @@
 
 package com.apple.spark.core;
 
-import com.apple.spark.operator.SparkApplicationResource;
+import com.apple.spark.operator.SparkApplication;
 
 public class SparkApplicationResourceHelper {
 
-  public static String getState(SparkApplicationResource sparkApp) {
+  public static String getState(SparkApplication sparkApp) {
     if (sparkApp.getStatus() != null && sparkApp.getStatus().getApplicationState() != null) {
       return sparkApp.getStatus().getApplicationState().getState();
     }

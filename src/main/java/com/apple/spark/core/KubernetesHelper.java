@@ -21,11 +21,8 @@ package com.apple.spark.core;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.util.EndAwareInputStream;
-import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.Config;
-import io.fabric8.kubernetes.client.ConfigBuilder;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.*;
 import io.fabric8.kubernetes.client.dsl.LogWatch;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -135,8 +132,7 @@ public class KubernetesHelper {
 
   public static InputStream tryGetLogStream(
       DefaultKubernetesClient client, String namespace, String podName) {
-    PodResource<Pod, DoneablePod> podResource =
-        client.inNamespace(namespace).pods().withName(podName);
+    PodResource podResource = client.pods().inNamespace(namespace).withName(podName);
     if (podResource == null) {
       logger.info("Cannot get pod resource {}", podName);
       return null;

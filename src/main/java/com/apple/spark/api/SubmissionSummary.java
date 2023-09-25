@@ -24,7 +24,7 @@ import static org.apache.spark.network.util.JavaUtils.byteStringAsGb;
 import com.apple.spark.AppConfig;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.SparkConstants;
-import com.apple.spark.operator.SparkApplicationResource;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationSpec;
 import com.apple.spark.util.ConfigUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -86,7 +86,7 @@ public class SubmissionSummary extends SubmissionStatus {
   }
 
   public void copyFrom(
-      SparkApplicationResource sparkApplicationResource,
+      SparkApplication sparkApplicationResource,
       AppConfig.SparkCluster sparkCluster,
       AppConfig appConfig) {
     this.copyFrom(sparkApplicationResource);
@@ -103,7 +103,7 @@ public class SubmissionSummary extends SubmissionStatus {
   }
 
   @Override
-  public void copyFrom(SparkApplicationResource sparkApplicationResource) {
+  public void copyFrom(SparkApplication sparkApplicationResource) {
     super.copyFrom(sparkApplicationResource);
     setSubmissionId(sparkApplicationResource.getMetadata().getName());
     if (sparkApplicationResource.getMetadata().getLabels() != null) {

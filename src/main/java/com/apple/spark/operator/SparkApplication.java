@@ -22,10 +22,14 @@ package com.apple.spark.operator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.fabric8.kubernetes.client.CustomResource;
+import io.fabric8.kubernetes.model.annotation.Group;
+import io.fabric8.kubernetes.model.annotation.Version;
 
+@Version("v1beta2")
+@Group("sparkoperator.k8s.io")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SparkApplicationResource extends CustomResource {
+public class SparkApplication extends CustomResource {
 
   private SparkApplicationSpec spec;
   private SparkApplicationStatus status;

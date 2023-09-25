@@ -43,8 +43,7 @@ import com.apple.spark.api.SubmitApplicationRequest;
 import com.apple.spark.api.SubmitApplicationResponse;
 import com.apple.spark.core.*;
 import com.apple.spark.operator.DriverInfo;
-import com.apple.spark.operator.SparkApplicationResource;
-import com.apple.spark.operator.SparkApplicationResourceDoneable;
+import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationResourceList;
 import com.apple.spark.operator.SparkApplicationSpec;
 import com.apple.spark.security.User;
@@ -69,6 +68,9 @@ import io.fabric8.kubernetes.api.model.EventList;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodStatus;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
@@ -154,7 +156,7 @@ public class ApplicationSubmissionRest extends RestBase {
             AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
             try {
               GetSubmissionStatusResponse response =
-                  getStatusImplWithoutCache(submissionId, sparkCluster);
+                  getStatusImplWithoutCache(getSparkApplicationResource(submissionId), submissionId, sparkCluster);
               return new GetSubmissionStatusResponseCacheValue(response);
             } catch (Throwable ex) {
               requestCounters.increment(
@@ -343,21 +345,21 @@ public class ApplicationSubmissionRest extends RestBase {
     com.codahale.metrics.Timer timer =
         registry.timer(this.getClass().getSimpleName() + ".submitApplication.k8s-time");
 
-    try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
-        com.codahale.metrics.Timer.Context context = timer.time()) {
-      SparkApplicationResource sparkApplicationResource = new SparkApplicationResource();
-      sparkApplicationResource.setApiVersion(SparkConstants.SPARK_OPERATOR_API_VERSION);
-      sparkApplicationResource.setKind(SparkConstants.SPARK_APPLICATION_KIND);
-      sparkApplicationResource.getMetadata().setName(submissionId);
-      sparkApplicationResource
+    try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
+         com.codahale.metrics.Timer.Context context = timer.time()) {
+      SparkApplication sparkApplication = new SparkApplication();
+      sparkApplication.setApiVersion(SparkConstants.SPARK_OPERATOR_API_VERSION);
+      sparkApplication.setKind(SparkConstants.SPARK_APPLICATION_KIND);
+      sparkApplication.getMetadata().setName(submissionId);
+      sparkApplication
           .getMetadata()
           .setNamespace(sparkCluster.getSparkApplicationNamespace());
 
-      if (sparkApplicationResource.getMetadata().getLabels() == null) {
-        sparkApplicationResource.getMetadata().setLabels(new HashMap<>());
+      if (sparkApplication.getMetadata().getLabels() == null) {
+        sparkApplication.getMetadata().setLabels(new HashMap<>());
       }
       if (sparkSpec.getProxyUser() != null) {
-        sparkApplicationResource
+        sparkApplication
             .getMetadata()
             .getLabels()
             .put(PROXY_USER_LABEL, sparkSpec.getProxyUser());
@@ -365,13 +367,13 @@ public class ApplicationSubmissionRest extends RestBase {
       if (request.getApplicationName() != null) {
         String applicationNameLabelValue =
             KubernetesHelper.normalizeLabelValue(request.getApplicationName());
-        sparkApplicationResource
+        sparkApplication
             .getMetadata()
             .getLabels()
             .put(APPLICATION_NAME_LABEL, applicationNameLabelValue);
       }
 
-      sparkApplicationResource
+      sparkApplication
           .getMetadata()
           .getLabels()
           .put(QUEUE_LABEL, YUNIKORN_ROOT_QUEUE + "." + queue);
@@ -400,7 +402,7 @@ public class ApplicationSubmissionRest extends RestBase {
           }
         }
       }
-      sparkApplicationResource
+      sparkApplication
           .getMetadata()
           .getLabels()
           .put(MAX_RUNNING_MILLIS_LABEL, String.valueOf(maxRunningMillis));
@@ -412,16 +414,13 @@ public class ApplicationSubmissionRest extends RestBase {
         logger.warn("Failed to serialize SparkApplicationSpec and mask sensitive info", ex);
       }
 
-      sparkApplicationResource.setSpec(sparkSpec);
-      CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
-      client
-          .customResources(
-              crdContext,
-              SparkApplicationResource.class,
-              SparkApplicationResourceList.class,
-              SparkApplicationResourceDoneable.class)
-          .create(sparkApplicationResource);
+      sparkApplication.setSpec(sparkSpec);
 
+      MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
+              sparkApplicationClient =
+              client.resources(SparkApplication.class, SparkApplicationResourceList.class);
+
+      sparkApplicationClient.create(sparkApplication);
       SubmitApplicationResponse response = new SubmitApplicationResponse();
       response.setSubmissionId(submissionId);
       context.stop();
@@ -465,18 +464,16 @@ public class ApplicationSubmissionRest extends RestBase {
     AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
     com.codahale.metrics.Timer timer =
         registry.timer(this.getClass().getSimpleName() + ".deleteSubmission.k8s-time");
-    try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
+    try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
         com.codahale.metrics.Timer.Context context = timer.time()) {
-      CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
-      client
-          .customResources(
-              crdContext,
-              SparkApplicationResource.class,
-              SparkApplicationResourceList.class,
-              SparkApplicationResourceDoneable.class)
-          .inNamespace(sparkCluster.getSparkApplicationNamespace())
-          .withName(submissionId)
-          .delete();
+      MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
+              sparkApplicationClient =
+              client.resources(SparkApplication.class, SparkApplicationResourceList.class);
+
+      sparkApplicationClient
+              .inNamespace(sparkCluster.getSparkApplicationNamespace())
+              .withName(submissionId)
+              .delete();
       context.stop();
       return new DeleteSubmissionResponse();
     }
@@ -515,9 +512,9 @@ public class ApplicationSubmissionRest extends RestBase {
         clientVersion);
     requestCounters.increment(
         REQUEST_METRIC_NAME, Tag.of("name", "get_spec"), Tag.of("user", user.getName()));
-    SparkApplicationResource sparkApplicationResource = getSparkApplicationResource(submissionId);
+    SparkApplication sparkApplication = getSparkApplicationResource(submissionId);
     SparkApplicationSpec sparkApplicationSpec =
-        removeEnvFromSpec(sparkApplicationResource.getSpec());
+        removeEnvFromSpec(sparkApplication.getSpec());
     return sparkApplicationSpec;
   }
 
@@ -561,13 +558,13 @@ public class ApplicationSubmissionRest extends RestBase {
           STATUS_CACHE_GET_FAILURE, Tag.of("exception", ex.getClass().getSimpleName()));
       logger.warn(String.format("Failed to get status from cache for %s", submissionId), ex);
       AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
-      return getStatusImplWithoutCache(submissionId, sparkCluster);
+      return getStatusImplWithoutCache(getSparkApplicationResource(submissionId), submissionId, sparkCluster);
     }
 
     if (cacheValue == null) {
       logger.warn("Got null status cache value for {}", submissionId);
       AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
-      return getStatusImplWithoutCache(submissionId, sparkCluster);
+      return getStatusImplWithoutCache(getSparkApplicationResource(submissionId), submissionId, sparkCluster);
     }
 
     long cacheElapsedTime = System.currentTimeMillis() - cacheValue.getCreatedTimeMillis();
@@ -578,7 +575,7 @@ public class ApplicationSubmissionRest extends RestBase {
       logger.warn(
           "Got expired status cache value ({} millis) for {}", cacheElapsedTime, submissionId);
       AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
-      return getStatusImplWithoutCache(submissionId, sparkCluster);
+      return getStatusImplWithoutCache(getSparkApplicationResource(submissionId), submissionId, sparkCluster);
     }
 
     if (cacheValue.getResponse() == null) {
@@ -603,24 +600,8 @@ public class ApplicationSubmissionRest extends RestBase {
   }
 
   private GetSubmissionStatusResponse getStatusImplWithoutCache(
-      String submissionId, AppConfig.SparkCluster sparkCluster) {
-    com.codahale.metrics.Timer timer =
-        registry.timer(this.getClass().getSimpleName() + ".getStatus.k8s-time");
-    try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
-        com.codahale.metrics.Timer.Context context = timer.time()) {
-      CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
+          SparkApplication sparkApplication, String submissionId, AppConfig.SparkCluster sparkCluster) {
 
-      SparkApplicationResource sparkApplication =
-          client
-              .customResources(
-                  crdContext,
-                  SparkApplicationResource.class,
-                  SparkApplicationResourceList.class,
-                  SparkApplicationResourceDoneable.class)
-              .inNamespace(sparkCluster.getSparkApplicationNamespace())
-              .withName(submissionId)
-              .get();
-      context.stop();
       if (sparkApplication == null) {
         throw new WebApplicationException(
             String.format("Application submission %s not found", submissionId),
@@ -678,7 +659,6 @@ public class ApplicationSubmissionRest extends RestBase {
       }
 
       return response;
-    }
   }
 
   @GET()
@@ -716,7 +696,7 @@ public class ApplicationSubmissionRest extends RestBase {
         REQUEST_METRIC_NAME, Tag.of("name", "get_driver"), Tag.of("user", user.getName()));
 
     AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
-    SparkApplicationResource sparkApplicationResource = getSparkApplicationResource(submissionId);
+    SparkApplication sparkApplicationResource = getSparkApplicationResource(submissionId);
     if (sparkApplicationResource.getStatus() == null
         || sparkApplicationResource.getStatus().getDriverInfo() == null) {
       return new GetDriverInfoResponse();
@@ -770,7 +750,7 @@ public class ApplicationSubmissionRest extends RestBase {
         Tag.of("name", "describe_application"),
         Tag.of("user", user.getName()));
 
-    final SparkApplicationResource sparkApplicationResource =
+    final SparkApplication sparkApplicationResource =
         getSparkApplicationResource(submissionId);
     SparkApplicationSpec sparkApplicationSpec =
         removeEnvFromSpec(sparkApplicationResource.getSpec());
@@ -862,9 +842,9 @@ public class ApplicationSubmissionRest extends RestBase {
     for (AppConfig.SparkCluster sparkCluster : getSparkClusters()) {
       SparkApplicationResourceList list =
           getSparkApplicationResourcesByUser(sparkCluster, user.getName());
-      List<SparkApplicationResource> sparkApplicationResources = list.getItems();
+      List<SparkApplication> sparkApplicationResources = list.getItems();
       if (sparkApplicationResources != null) {
-        for (SparkApplicationResource sparkApplicationResource : sparkApplicationResources) {
+        for (SparkApplication sparkApplicationResource : sparkApplicationResources) {
           SubmissionSummary submission = new SubmissionSummary();
           submission.copyFrom(sparkApplicationResource, sparkCluster, getAppConfig());
           submissionList.add(submission);
@@ -884,11 +864,12 @@ public class ApplicationSubmissionRest extends RestBase {
     try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
         com.codahale.metrics.Timer.Context context = timer.time()) {
       EventList eventList =
-          client
-              .events()
-              .inNamespace(sparkCluster.getSparkApplicationNamespace())
-              .withFields(fields)
-              .list();
+              client
+                      .v1()
+                      .events()
+                      .inNamespace(sparkCluster.getSparkApplicationNamespace())
+                      .withFields(fields)
+                      .list();
       context.stop();
       if (eventList == null) {
         return Collections.EMPTY_LIST;
