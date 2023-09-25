@@ -543,6 +543,9 @@ public class AppConfig extends Configuration {
 
     private String name;
     private Boolean secure;
+
+    private Boolean authorizeEnabled = false;
+
     private List<String> users;
     private Long maxRunningMillis;
     private String driverNodeLabelKey;
@@ -573,6 +576,14 @@ public class AppConfig extends Configuration {
 
     public void setSecure(Boolean secure) {
       this.secure = secure;
+    }
+
+    public Boolean getAuthorizeEnabled() {
+      return authorizeEnabled;
+    }
+
+    public void setAuthorizeEnabled(Boolean authorizeEnabled) {
+      this.authorizeEnabled = authorizeEnabled;
     }
 
     public List<String> getUsers() {

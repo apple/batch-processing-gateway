@@ -1,5 +1,7 @@
 package com.apple.spark.appleintegration;
 
+import static com.apple.spark.util.HttpUtils.post;
+
 import com.apple.spark.api.*;
 import com.apple.spark.core.SparkConstants;
 import com.apple.spark.operator.Dependencies;
@@ -8,10 +10,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import jakarta.ws.rs.core.Response;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -162,18 +168,26 @@ public class IntegrationTestHelper {
         false);
   }
 
-  // When driverLog is true, the result type will be Some<String>, otherwise it would be None.
-  private static Optional<String> runSparkApplication(
-      String serviceRootUrl,
-      String requestTemplate,
-      Consumer<SubmitApplicationRequest> requestModifier,
-      String expectedFinalState,
-      boolean driverLog,
-      boolean sparkSpec)
+  public static String generateSubmitApplicationRequestStr(
+      ObjectMapper objectMapper,
+      SubmitApplicationRequest submitApplicationRequest,
+      Consumer<SubmitApplicationRequest> requestModifier)
       throws IOException {
+    requestModifier.accept(submitApplicationRequest);
+    return objectMapper.writeValueAsString(submitApplicationRequest);
+  }
 
-    boolean requestTemplateIsYaml = requestTemplate.toLowerCase().endsWith("yaml");
+  public static SubmitApplicationRequest generateSubmitApplicationRequest(
+      ObjectMapper objectMapper, String requestTemplate) throws IOException {
+    // Use json request file as a request template
+    String submitApplicationRequestText =
+        getResourceAsString(requestTemplate, StandardCharsets.UTF_8);
 
+    // Set application files
+    return objectMapper.readValue(submitApplicationRequestText, SubmitApplicationRequest.class);
+  }
+
+  private static ObjectMapper generateObjectMapper(boolean requestTemplateIsYaml) {
     ObjectMapper objectMapper;
     if (requestTemplateIsYaml) {
       objectMapper =
@@ -185,27 +199,241 @@ public class IntegrationTestHelper {
       objectMapper = new ObjectMapper();
     }
 
-    // Use json request file as a request template
-    String submitApplicationRequestText =
-        getResourceAsString(requestTemplate, StandardCharsets.UTF_8);
+    return objectMapper;
+  }
 
-    // Set application files
+  public static void runSparkApplicationWithUnauthorizedAndAuthorizedUser(
+      String serviceRootUrl,
+      String requestTemplate,
+      Consumer<SubmitApplicationRequest> requestModifier)
+      throws Exception {
+    boolean requestTemplateIsYaml = requestTemplate.toLowerCase().endsWith("yaml");
+    ObjectMapper objectMapper = generateObjectMapper(requestTemplateIsYaml);
     SubmitApplicationRequest submitApplicationRequest =
-        objectMapper.readValue(submitApplicationRequestText, SubmitApplicationRequest.class);
-    requestModifier.accept(submitApplicationRequest);
-    submitApplicationRequestText = objectMapper.writeValueAsString(submitApplicationRequest);
+        generateSubmitApplicationRequest(objectMapper, requestTemplate);
+    String submitApplicationRequestText =
+        generateSubmitApplicationRequestStr(
+            objectMapper, submitApplicationRequest, requestModifier);
+    String unauthorizedUser = "aimldpsecuritynoaccess_bot";
+    String authorizedUser = "raimldpi";
+
+    // Submit application with unauthorized user
+    final String submitUrl = String.format("%s/spark", serviceRootUrl);
+    String responseStrWithUnauthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            submitUrl,
+            submitApplicationRequestText,
+            unauthorizedUser,
+            "post");
+    assertResponseBasedOnAuthorizationStatus(responseStrWithUnauthorizedUser, false);
+
+    // Submit application with authorized user
+    String responseStrWithAuthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml, submitUrl, submitApplicationRequestText, authorizedUser, "post");
+    assertResponseBasedOnAuthorizationStatus(responseStrWithAuthorizedUser, true);
+    String submissionId =
+        HttpUtils.parseJson(responseStrWithAuthorizedUser, SubmitApplicationResponse.class)
+            .getSubmissionId();
+
+    // Get submissions with unauthorized user
+    String mySubmissionsResponseStrWithUnauthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/mySubmissions", serviceRootUrl),
+            submitApplicationRequestText,
+            unauthorizedUser,
+            "get");
+    Assert.assertTrue(mySubmissionsResponseStrWithUnauthorizedUser.equals("{\"submissions\":[]}"));
+
+    // Get submissions with authorized user
+    String mySubmissionsResponseStrWithAuthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/mySubmissions", serviceRootUrl),
+            submitApplicationRequestText,
+            authorizedUser,
+            "get");
+    Assert.assertTrue(!mySubmissionsResponseStrWithAuthorizedUser.equals("{\"submissions\":[]}"));
+
+    // Get Spark application spec with unauthorized user
+    String descResponseStrWithUnauthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/%s/spec", serviceRootUrl, submissionId),
+            submitApplicationRequestText,
+            unauthorizedUser,
+            "get");
+    assertResponseBasedOnAuthorizationStatus(descResponseStrWithUnauthorizedUser, false);
+
+    // Get Spark application spec with authorized user
+    String descResponseStrWithauthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/%s/spec", serviceRootUrl, submissionId),
+            submitApplicationRequestText,
+            authorizedUser,
+            "get");
+    assertResponseBasedOnAuthorizationStatus(descResponseStrWithauthorizedUser, true);
+
+    // Get Spark application status with unauthorized user
+    String statusResponseStrWithUnauthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/%s/status", serviceRootUrl, submissionId),
+            submitApplicationRequestText,
+            unauthorizedUser,
+            "get");
+    assertResponseBasedOnAuthorizationStatus(statusResponseStrWithUnauthorizedUser, false);
+
+    // Get Spark application status with authorized user
+    String statusResponseStrWithAuthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/%s/status", serviceRootUrl, submissionId),
+            submitApplicationRequestText,
+            authorizedUser,
+            "get");
+    assertResponseBasedOnAuthorizationStatus(statusResponseStrWithAuthorizedUser, true);
+
+    // Get Spark application driver information with unauthorized user
+    String getDriverResponseStrWithUnauthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/%s/driver", serviceRootUrl, submissionId),
+            submitApplicationRequestText,
+            unauthorizedUser,
+            "get");
+    assertResponseBasedOnAuthorizationStatus(getDriverResponseStrWithUnauthorizedUser, false);
+
+    // Get Spark application driver information with authorized user
+    String getDriverResponseStrWitAuthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/%s/driver", serviceRootUrl, submissionId),
+            submitApplicationRequestText,
+            authorizedUser,
+            "get");
+    assertResponseBasedOnAuthorizationStatus(getDriverResponseStrWitAuthorizedUser, true);
+
+    // Describe spark application with unauthorized user
+    String describeResponseStrWithUnauthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/%s/describe", serviceRootUrl, submissionId),
+            submitApplicationRequestText,
+            unauthorizedUser,
+            "get");
+    assertResponseBasedOnAuthorizationStatus(describeResponseStrWithUnauthorizedUser, false);
+
+    // Describe spark application with authorized user
+    String describeResponseStrWithAuthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/%s/describe", serviceRootUrl, submissionId),
+            submitApplicationRequestText,
+            authorizedUser,
+            "get");
+    assertResponseBasedOnAuthorizationStatus(describeResponseStrWithAuthorizedUser, true);
+
+    // Delete application with unauthorized user
+    String deleteResponseStrWithUnauthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/%s", serviceRootUrl, submissionId),
+            submitApplicationRequestText,
+            unauthorizedUser,
+            "delete");
+    assertResponseBasedOnAuthorizationStatus(deleteResponseStrWithUnauthorizedUser, false);
+
+    // Delete application with authorized user
+    String deleteResponseStrWithAuthorizedUser =
+        submitRequest(
+            requestTemplateIsYaml,
+            String.format("%s/spark/%s", serviceRootUrl, submissionId),
+            submitApplicationRequestText,
+            authorizedUser,
+            "delete");
+    assertResponseBasedOnAuthorizationStatus(deleteResponseStrWithAuthorizedUser, true);
+  }
+
+  private static void assertResponseBasedOnAuthorizationStatus(
+      String response, boolean authorized) {
+    boolean unauthorizedResult =
+        response.contains(String.valueOf(Response.Status.FORBIDDEN.getStatusCode()))
+            && response.contains("Unauthorized");
+    boolean result;
+    if (authorized) {
+      result = !unauthorizedResult;
+    } else {
+      result = unauthorizedResult;
+    }
+    Assert.assertTrue(result);
+  }
+
+  private static String getMediaType(boolean requestTemplateIsYaml) {
+    if (requestTemplateIsYaml) {
+      return "application/x-yaml";
+    } else {
+      return "application/json";
+    }
+  }
+
+  private static String submitRequest(
+      boolean requestTemplateIsYaml,
+      String url,
+      String submitApplicationRequestText,
+      String user,
+      String requestType)
+      throws Exception {
+    String mediaType = getMediaType(requestTemplateIsYaml);
+    logger.info("Submitting application to {}", url);
+
+    var builder = HttpRequest.newBuilder().uri(new URI(url)).header("Content-Type", mediaType);
+    if (authHeaderName != null && !authHeaderName.isEmpty()) {
+      builder = builder.header(authHeaderName, user);
+    }
+    HttpRequest request = null;
+    if (requestType.equals("post")) {
+      request =
+          builder.POST(HttpRequest.BodyPublishers.ofString(submitApplicationRequestText)).build();
+    } else if (requestType.equals("get")) {
+      request = builder.GET().build();
+    } else if (requestType.equals("delete")) {
+      request = builder.DELETE().build();
+    } else {
+      throw new Exception(String.format("requestType %s is not supported.", requestType));
+    }
+
+    HttpResponse<String> response =
+        HttpClient.newBuilder().build().send(request, HttpResponse.BodyHandlers.ofString());
+    return response.body();
+  }
+
+  // When driverLog is true, the result type will be Some<String>, otherwise it would be None.
+  private static Optional<String> runSparkApplication(
+      String serviceRootUrl,
+      String requestTemplate,
+      Consumer<SubmitApplicationRequest> requestModifier,
+      String expectedFinalState,
+      boolean driverLog,
+      boolean sparkSpec)
+      throws IOException {
+    boolean requestTemplateIsYaml = requestTemplate.toLowerCase().endsWith("yaml");
+    ObjectMapper objectMapper = generateObjectMapper(requestTemplateIsYaml);
+    SubmitApplicationRequest submitApplicationRequest =
+        generateSubmitApplicationRequest(objectMapper, requestTemplate);
+    String submitApplicationRequestText =
+        generateSubmitApplicationRequestStr(
+            objectMapper, submitApplicationRequest, requestModifier);
 
     // submit application
     final String submitUrl = String.format("%s/spark", serviceRootUrl);
-    String mediaType;
-    if (requestTemplateIsYaml) {
-      mediaType = "application/x-yaml";
-    } else {
-      mediaType = "application/json";
-    }
+    String mediaType = getMediaType(requestTemplateIsYaml);
     logger.info("Submitting application to {}", submitUrl);
     SubmitApplicationResponse submitApplicationResponse =
-        HttpUtils.post(
+        post(
             submitUrl,
             submitApplicationRequestText,
             mediaType,

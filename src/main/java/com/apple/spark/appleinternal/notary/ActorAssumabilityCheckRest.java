@@ -341,20 +341,6 @@ public class ActorAssumabilityCheckRest extends RestBase {
   }
 
   /**
-   * Return username for datadog metrics collecting.
-   *
-   * @param user who makes the request to assumability check endpoint.
-   * @return username.
-   */
-  private String getUserTagValue(User user) {
-    if (user != null && user.getName() != null) {
-      return user.getName();
-    } else {
-      return "";
-    }
-  }
-
-  /**
    * Rate limiter for the assumability_check endpoint. Will response with status 429 if
    * request_per_second exceeds the given rate limit value (default is 10000).
    *

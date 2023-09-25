@@ -36,6 +36,7 @@ import com.apple.spark.core.LogDao;
 import com.apple.spark.core.RestStreamingOutput;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplication;
+import com.apple.spark.security.QueueAuthorizer;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ExceptionUtils;
 import com.codahale.metrics.MetricRegistry;
@@ -89,6 +90,8 @@ public class ApplicationGetLogRest extends RestBase {
   private final MetricRegistry registry;
   private final LogDao logDao;
 
+  private final QueueAuthorizer queueAuthorizer;
+
   public ApplicationGetLogRest(AppConfig appConfig, MeterRegistry meterRegistry) {
     super(appConfig, meterRegistry);
     this.registry = SharedMetricRegistries.getDefault();
@@ -106,6 +109,8 @@ public class ApplicationGetLogRest extends RestBase {
     }
 
     this.logDao = new LogDao(dbConnectionString, dbUser, dbPassword, dbName, meterRegistry);
+
+    this.queueAuthorizer = new QueueAuthorizer(meterRegistry, appConfig.getQueueConfigs());
   }
 
   private AmazonS3 s3Client = getS3Client();
@@ -189,11 +194,17 @@ public class ApplicationGetLogRest extends RestBase {
         throw new WebApplicationException(errorMessage, Response.Status.BAD_REQUEST);
       }
 
+      final SparkApplication sparkApplicationResource = getSparkApplicationResource(id);
+      String queue = getQueueFromSparkApplication(sparkApplicationResource);
+      if (queueAuthorizer.authorizeEnabled(queue)) {
+        queueAuthorizer.authorize(queue, "log", getUserTagValue(user));
+      }
+
       // Try to get driver/executor logs from EKS first instead of S3.
       // If s3only is true, skip searching EKS.
+
       if (s3only.equalsIgnoreCase("false")) {
         try {
-          final SparkApplication sparkApplicationResource = getSparkApplicationResource(id);
           logStream = getLog(sparkApplicationResource, execId);
         } catch (Throwable ex) {
           ExceptionUtils.meterException();

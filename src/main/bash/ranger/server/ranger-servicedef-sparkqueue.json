@@ -1,0 +1,82 @@
+{
+  "name": "spark-queue",
+  "displayName": "spark queue",
+  "label": "Spark Queue Server",
+  "description": "Spark Queue Server",
+  "resources":
+  [
+    {
+      "itemId": 1,
+      "name": "queue",
+      "type": "string",
+      "level": 10,
+      "parent": "",
+      "mandatory": true,
+      "lookupSupported": true,
+      "recursiveSupported": true,
+      "excludesSupported": false,
+      "matcher": "org.apache.ranger.plugin.resourcematcher.RangerPathResourceMatcher",
+      "matcherOptions": { "wildCard":true, "ignoreCase":false },
+      "validationRegEx":"",
+      "validationMessage": "",
+      "uiHint":"",
+      "label": "Spark Queue",
+      "description": "Spark Queue",
+      "isValidLeaf": true
+    }
+  ],
+
+  "accessTypes":
+  [
+    {
+      "itemId": 1,
+      "name": "list",
+      "label": "List"
+    },
+
+    {
+      "itemId": 2,
+      "name": "log",
+      "label": "Log"
+    },
+
+    {
+      "itemId": 3,
+      "name": "kill",
+      "label": "Kill"
+    },
+
+    {
+      "itemId": 4,
+      "name": "submit",
+      "label": "Submit"
+    },
+
+    {
+      "itemId": 5,
+      "name": "describe",
+      "label": "Describe"
+    },
+
+    {
+      "itemId": 6,
+      "name": "status",
+      "label": "Status"
+    },
+
+    {
+      "itemId": 7,
+      "name": "all",
+      "label": "All",
+      "impliedGrants":
+      [
+        "list",
+        "log",
+        "kill",
+        "submit",
+        "describe",
+        "status"
+      ]
+    }
+  ]
+}

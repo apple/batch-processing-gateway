@@ -19,6 +19,8 @@
 
 package com.apple.spark.rest;
 
+import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_ROOT_QUEUE;
+
 import com.apple.spark.AppConfig;
 import com.apple.spark.core.ApplicationSubmissionHelper;
 import com.apple.spark.core.Constants;
@@ -27,6 +29,7 @@ import com.apple.spark.core.SparkClusterHelper;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationResourceList;
+import com.apple.spark.security.User;
 import com.apple.spark.util.CounterMetricContainer;
 import com.apple.spark.util.TimerMetricContainer;
 import com.codahale.metrics.MetricRegistry;
@@ -92,6 +95,20 @@ public class RestBase {
     this.timerMetrics = new TimerMetricContainer(meterRegistry);
   }
 
+  /**
+   * Return username for datadog metrics collecting.
+   *
+   * @param user who makes the request to assumability check endpoint.
+   * @return username.
+   */
+  protected String getUserTagValue(User user) {
+    if (user != null && user.getName() != null) {
+      return user.getName();
+    } else {
+      return "";
+    }
+  }
+
   protected AppConfig getAppConfig() {
     return appConfig;
   }
@@ -143,6 +160,11 @@ public class RestBase {
       }
       return sparkApplication;
     }
+  }
+
+  protected String getQueueFromSparkApplication(SparkApplication sparkApplication) {
+    String queue = sparkApplication.getMetadata().getLabels().get(Constants.QUEUE_LABEL);
+    return queue.replace(String.format("%s.", YUNIKORN_ROOT_QUEUE), "");
   }
 
   protected SparkApplicationResourceList getSparkApplicationResourcesByUser(

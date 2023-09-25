@@ -42,6 +42,13 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
     exceptions = metrics.meter(MetricRegistry.name(getClass(), "exceptions"));
   }
 
+  private Response getResponse(int statusCode, String exceptionNameAndMessage) {
+    return Response.status(statusCode)
+        .type(MediaType.APPLICATION_JSON_TYPE)
+        .entity(new ErrorMessage(statusCode, exceptionNameAndMessage))
+        .build();
+  }
+
   @Override
   public Response toResponse(Throwable throwable) {
     exceptions.mark();
@@ -51,13 +58,17 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 
     if (throwable instanceof WebApplicationException) {
       WebApplicationException webApplicationException = (WebApplicationException) throwable;
-      return Response.status(webApplicationException.getResponse().getStatus())
-          .type(MediaType.APPLICATION_JSON_TYPE)
-          .entity(
-              new ErrorMessage(
-                  webApplicationException.getResponse().getStatus(),
-                  ExceptionUtils.getExceptionNameAndMessage(webApplicationException)))
-          .build();
+      return getResponse(
+          webApplicationException.getResponse().getStatus(),
+          ExceptionUtils.getExceptionNameAndMessage(webApplicationException));
+    }
+
+    if (throwable instanceof javax.ws.rs.WebApplicationException) {
+      javax.ws.rs.WebApplicationException webApplicationException =
+          (javax.ws.rs.WebApplicationException) throwable;
+      return getResponse(
+          webApplicationException.getResponse().getStatus(),
+          ExceptionUtils.getExceptionNameAndMessage(webApplicationException));
     }
 
     return Response.status(Response.Status.INTERNAL_SERVER_ERROR)

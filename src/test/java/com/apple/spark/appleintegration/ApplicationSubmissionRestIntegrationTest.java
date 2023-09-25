@@ -25,9 +25,6 @@ It will use config.yml in root of this project to configure the Skate server. Yo
 config.yml in your local side to use different environments.
  */
 public class ApplicationSubmissionRestIntegrationTest {
-
-  private static final String authHeaderName = "Authorization";
-  private static final String authHeaderValue = "Basic dXNlcjE6cGFzc3dvcmQ=";
   private static final String skateIntegrationTestResourcesFolderUrl =
       "s3a://aiml-prod-artifacts/skate_uploaded/skateIntegrationTest/resources";
 
@@ -60,6 +57,23 @@ public class ApplicationSubmissionRestIntegrationTest {
   @AfterClass
   public void afterClass() {
     testSupport.after();
+  }
+
+  @Test(dataProvider = "sparkVersionsAndPythonApplications")
+  // Upload python file and run Spark application
+  public void runPythonSparkApplicationWithUnauthorizedUser(
+      String sparkVersion, String sparkApplication) throws Exception {
+    final String requestTemplate = "/SubmitSparkApplicationRequest_python_example.json";
+    final String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
+
+    IntegrationTestHelper.runSparkApplicationWithUnauthorizedAndAuthorizedUser(
+        serviceRootUrl,
+        requestTemplate,
+        submitApplicationRequest -> {
+          submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
+          submitApplicationRequest.setSparkVersion(sparkVersion);
+          submitApplicationRequest.setQueue("queue-authz-poc");
+        });
   }
 
   @Test(dataProvider = "sparkVersions")

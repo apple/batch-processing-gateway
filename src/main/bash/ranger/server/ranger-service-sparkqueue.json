@@ -1,0 +1,6 @@
+{
+  "isEnabled": "true",
+  "type": "spark-queue",
+  "name": "spark-queue",
+  "description": "Spark Queue Authorization"
+}

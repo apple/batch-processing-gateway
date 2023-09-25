@@ -164,7 +164,7 @@ public class HttpUtils {
     }
   }
 
-  private static <T> T parseJson(String str, Class<T> clazz) {
+  public static <T> T parseJson(String str, Class<T> clazz) {
     ObjectMapper objectMapper = new ObjectMapper();
     try {
       return objectMapper.readValue(str, clazz);

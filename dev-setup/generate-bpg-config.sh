@@ -124,6 +124,7 @@ blockedUsers: []
 queues:
   - name: poc
     maxRunningMillis: 21600000
+    authorizeEnabled : false
 queueTokenSOPS: {}
 dbStorageSOPS:
   connectionString: jdbc:postgresql://${dbHostPort}/bpg?useUnicode=yes&characterEncoding=UTF-8&useLegacyDatetimeCode=false&connectTimeout=10000&socketTimeout=30000
