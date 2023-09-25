@@ -5,7 +5,7 @@ target/
 classes/
 dependency-reduced-pom.xml
 
-bpg-config.yaml
+config.yml
 
 venv/
 __pycache__/
