@@ -5,6 +5,7 @@ import static com.apple.spark.core.Constants.SERVICE_ABBR;
 import static io.micrometer.core.aop.TimedAspect.EXCEPTION_TAG;
 
 import com.apple.spark.AppConfig;
+import com.apple.spark.ranger.client.QueueAccessTypeAndUser;
 import com.apple.spark.ranger.client.RangerSparkQueueClient;
 import com.apple.spark.util.CounterMetricContainer;
 import com.apple.spark.util.TimerMetricContainer;
@@ -67,7 +68,8 @@ public class QueueAuthorizer {
     return timerMetrics.record(
         () -> {
           try {
-            return rangerSparkQueueClient.authorize(queue, accessType, user);
+            return rangerSparkQueueClient.authorize(
+                new QueueAccessTypeAndUser(queue, accessType, user));
           } catch (Exception ex) {
             logger.warn(
                 String.format(

@@ -16,6 +16,7 @@ import org.apache.ranger.plugin.service.RangerBasePlugin;
 
 public class RangerSparkQueueClient {
   private static volatile RangerBasePlugin plugin;
+  private static LoadingCache<QueueAccessTypeAndUser, Boolean> queueAccessCache;
   private static LoadingCache<String, Set<String>> userRolesCache;
 
   private static final String serviceType = "spark-queue";
@@ -40,10 +41,23 @@ public class RangerSparkQueueClient {
             .expireAfterWrite(cacheDuration, TimeUnit.MILLISECONDS)
             .maximumSize(cacheMaxCount)
             .build(
-                new CacheLoader<String, Set<String>>() {
+                new CacheLoader<>() {
                   public Set<String> load(String user) throws Exception {
                     Set<String> userRoles = Set.copyOf(plugin.getUserRoles(user, auditHandler));
                     return userRoles;
+                  }
+                });
+
+    // This is to cache authorize result from ranger server
+    queueAccessCache =
+        CacheBuilder.newBuilder()
+            .expireAfterWrite(cacheDuration, TimeUnit.MILLISECONDS)
+            .maximumSize(cacheMaxCount)
+            .build(
+                new CacheLoader<>() {
+                  public Boolean load(QueueAccessTypeAndUser queueAccessTypeAndUser)
+                      throws Exception {
+                    return authorizeAndUpdateCache(queueAccessTypeAndUser);
                   }
                 });
   }
@@ -51,22 +65,28 @@ public class RangerSparkQueueClient {
   /**
    * Get whether a user is authorized based on queue, access type and user roles from ranger
    *
-   * @param queue name
-   * @param accessType
-   * @param user
+   * @param queueAccessTypeAndUser QueueAccessTypeAndUser
    * @return whether a user is authorized
    */
-  public static boolean authorize(String queue, String accessType, String user) throws Exception {
+  private static boolean authorizeAndUpdateCache(QueueAccessTypeAndUser queueAccessTypeAndUser)
+      throws Exception {
     RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
-    resource.setValue(QUEUE_LABEL, queue);
+    resource.setValue(QUEUE_LABEL, queueAccessTypeAndUser.getQueue());
+
+    String user = queueAccessTypeAndUser.getUser();
 
     Set<String> userRoles = userRolesCache.get(user);
 
     RangerAccessRequest request =
-        new RangerAccessRequestImpl(resource, accessType, user, null, userRoles);
+        new RangerAccessRequestImpl(
+            resource, queueAccessTypeAndUser.getAccessType(), user, null, userRoles);
 
     RangerAccessResult result = plugin.isAccessAllowed(request, auditHandler);
 
     return result != null && result.getIsAllowed();
+  }
+
+  public static boolean authorize(QueueAccessTypeAndUser queueAccessTypeAndUser) throws Exception {
+    return queueAccessCache.get(queueAccessTypeAndUser);
   }
 }
