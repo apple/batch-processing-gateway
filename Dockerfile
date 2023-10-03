@@ -23,7 +23,7 @@ COPY ./entrypoint.sh /opt/entrypoint.sh
 # Install packages
 RUN microdnf install -y gzip
 RUN microdnf install -y unzip && microdnf clean all
-RUN curl https://downloads.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.zip -o apache-maven-3.8.6-bin.zip
+RUN curl https://archive.apache.org/dist/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.zip -o apache-maven-3.8.6-bin.zip
 RUN unzip apache-maven-3.8.6-bin.zip
 RUN rm apache-maven-3.8.6-bin.zip
 
