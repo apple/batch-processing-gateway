@@ -29,7 +29,7 @@ public class SkateTestSupport {
 
     String connectionString =
         String.format(
-            "jdbc:h2:%s;DB_CLOSE_DELAY=-1;MODE=MySQL;AUTO_SERVER=TRUE;USER=sa;PASSWORD=sa;",
+            "jdbc:h2:%s;DB_CLOSE_DELAY=-1;MODE=MySQL;NON_KEYWORDS=user,hour;AUTO_SERVER=TRUE;USER=sa;PASSWORD=sa;",
             path.toFile().getAbsolutePath() + "/skate");
 
     testSupport =

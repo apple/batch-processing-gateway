@@ -46,7 +46,9 @@ public class LogDaoTest {
     file.deleteOnExit();
 
     String connectionString =
-        String.format("jdbc:h2:%s;DB_CLOSE_DELAY=-1;MODE=MySQL", file.getAbsolutePath());
+        String.format(
+            "jdbc:h2:%s;DB_CLOSE_DELAY=-1;MODE=MySQL;NON_KEYWORDS=user,hour",
+            file.getAbsolutePath());
     DBConnection dbConnection = new DBConnection(connectionString, null, null);
 
     LogDao logDao = new LogDao(connectionString, null, null, null);
@@ -209,7 +211,9 @@ public class LogDaoTest {
     file.deleteOnExit();
 
     String connectionString =
-        String.format("jdbc:h2:%s;DB_CLOSE_DELAY=-1;MODE=MySQL", file.getAbsolutePath());
+        String.format(
+            "jdbc:h2:%s;DB_CLOSE_DELAY=-1;MODE=MySQL;NON_KEYWORDS=user,hour",
+            file.getAbsolutePath());
 
     LogDao logDao = new LogDao(connectionString, null, null, null);
     Assert.assertNotNull(logDao);

@@ -464,7 +464,7 @@ public class LogDao {
                 + "    number_executor SMALLINT,\n"
                 + "    executor_core SMALLINT,\n"
                 + "    executor_memory_mb INT,\n"
-                + "    cost DECIMAL(10,2) unsigned,\n"
+                + "    cost DECIMAL(10,2),\n"
                 + "    INDEX (user),\n"
                 + "    INDEX (spark_version),\n"
                 + "    INDEX (app_id),\n"
