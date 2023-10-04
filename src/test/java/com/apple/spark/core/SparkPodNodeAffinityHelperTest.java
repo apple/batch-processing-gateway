@@ -542,4 +542,92 @@ public class SparkPodNodeAffinityHelperTest {
     Assert.assertEquals(
         executorNodeAffinity[2].getValues()[0], KARPENTER_CAPACITY_TYPE_VALUE_ON_DEMAND);
   }
+
+  @Test
+  public void karpenter_ondemand_job_arch_null_queue_arch_amd64() {
+    String nodeArch = null;
+    boolean isOnDemand = true;
+
+    AppConfig appConfig = new AppConfig();
+    AppConfig.QueueConfig qc = new AppConfig.QueueConfig();
+    qc.setDriverNodeLabelKey(KARPENTER_PROVISIONER_NAME_KEY);
+    qc.setDriverNodeLabelValues(List.of("compute"));
+    qc.setDefaultQueueArch("amd64");
+
+    qc.setExecutorNodeLabelKey(KARPENTER_PROVISIONER_NAME_KEY);
+    qc.setExecutorNodeLabelValues(List.of("compute"));
+    qc.setName("poc");
+    appConfig.setQueues(List.of(qc));
+
+    NodeSelectorRequirement[] driverNodeAffinity =
+        createNodeSelectorTermForSparkPods(appConfig, "poc", true, isOnDemand, nodeArch, false)
+            .getMatchExpressions();
+    NodeSelectorRequirement[] executorNodeAffinity =
+        createNodeSelectorTermForSparkPods(appConfig, "poc", false, isOnDemand, nodeArch, false)
+            .getMatchExpressions();
+
+    Assert.assertEquals(driverNodeAffinity[0].getKey(), KARPENTER_PROVISIONER_NAME_KEY);
+    Assert.assertEquals(driverNodeAffinity[0].getValues()[0], "compute");
+
+    Assert.assertEquals(driverNodeAffinity[1].getKey(), K8S_ARCH_KEY);
+    Assert.assertEquals(driverNodeAffinity[1].getValues()[0], KARPENTER_ARCH_VALUE_AMD64);
+
+    Assert.assertEquals(driverNodeAffinity[2].getKey(), KARPENTER_CAPACITY_TYPE_KEY);
+    Assert.assertEquals(
+        driverNodeAffinity[2].getValues()[0], KARPENTER_CAPACITY_TYPE_VALUE_ON_DEMAND);
+
+    Assert.assertEquals(executorNodeAffinity[0].getKey(), KARPENTER_PROVISIONER_NAME_KEY);
+    Assert.assertEquals(executorNodeAffinity[0].getValues()[0], "compute");
+
+    Assert.assertEquals(executorNodeAffinity[1].getKey(), K8S_ARCH_KEY);
+    Assert.assertEquals(executorNodeAffinity[1].getValues()[0], KARPENTER_ARCH_VALUE_AMD64);
+
+    Assert.assertEquals(executorNodeAffinity[2].getKey(), KARPENTER_CAPACITY_TYPE_KEY);
+    Assert.assertEquals(
+        executorNodeAffinity[2].getValues()[0], KARPENTER_CAPACITY_TYPE_VALUE_ON_DEMAND);
+  }
+
+  @Test
+  public void karpenter_ondemand_job_arch_null_queue_arch_arm64() {
+    String nodeArch = null;
+    boolean isOnDemand = true;
+
+    AppConfig appConfig = new AppConfig();
+    AppConfig.QueueConfig qc = new AppConfig.QueueConfig();
+    qc.setDriverNodeLabelKey(KARPENTER_PROVISIONER_NAME_KEY);
+    qc.setDriverNodeLabelValues(List.of("compute"));
+    qc.setDefaultQueueArch("arm64");
+
+    qc.setExecutorNodeLabelKey(KARPENTER_PROVISIONER_NAME_KEY);
+    qc.setExecutorNodeLabelValues(List.of("compute"));
+    qc.setName("poc");
+    appConfig.setQueues(List.of(qc));
+
+    NodeSelectorRequirement[] driverNodeAffinity =
+        createNodeSelectorTermForSparkPods(appConfig, "poc", true, isOnDemand, nodeArch, false)
+            .getMatchExpressions();
+    NodeSelectorRequirement[] executorNodeAffinity =
+        createNodeSelectorTermForSparkPods(appConfig, "poc", false, isOnDemand, nodeArch, false)
+            .getMatchExpressions();
+
+    Assert.assertEquals(driverNodeAffinity[0].getKey(), KARPENTER_PROVISIONER_NAME_KEY);
+    Assert.assertEquals(driverNodeAffinity[0].getValues()[0], "compute");
+
+    Assert.assertEquals(driverNodeAffinity[1].getKey(), K8S_ARCH_KEY);
+    Assert.assertEquals(driverNodeAffinity[1].getValues()[0], KARPENTER_ARCH_VALUE_ARM64);
+
+    Assert.assertEquals(driverNodeAffinity[2].getKey(), KARPENTER_CAPACITY_TYPE_KEY);
+    Assert.assertEquals(
+        driverNodeAffinity[2].getValues()[0], KARPENTER_CAPACITY_TYPE_VALUE_ON_DEMAND);
+
+    Assert.assertEquals(executorNodeAffinity[0].getKey(), KARPENTER_PROVISIONER_NAME_KEY);
+    Assert.assertEquals(executorNodeAffinity[0].getValues()[0], "compute");
+
+    Assert.assertEquals(executorNodeAffinity[1].getKey(), K8S_ARCH_KEY);
+    Assert.assertEquals(executorNodeAffinity[1].getValues()[0], KARPENTER_ARCH_VALUE_ARM64);
+
+    Assert.assertEquals(executorNodeAffinity[2].getKey(), KARPENTER_CAPACITY_TYPE_KEY);
+    Assert.assertEquals(
+        executorNodeAffinity[2].getValues()[0], KARPENTER_CAPACITY_TYPE_VALUE_ON_DEMAND);
+  }
 }

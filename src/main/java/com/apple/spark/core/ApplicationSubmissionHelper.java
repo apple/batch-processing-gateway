@@ -487,6 +487,7 @@ public class ApplicationSubmissionHelper {
     driverAnnotations.put(
         KUBE_CLUSTER_AUTOSCALER_SCALE_IN_ANNOTATION_KEY,
         KUBE_CLUSTER_AUTOSCALER_SCALE_IN_ANNOTATION_VALUE);
+    driverAnnotations.put(KAPENTER_SCALE_IN_ANNOTATION_KEY, KAPENTER_SCALE_IN_ANNOTATION_VALUE);
     driverSpec.setAnnotations(driverAnnotations);
 
     // Driver affinity is for all drivers to share the same node group, with only scaling up
@@ -702,6 +703,7 @@ public class ApplicationSubmissionHelper {
       executorAnnotations.put(
           KUBE_CLUSTER_AUTOSCALER_SCALE_IN_ANNOTATION_KEY,
           KUBE_CLUSTER_AUTOSCALER_SCALE_IN_ANNOTATION_VALUE);
+      executorAnnotations.put(KAPENTER_SCALE_IN_ANNOTATION_KEY, KAPENTER_SCALE_IN_ANNOTATION_VALUE);
       executorSpec.setAnnotations(executorAnnotations);
     }
 

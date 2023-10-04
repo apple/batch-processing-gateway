@@ -33,6 +33,12 @@ public class AppleCostAttrUtils {
     addLabel(sparkApplication, AIML_OBSV_QUEUE_LABEL, queue, true);
     addLabel(sparkApplication, AIML_OBSV_JOB_ID_LABEL, submissionId, true);
 
+    if (request.getApplicationName() != null) {
+      String applicationNameLabelValue =
+          KubernetesHelper.normalizeLabelValue(request.getApplicationName());
+      addLabel(sparkApplication, AIML_OBSV_JOB_NAME_LABEL, applicationNameLabelValue, true);
+    }
+
     // for other customer tags inject from request, we will
     if (costAttribution != null && costAttribution.getTags() != null) {
       List<CostAttributionTag> supportedTags = costAttribution.getTags();

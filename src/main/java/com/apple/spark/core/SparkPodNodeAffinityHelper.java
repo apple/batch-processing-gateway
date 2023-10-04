@@ -90,7 +90,7 @@ public class SparkPodNodeAffinityHelper {
 
             // Apply Karpenter node arch label
             NodeSelectorRequirement karpenterNodeArchLabel =
-                createNodeArchMatchExpression(nodeArch);
+                createNodeArchMatchExpression(nodeArch, appConfig);
             matchExpressions.add(karpenterNodeArchLabel);
 
             // Apply Karpenter capacity type label, driver will be always run on on-demand machines
@@ -121,7 +121,7 @@ public class SparkPodNodeAffinityHelper {
 
             // Apply Karpenter node arch label
             NodeSelectorRequirement karpenterNodeArchLabel =
-                createNodeArchMatchExpression(nodeArch);
+                createNodeArchMatchExpression(nodeArch, appConfig);
             matchExpressions.add(karpenterNodeArchLabel);
 
             // Apply Karpenter capacity type label
@@ -168,9 +168,25 @@ public class SparkPodNodeAffinityHelper {
     }
   }
 
-  public static NodeSelectorRequirement createNodeArchMatchExpression(String nodeArch) {
+  public static NodeSelectorRequirement createNodeArchMatchExpression(
+      String nodeArch, AppConfig appConfig) {
     if (nodeArch == null) {
-      // set default arch to arm64 to save cost
+      // set default arch same as queue level setting
+      AppConfig.QueueConfig queueConfig = null;
+      if (appConfig.getQueues() != null) {
+        Optional<AppConfig.QueueConfig> optional =
+            appConfig.getQueues().stream().filter(t -> t.getName() != null).findFirst();
+        if (optional.isPresent()) {
+          queueConfig = optional.get();
+          if (queueConfig.getDefaultQueueArch() != null) {
+            return new NodeSelectorRequirement(
+                K8S_ARCH_KEY,
+                NodeSelectorOperator.NodeSelectorOpIn.toString(),
+                new String[] {queueConfig.getDefaultQueueArch()});
+          }
+        }
+      }
+      // set default arch to arm64 to save cost if queue arch is null
       return new NodeSelectorRequirement(
           K8S_ARCH_KEY,
           NodeSelectorOperator.NodeSelectorOpIn.toString(),

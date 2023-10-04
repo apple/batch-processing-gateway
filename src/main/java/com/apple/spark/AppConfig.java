@@ -560,6 +560,7 @@ public class AppConfig extends Configuration {
     private double executorMemBufferRatio = 1.0;
     private List<String> allowedAssumeRoles;
     private String defaultAssumeRole;
+    private String defaultQueueArch;
     private boolean supportGpu = false;
 
     public String getName() {
@@ -697,6 +698,14 @@ public class AppConfig extends Configuration {
 
     public void setDefaultAssumeRole(String defaultAssumeRole) {
       this.defaultAssumeRole = defaultAssumeRole;
+    }
+
+    public String getDefaultQueueArch() {
+      return defaultQueueArch;
+    }
+
+    public void setDefaultQueueArch(String defaultQueueArch) {
+      this.defaultQueueArch = defaultQueueArch;
     }
 
     public Boolean getSupportGpu() {

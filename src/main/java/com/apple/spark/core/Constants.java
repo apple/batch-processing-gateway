@@ -99,6 +99,10 @@ public class Constants {
   public static final String KUBE_CLUSTER_AUTOSCALER_SCALE_IN_ANNOTATION_KEY =
       "cluster-autoscaler.kubernetes.io/safe-to-evict";
   public static final String KUBE_CLUSTER_AUTOSCALER_SCALE_IN_ANNOTATION_VALUE = "false";
+
+  public static final String KAPENTER_SCALE_IN_ANNOTATION_KEY = "karpenter.sh/do-not-evict";
+  public static final String KAPENTER_SCALE_IN_ANNOTATION_VALUE = "true";
+
   public static final String DNS_CONFIG_OPTION_NDOTS_NAME = "ndots";
   public static final String DNS_CONFIG_OPTION_NDOTS_VALUE = "1";
   public static final int MAX_EXECUTOR_INSTANCES = 5000;
