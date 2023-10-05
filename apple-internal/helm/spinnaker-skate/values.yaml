@@ -79,11 +79,15 @@ whisper:
   bucket: ""
 
 notary:
-  # -- Enable notary authentication for spark service
+  # -- Enable notary authentication for Spark service
   notaryEnabled: false
+  # -- Enable notary assumability check endpoint service, this valuse must be the same as the "notaryEnabled" above
+  notaryAacEnabled: false
+  notaryAacReplicas: 1
   # -- tui directory key
   turiKey: ""
   proxyImage: docker.apple.com/polymer/notary-proxy:latest
+  proxyAddGroupIDHeaders: false
   proxyGroupIDsFilter:
   proxyAllowedGroupIDList:
   proxyAllowedApplicationIDList:

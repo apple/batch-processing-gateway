@@ -20,7 +20,7 @@ data:
       disableIssueNotaryTokenFromDaw: true
       # set this to true will add `X-Notary-GroupIDs` header to the forwarded request
       # example header: X-Notary-GroupIDs: 1234;7890;4567
-      addGroupIDsHeader: true
+      addGroupIDsHeader: {{ .Values.notary.proxyAddGroupIDHeaders }}
       # filter the groups provided in `X-Notary-GroupIDs` header to only include the ids defined here
       groupIDsFilter: {{ .Values.notary.proxyGroupIDsFilter | toJson }}
       # if provided, the authenticated person must be a member of any of the allowed groups, otherwise a 403 will be returned.

@@ -5,9 +5,11 @@ config_file_path=${CONFIG_FILE_PATH:-/etc/app_config/app-config.yaml}
 gz_file_path=${GZ_FILE_PATH:-/app/app-config.gz}
 app_monitor_enabled=${APP_MONITOR_ENABLED:-false}
 notary_enabled=${NOTARY_ENABLED:-false}
+notary_aac_enabled=${NOTARY_AAC_ENABLED:-false}
 
 monitor_app_property="-DmonitorApplication=true"
 notary_app_property="-DnotaryApplication=true"
+notary_aac_app_property="-DnotaryAacApplication=true"``
 
 dir=$(dirname $config_file_path)
 mkdir -p ${dir}
@@ -35,6 +37,12 @@ if [[ "${notary_enabled,,}" == "true" ]]; then
     JAVA_OPT="${JAVA_OPT} ${notary_app_property}"
 else
     echo "Notary disabled not a notary application"
+fi
+
+if [[ "${notary_aac_enabled,,}" == "true" ]]; then
+    JAVA_OPT="${JAVA_OPT} ${notary_aac_app_property}"
+else
+    echo "Notary aac disabled, not a notary application"
 fi
 
 # Start Application

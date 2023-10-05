@@ -68,22 +68,25 @@ public class BPGApplication extends Application<AppConfig> {
 
   private static final String MONITOR_APPLICATION_SYSTEM_PROPERTY_NAME = "monitorApplication";
   private static final String NOTARY_APPLICATION_SYSTEM_PROPERTY_NAME = "notaryApplication";
-
+  private static final String NOTARY_AAC_APPLICATION_SYSTEM_PROPERTY_NAME = "notaryAacApplication";
   private final boolean monitorApplication;
   private final boolean notaryApplication;
+  private final boolean notaryAacApplication;
   private NotaryDirectoryService notaryDirectoryService;
 
   public BPGApplication() {
-    this(false, false);
+    this(false, false, false);
   }
 
   public BPGApplication(boolean monitorApplication) {
-    this(false, monitorApplication);
+    this(false, false, monitorApplication);
   }
 
-  public BPGApplication(boolean notaryApplication, boolean monitorApplication) {
+  public BPGApplication(
+      boolean notaryApplication, boolean notaryAacApplication, boolean monitorApplication) {
     this.notaryApplication = notaryApplication;
     this.monitorApplication = monitorApplication;
+    this.notaryAacApplication = notaryAacApplication;
   }
 
   public static void main(final String[] args) throws Exception {
@@ -97,7 +100,11 @@ public class BPGApplication extends Application<AppConfig> {
     boolean notaryApplication =
         notaryAppProperty != null && notaryAppProperty.equalsIgnoreCase("true");
 
-    new BPGApplication(notaryApplication, monitorApplication).run(args);
+    String notaryAacAppProperty = System.getProperty(NOTARY_AAC_APPLICATION_SYSTEM_PROPERTY_NAME);
+    boolean notaryAacApplication =
+        notaryAacAppProperty != null && notaryAacAppProperty.equalsIgnoreCase("true");
+
+    new BPGApplication(notaryApplication, notaryAacApplication, monitorApplication).run(args);
   }
 
   @Override
@@ -114,6 +121,7 @@ public class BPGApplication extends Application<AppConfig> {
     if (notaryApplication) {
       notaryDirectoryService = new NotaryDirectoryService(configuration);
     }
+
     String applicationContextPath = configuration.getApplicationContextPath();
     if (applicationContextPath == null || applicationContextPath.isEmpty()) {
       applicationContextPath = Constants.DEFAULT_APPLICATION_CONTEXT_PATH;
@@ -148,7 +156,7 @@ public class BPGApplication extends Application<AppConfig> {
 
     // Actor Assumability endpoint only exists for BPG application that onboarded as notary
     // application.
-    if (notaryApplication) {
+    if (notaryAacApplication) {
       final ActorAssumabilityCheckRest actorAssumabilityCheckRest =
           new ActorAssumabilityCheckRest(configuration, meterRegistry);
       environment.jersey().register(actorAssumabilityCheckRest);
