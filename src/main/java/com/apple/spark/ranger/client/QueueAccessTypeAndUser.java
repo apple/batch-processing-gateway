@@ -1,5 +1,7 @@
 package com.apple.spark.ranger.client;
 
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
 public class QueueAccessTypeAndUser {
   private final String queue;
   private final String accessType;
@@ -21,6 +23,11 @@ public class QueueAccessTypeAndUser {
 
   public String getUser() {
     return user;
+  }
+
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder().append(queue).append(accessType).append(user).toHashCode();
   }
 
   @Override
