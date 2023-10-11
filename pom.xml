@@ -186,17 +186,17 @@
         </dependency>
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-core</artifactId>
+            <artifactId>swagger-core-jakarta</artifactId>
             <version>${swagger.version}</version>
         </dependency>
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-jaxrs2</artifactId>
+            <artifactId>swagger-jaxrs2-jakarta</artifactId>
             <version>${swagger.version}</version>
         </dependency>
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-integration</artifactId>
+            <artifactId>swagger-integration-jakarta</artifactId>
             <version>${swagger.version}</version>
         </dependency>
         <dependency>
