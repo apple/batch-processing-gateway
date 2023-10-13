@@ -24,108 +24,108 @@ spec:
         ad.datadoghq.com/skate.init_configs: '[{"is_jmx": true, "collect_default_metrics": true}]'
         ad.datadoghq.com/skate.instances: '[{"host": "%%host%%","port":"19081"}]'
     spec:
-  {{ if .Values.serviceAccounts.skate.create }}
-serviceAccountName: {{ .Values.serviceAccounts.skate.name }}
-  {{- end }}
-containers:
-  - name: skate
-    image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
-    command: ["/opt/entrypoint.sh"]
-    resources:
-      requests:
-        memory: {{ .Values.resources.requests.memory }}
-        cpu: {{ .Values.resources.requests.cpu }}
-      limits:
-        memory: {{ .Values.resources.limits.memory }}
-        cpu: {{ .Values.resources.limits.cpu }}
-    ports:
-      - containerPort: 8080
-      - containerPort: 8081
-        name: healthcheck
-        protocol: TCP
-    livenessProbe:
-      httpGet:
-        path: /healthcheck
-        port: healthcheck
-      failureThreshold: 3
-      periodSeconds: 15
-    volumeMounts:
-      - name: configuration
-        mountPath: "/app/"
-        readOnly: true
-      - name: spark-prometheus-configuration
-        mountPath: "/etc/prometheus"
-        readOnly: true
-    env:
-      - name: STATSD_SERVER_IP
-        valueFrom:
-          fieldRef:
-            fieldPath: status.hostIP
-      - name: STATSD_SERVER_PORT
-        value: "8125"
-      - name: AWS_STS_REGIONAL_ENDPOINTS
-        value: "regional"
-      - name: NOTARY_ENABLED
-        value: {{ .Values.notary.notaryEnabled | quote }}
-      - name: NOTARY_AAC_ENABLED
-        value: {{ .Values.notary.notaryAacEnabled | quote }}
-  {{- if not .Values.notary.notaryEnabled }}
-- name: skate-auth
-  image: '{{ .Values.appleConnect.proxyImage.registry }}/{{ .Values.appleConnect.proxyImage.repository }}:{{ .Values.appleConnect.proxyImage.tag }}'
-  args:
-    - '-e=http://localhost:8080'
-    - '--idms-a3-lookup-account'
-    - '-p=9090'
-  envFrom:
-    - configMapRef:
-        name: appleconnect
-  imagePullPolicy: IfNotPresent
-  livenessProbe:
-    httpGet:
-      path: /__health
-      port: 9090
-    timeoutSeconds: 30
-  ports:
-    - containerPort: 9090
-      protocol: TCP
-  {{- else }}
-- name: skate-auth
-  image: {{ .Values.notary.proxyImage}}
-  command: ["/app/notary-proxy"]
-  ports:
-    - containerPort: 9090
-      name: web
-  env:
-    - name: PORT
-      value: "9090"
-    - name: TURI_DIRECTORY_API_KEY # BJXDGZRWbkN6sazVRHvdnY9F environment variable that notary proxy looks for turi directory api key
-      valueFrom:
-        secretKeyRef: # references the Kubernetes secret we will create later
-          name: notary-proxy
-          key: TURI_DIRECTORY_API_KEY
-    - name: IDMS_APP_ADMIN_PASSWORD # environment variable that notary proxy looks for the IdMS app admin password
-      valueFrom:
-        secretKeyRef:
-          name: notary-proxy
-          key: IDMS_APP_ADMIN_PASSWORD
-  volumeMounts: # volume mounts the notary proxy config into the proxy container
-    - name: notary-proxy-configs
-      mountPath: /app/configs/notary-proxy.yml
-      subPath: notary-proxy.yml
-  {{- end }}
-volumes:
-  - name: configuration
-    configMap:
-      name: 'skate'
-      items:
-        - key: 'skate-config-yaml'
-          path: 'app-config.gz'
-  - name: spark-prometheus-configuration
-    configMap:
-      name: 'spark-prometheus'
-  {{- if .Values.notary.notaryEnabled }}
-- name: notary-proxy-configs
-  configMap:
-    name: notary-proxy-config
-  {{- end }}
+{{ if .Values.serviceAccounts.skate.create }}
+      serviceAccountName: {{ .Values.serviceAccounts.skate.name }}
+{{- end }}
+      containers:
+        - name: skate
+          image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
+          command: ["/opt/entrypoint.sh"]
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+          ports:
+            - containerPort: 8080
+            - containerPort: 8081
+              name: healthcheck
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: healthcheck
+            failureThreshold: 3
+            periodSeconds: 15
+          volumeMounts:
+            - name: configuration
+              mountPath: "/app/"
+              readOnly: true
+            - name: spark-prometheus-configuration
+              mountPath: "/etc/prometheus"
+              readOnly: true
+          env:
+            - name: STATSD_SERVER_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: STATSD_SERVER_PORT
+              value: "8125"
+            - name: AWS_STS_REGIONAL_ENDPOINTS
+              value: "regional"
+            - name: NOTARY_ENABLED
+              value: {{ .Values.notary.notaryEnabled | quote }}
+            - name: NOTARY_AAC_ENABLED
+              value: {{ .Values.notary.notaryAacEnabled | quote }}
+{{- if not .Values.notary.notaryEnabled }}
+        - name: skate-auth
+          image: '{{ .Values.appleConnect.proxyImage.registry }}/{{ .Values.appleConnect.proxyImage.repository }}:{{ .Values.appleConnect.proxyImage.tag }}'
+          args:
+            - '-e=http://localhost:8080'
+            - '--idms-a3-lookup-account'
+            - '-p=9090'
+          envFrom:
+            - configMapRef:
+                name: appleconnect
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              path: /__health
+              port: 9090
+            timeoutSeconds: 30
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+{{- else }}
+        - name: skate-auth
+          image: {{ .Values.notary.proxyImage}}
+          command: ["/app/notary-proxy"]
+          ports:
+            - containerPort: 9090
+              name: web
+          env:
+            - name: PORT
+              value: "9090"
+            - name: TURI_DIRECTORY_API_KEY # BJXDGZRWbkN6sazVRHvdnY9F environment variable that notary proxy looks for turi directory api key
+              valueFrom:
+                secretKeyRef: # references the Kubernetes secret we will create later
+                  name: notary-proxy
+                  key: TURI_DIRECTORY_API_KEY
+            - name: IDMS_APP_ADMIN_PASSWORD # environment variable that notary proxy looks for the IdMS app admin password
+              valueFrom:
+                secretKeyRef:
+                  name: notary-proxy
+                  key: IDMS_APP_ADMIN_PASSWORD
+          volumeMounts: # volume mounts the notary proxy config into the proxy container
+            - name: notary-proxy-configs
+              mountPath: /app/configs/notary-proxy.yml
+              subPath: notary-proxy.yml
+{{- end }}
+      volumes:
+        - name: configuration
+          configMap:
+            name: 'skate'
+            items:
+              - key: 'skate-config-yaml'
+                path: 'app-config.gz'
+        - name: spark-prometheus-configuration
+          configMap:
+            name: 'spark-prometheus'
+{{- if .Values.notary.notaryEnabled }}
+        - name: notary-proxy-configs
+          configMap:
+            name: notary-proxy-config
+{{- end }}
 {{- end }}
