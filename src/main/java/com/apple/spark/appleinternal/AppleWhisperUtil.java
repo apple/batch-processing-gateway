@@ -15,7 +15,11 @@ public class AppleWhisperUtil {
           || sparkSpec
               .getDriver()
               .getAnnotations()
-              .containsKey(WhisperConstants.WHISPER_BUCKET_KEY_2)) {
+              .containsKey(WhisperConstants.WHISPER_BUCKET_KEY_2)
+          || sparkSpec
+              .getDriver()
+              .getAnnotations()
+              .containsKey(WhisperConstants.WHISPER_BUCKET_KEY_3)) {
         sparkSpec
             .getDriver()
             .getAnnotations()

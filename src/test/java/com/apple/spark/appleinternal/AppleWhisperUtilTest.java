@@ -9,12 +9,58 @@ import org.testng.annotations.Test;
 
 public class AppleWhisperUtilTest {
   @Test
-  public void enableWhisperSupportTest() {
+  public void enableWhisperSupportTest_KEY_1() {
     SparkApplicationSpec sparkSpec = new SparkApplicationSpec();
     String proxyUser = "dummyUser";
     Map<String, String> annotations = new HashMap<>();
     annotations.put(WhisperConstants.WHISPER_NAMESPACE_KEY, "dummyNamespace");
     annotations.put(WhisperConstants.WHISPER_BUCKET_KEY_1, "MySecretBucket");
+    annotations.put(WhisperConstants.WHISPER_IDENTITY_TYPE_KEY, "hydrogen");
+    DriverSpec driverSpec = new DriverSpec();
+    driverSpec.setAnnotations(annotations);
+    sparkSpec.setDriver(driverSpec);
+
+    AppleWhisperUtil.enableWhisperSupport(sparkSpec, proxyUser);
+
+    Assert.assertEquals(
+        sparkSpec.getDriver().getAnnotations().get(WhisperConstants.WHISPER_HYDROGEN_USER_KEY),
+        "dummyUser");
+    Assert.assertEquals(
+        sparkSpec.getDriver().getAnnotations().get(WhisperConstants.WHISPER_ISSUERNAME_KEY),
+        WhisperConstants.WHISPER_ISSUERNAME);
+  }
+
+  @Test
+  public void enableWhisperSupportTest_KEY_2() {
+    SparkApplicationSpec sparkSpec = new SparkApplicationSpec();
+    String proxyUser = "dummyUser";
+    Map<String, String> annotations = new HashMap<>();
+    annotations.put(WhisperConstants.WHISPER_NAMESPACE_KEY, "dummyNamespace");
+    annotations.put(WhisperConstants.WHISPER_BUCKET_KEY_2, "MySecretBucket");
+    annotations.put(WhisperConstants.WHISPER_IDENTITY_TYPE_KEY, "hydrogen");
+    DriverSpec driverSpec = new DriverSpec();
+    driverSpec.setAnnotations(annotations);
+    sparkSpec.setDriver(driverSpec);
+
+    AppleWhisperUtil.enableWhisperSupport(sparkSpec, proxyUser);
+
+    Assert.assertEquals(
+        sparkSpec.getDriver().getAnnotations().get(WhisperConstants.WHISPER_HYDROGEN_USER_KEY),
+        "dummyUser");
+    Assert.assertEquals(
+        sparkSpec.getDriver().getAnnotations().get(WhisperConstants.WHISPER_ISSUERNAME_KEY),
+        WhisperConstants.WHISPER_ISSUERNAME);
+  }
+
+  @Test
+  public void enableWhisperSupportTest_KEY_3() {
+    SparkApplicationSpec sparkSpec = new SparkApplicationSpec();
+    String proxyUser = "dummyUser";
+    Map<String, String> annotations = new HashMap<>();
+    annotations.put(WhisperConstants.WHISPER_NAMESPACE_KEY, "dummyNamespace");
+    annotations.put(
+        WhisperConstants.WHISPER_BUCKET_KEY_3,
+        "myNamespace1:mySecretBucket1, myNamespace2:mySecretBucket2");
     annotations.put(WhisperConstants.WHISPER_IDENTITY_TYPE_KEY, "hydrogen");
     DriverSpec driverSpec = new DriverSpec();
     driverSpec.setAnnotations(annotations);
