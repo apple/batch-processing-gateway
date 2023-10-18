@@ -55,7 +55,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
+import java.util.*;
 import javax.annotation.security.PermitAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -198,6 +198,50 @@ public class AdminRest extends RestBase {
                   outputStream.flush();
                 } catch (Throwable ex) {
                   logger.warn("Failed to get version info", ex);
+                  ExceptionUtils.meterException();
+                }
+              }
+            })
+        .build();
+  }
+
+  // For access in tests
+  public static List<String> allPossibleStatuses =
+      Arrays.asList(
+          "UNKNOWN",
+          "SUBMITTED",
+          "RUNNING",
+          "FAILING",
+          "FAILED",
+          "SUCCEEDING",
+          "COMPLETED",
+          "DELETED");
+
+  @GET
+  @Path("statuses")
+  @Timed
+  @Operation(
+      summary = "Get all possible statuses",
+      tags = {"Admin"})
+  @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
+  public Response statuses() {
+
+    Map<String, List<String>> statusesMap = new HashMap<>();
+    statusesMap.put("statuses", allPossibleStatuses);
+
+    return Response.ok(
+            new RestStreamingOutput() {
+              @Override
+              public void write(OutputStream outputStream) throws WebApplicationException {
+                try {
+                  ObjectMapper mapper = new ObjectMapper();
+                  String statusesJson =
+                      mapper.writerWithDefaultPrettyPrinter().writeValueAsString(statusesMap);
+                  writeLine(outputStream, statusesJson);
+
+                  outputStream.flush();
+                } catch (Throwable ex) {
+                  logger.warn("Failed to get statuses info", ex);
                   ExceptionUtils.meterException();
                 }
               }
