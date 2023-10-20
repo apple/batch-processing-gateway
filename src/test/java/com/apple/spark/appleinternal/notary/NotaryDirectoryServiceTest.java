@@ -53,4 +53,17 @@ public class NotaryDirectoryServiceTest {
     Boolean ifBelong = notaryDirectoryService.checkIfPersonIdInAllowedGroups(personId);
     Assert.assertEquals(ifBelong.booleanValue(), false);
   }
+
+  @Test
+  public void checkPersonIdMembership_EmptyAllowedGroup() throws DirectoryServiceException {
+    Long personId = 123456L;
+    AppConfig.NotaryAppConfig notary = new AppConfig.NotaryAppConfig();
+    List<Long> proxyAllowedGroupsEmpty = new ArrayList<>();
+    notary.setProxyAllowedGroupIDList(proxyAllowedGroupsEmpty);
+    notary.setTuriDirectoryApiKey("BJXDGZRWbkN6sazVRHvdnY9F");
+    appconfi.setNotary(notary);
+    notaryDirectoryService = new NotaryDirectoryService(appconfi);
+    Boolean ifBelong = notaryDirectoryService.checkIfPersonIdInAllowedGroups(personId);
+    Assert.assertEquals(ifBelong.booleanValue(), true);
+  }
 }

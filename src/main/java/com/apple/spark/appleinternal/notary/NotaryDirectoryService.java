@@ -36,7 +36,7 @@ public class NotaryDirectoryService {
   public NotaryDirectoryService(AppConfig appConfig) {
     String directoryKey = null;
     AppConfig.NotaryAppConfig notary = appConfig.getNotary();
-    if (notary != null) {
+    if (notary != null && notary.getTuriDirectoryApiKey() != null) {
       directoryKey = notary.getTuriDirectoryApiKey();
       proxyAllowedGroups = notary.getProxyAllowedGroupIDList();
       logger.debug("proxyAllowedGroups: {}", proxyAllowedGroups.toString());
@@ -111,6 +111,12 @@ public class NotaryDirectoryService {
    */
   public Boolean checkIfPersonIdInAllowedGroups(Long personId) throws DirectoryServiceException {
     logger.debug("Check if {} in allowed groups list", personId);
+    // For accounts such as mlpt-prod that permit all groups when the proxyAllowGroup list is empty,
+    // bypass the turi person id check.
+    if (proxyAllowedGroups.isEmpty()) {
+      return true;
+    }
+
     Boolean ifBelong = personIdGroupsCache.get(personId);
 
     if (ifBelong == null) {
