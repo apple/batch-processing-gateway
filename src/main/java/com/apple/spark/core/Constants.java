@@ -20,7 +20,10 @@
 package com.apple.spark.core;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -156,4 +159,21 @@ public class Constants {
   // If this is true, do not set proxy user on spark application, to avoid error on GCS:
   // PartialGroupNameException The user name 'xxx' is not found. id: ‘xxx’: no such user
   public static final String DISABLE_PROXY_USER = "spark.batchProcessingGateway.disableProxyUser";
+
+  public static final List<String> ALL_POSSIBLE_STATUSES =
+      Arrays.asList(
+          "UNKNOWN",
+          "SUBMITTED",
+          "RUNNING",
+          "FAILING",
+          "FAILED",
+          "SUCCEEDING",
+          "COMPLETED",
+          "DELETED");
+
+  public static final Map<String, List<String>> STATUSES_MAP = new HashMap<>();
+
+  static {
+    STATUSES_MAP.put("statuses", ALL_POSSIBLE_STATUSES);
+  }
 }

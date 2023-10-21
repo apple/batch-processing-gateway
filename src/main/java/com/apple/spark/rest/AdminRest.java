@@ -55,7 +55,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.List;
 import javax.annotation.security.PermitAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -205,29 +205,14 @@ public class AdminRest extends RestBase {
         .build();
   }
 
-  // For access in tests
-  public static List<String> allPossibleStatuses =
-      Arrays.asList(
-          "UNKNOWN",
-          "SUBMITTED",
-          "RUNNING",
-          "FAILING",
-          "FAILED",
-          "SUCCEEDING",
-          "COMPLETED",
-          "DELETED");
-
   @GET
   @Path("statuses")
   @Timed
   @Operation(
-      summary = "Get all possible statuses",
+      summary = "Get all possible Spark job statuses",
       tags = {"Admin"})
   @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
   public Response statuses() {
-
-    Map<String, List<String>> statusesMap = new HashMap<>();
-    statusesMap.put("statuses", allPossibleStatuses);
 
     return Response.ok(
             new RestStreamingOutput() {
@@ -236,7 +221,9 @@ public class AdminRest extends RestBase {
                 try {
                   ObjectMapper mapper = new ObjectMapper();
                   String statusesJson =
-                      mapper.writerWithDefaultPrettyPrinter().writeValueAsString(statusesMap);
+                      mapper
+                          .writerWithDefaultPrettyPrinter()
+                          .writeValueAsString(Constants.STATUSES_MAP);
                   writeLine(outputStream, statusesJson);
 
                   outputStream.flush();

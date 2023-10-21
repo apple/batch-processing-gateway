@@ -1,7 +1,6 @@
 package com.apple.spark.appleintegration;
 
 import com.apple.spark.core.Constants;
-import com.apple.spark.rest.AdminRest;
 import com.apple.spark.util.HttpUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -35,7 +34,7 @@ public class AdminRestIntegrationTest {
     String fullUrl = serviceRootUrl + "/admin/statuses";
     String response = HttpUtils.get(fullUrl, authHeaderName, authHeaderValue);
 
-    for (String status : AdminRest.allPossibleStatuses) {
+    for (String status : Constants.ALL_POSSIBLE_STATUSES) {
       Assert.assertTrue(response.contains(status));
     }
   }
