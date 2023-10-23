@@ -7,14 +7,18 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import org.apache.ranger.authorization.hadoop.config.RangerPluginConfig;
 import org.apache.ranger.plugin.audit.RangerDefaultAuditHandler;
 import org.apache.ranger.plugin.policyengine.RangerAccessRequest;
 import org.apache.ranger.plugin.policyengine.RangerAccessRequestImpl;
 import org.apache.ranger.plugin.policyengine.RangerAccessResourceImpl;
 import org.apache.ranger.plugin.policyengine.RangerAccessResult;
 import org.apache.ranger.plugin.service.RangerBasePlugin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RangerSparkQueueClient {
+  private static final Logger logger = LoggerFactory.getLogger(RangerSparkQueueClient.class);
   private static volatile RangerBasePlugin plugin;
   private static LoadingCache<QueueAccessTypeAndUser, Boolean> queueAccessCache;
   private static LoadingCache<String, Set<String>> userRolesCache;
@@ -26,8 +30,9 @@ public class RangerSparkQueueClient {
 
   private static RangerDefaultAuditHandler auditHandler;
 
-  static {
-    plugin = new RangerBasePlugin(serviceType, appId);
+  public RangerSparkQueueClient(String policyRestUrl, String auditSolrUrl) {
+    RangerPluginConfig rangerPluginConfig = getRangerPluginConfig(policyRestUrl, auditSolrUrl);
+    plugin = new RangerBasePlugin(rangerPluginConfig);
 
     auditHandler = new RangerDefaultAuditHandler();
 
@@ -60,6 +65,41 @@ public class RangerSparkQueueClient {
                     return authorizeAndUpdateCache(queueAccessTypeAndUser);
                   }
                 });
+  }
+
+  private static RangerPluginConfig getRangerPluginConfig(
+      String policyRestUrl, String auditSolrUrl) {
+    RangerPluginConfig config = new RangerPluginConfig(serviceType, appId, appId, null, null, null);
+
+    // audit config
+    if (auditSolrUrl != null) {
+      config.set("xasecure.audit.is.enabled", "true");
+      config.set("xasecure.audit.destination.solr", "true");
+      config.set("xasecure.audit.destination.solr.urls", auditSolrUrl);
+      config.set("xasecure.audit.destination.solr.batch.batch.interval.ms", "5000");
+    } else {
+      logger.warn("ranger audit is not enavled.");
+    }
+
+    // security config
+    config.set(
+        String.format("ranger.plugin.%s.policy.source.impl", serviceType),
+        "com.apple.spark.ranger.client.AdminRESTClient");
+    config.set(String.format("ranger.plugin.%s.service.name", serviceType), appId);
+    config.set(String.format("ranger.plugin.%s.policy.rest.url", serviceType), policyRestUrl);
+    config.set(String.format("ranger.plugin.%s.policy.pollIntervalMs", serviceType), "30000");
+    config.set(
+        String.format("ranger.plugin.%s.policy.rest.client.connection.timeoutMs", serviceType),
+        "30000");
+    config.set(
+        String.format("ranger.plugin.%s.policy.rest.client.read.timeoutMs", serviceType), "30000");
+
+    // TODO: Get username and password from env var.
+    config.set(String.format("ranger.plugin.%s.plugin.user", serviceType), "rangerusersync");
+    config.set(
+        String.format("ranger.plugin.%s.plugin.password", serviceType), "UnprivilegedUserP4ss");
+
+    return config;
   }
 
   /**

@@ -41,6 +41,8 @@ public class AppConfig extends Configuration {
 
   private List<SparkImage> sparkImages;
 
+  private Ranger ranger;
+
   private List<InitContainer> driverInitContainers;
 
   private String s3Bucket;
@@ -192,6 +194,14 @@ public class AppConfig extends Configuration {
       queueConfigs.put(queue.getName(), queue);
     }
     return queueConfigs;
+  }
+
+  public Ranger getRanger() {
+    return ranger;
+  }
+
+  public void setRanger(Ranger ranger) {
+    this.ranger = ranger;
   }
 
   public QueueTokenConfig getQueueTokenSOPS() {
@@ -736,6 +746,29 @@ public class AppConfig extends Configuration {
 
     public void setSecrets(List<String> secrets) {
       this.secrets = secrets;
+    }
+  }
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class Ranger {
+    private String sparkQueuePolicyRestUrl;
+    private String sparkQueueXasecureAuditDestinationSolrUrls;
+
+    public String getSparkQueuePolicyRestUrl() {
+      return sparkQueuePolicyRestUrl;
+    }
+
+    public void setSparkQueuePolicyRestUrl(String sparkQueuePolicyRestUrl) {
+      this.sparkQueuePolicyRestUrl = sparkQueuePolicyRestUrl;
+    }
+
+    public String getSparkQueueXasecureAuditDestinationSolrUrls() {
+      return sparkQueueXasecureAuditDestinationSolrUrls;
+    }
+
+    public void setSparkQueueXasecureAuditDestinationSolrUrls(
+        String sparkQueueXasecureAuditDestinationSolrUrls) {
+      this.sparkQueueXasecureAuditDestinationSolrUrls = sparkQueueXasecureAuditDestinationSolrUrls;
     }
   }
 

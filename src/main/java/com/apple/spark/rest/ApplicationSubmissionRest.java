@@ -174,7 +174,18 @@ public class ApplicationSubmissionRest extends RestBase {
             .expireAfterWrite(statusCacheExpireMillis, TimeUnit.MILLISECONDS)
             .build(loader);
     this.queueConfigs = appConfig.getQueueConfigs();
-    this.queueAuthorizer = new QueueAuthorizer(meterRegistry, queueConfigs);
+    AppConfig.Ranger ranger = appConfig.getRanger();
+    if (ranger != null) {
+      this.queueAuthorizer =
+          new QueueAuthorizer(
+              meterRegistry,
+              queueConfigs,
+              ranger.getSparkQueuePolicyRestUrl(),
+              ranger.getSparkQueueXasecureAuditDestinationSolrUrls());
+    } else {
+      logger.warn("queueAuthorizer is not enabled.");
+      this.queueAuthorizer = null;
+    }
   }
 
   @POST
@@ -278,7 +289,7 @@ public class ApplicationSubmissionRest extends RestBase {
     String parentQueue = SparkClusterHelper.getParentQueue(queue);
     String queueTagValue = queue == null ? "" : queue;
 
-    if (queueAuthorizer.authorizeEnabled(queue)) {
+    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
       queueAuthorizer.authorize(queue, "submit", getUserTagValue(user));
     }
 
@@ -608,7 +619,7 @@ public class ApplicationSubmissionRest extends RestBase {
       SparkApplication sparkApplication = sparkApplicationResource.get();
       if (sparkApplication != null) {
         String queue = getQueueFromSparkApplication(sparkApplication);
-        if (queueAuthorizer.authorizeEnabled(queue)) {
+        if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
           queueAuthorizer.authorize(queue, "kill", getUserTagValue(user));
         }
       }
@@ -659,7 +670,7 @@ public class ApplicationSubmissionRest extends RestBase {
         REQUEST_METRIC_NAME, Tag.of("name", "get_spec"), Tag.of("user", user.getName()));
     SparkApplication sparkApplication = getSparkApplicationResource(submissionId);
     String queue = getQueueFromSparkApplication(sparkApplication);
-    if (queueAuthorizer.authorizeEnabled(queue)) {
+    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
       queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
     }
     SparkApplicationSpec sparkApplicationSpec = removeEnvFromSpec(sparkApplication.getSpec());
@@ -702,7 +713,7 @@ public class ApplicationSubmissionRest extends RestBase {
 
     SparkApplication sparkApplication = getSparkApplicationResource(submissionId);
     String queue = getQueueFromSparkApplication(sparkApplication);
-    if (queueAuthorizer.authorizeEnabled(queue)) {
+    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
       queueAuthorizer.authorize(queue, "status", getUserTagValue(user));
     }
 
@@ -886,7 +897,7 @@ public class ApplicationSubmissionRest extends RestBase {
     VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
     SparkApplication sparkApplicationResource = getSparkApplicationResource(submissionId);
     String queue = getQueueFromSparkApplication(sparkApplicationResource);
-    if (queueAuthorizer.authorizeEnabled(queue)) {
+    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
       queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
     }
     if (sparkApplicationResource.getStatus() == null
@@ -945,7 +956,7 @@ public class ApplicationSubmissionRest extends RestBase {
 
     final SparkApplication sparkApplicationResource = getSparkApplicationResource(submissionId);
     String queue = getQueueFromSparkApplication(sparkApplicationResource);
-    if (queueAuthorizer.authorizeEnabled(queue)) {
+    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
       queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
     }
     SparkApplicationSpec sparkApplicationSpec =
@@ -1060,8 +1071,10 @@ public class ApplicationSubmissionRest extends RestBase {
       if (sparkApplicationResources != null) {
         for (SparkApplication sparkApplication : sparkApplicationResources) {
           String queue = getQueueFromSparkApplication(sparkApplication);
-          if ((queueAuthorizer.authorizeEnabled(queue)
+          if ((queueAuthorizer != null
+                  && queueAuthorizer.authorizeEnabled(queue)
                   && queueAuthorizer.isAuthorized(queue, "list", getUserTagValue(user)))
+              || queueAuthorizer == null
               || !queueAuthorizer.authorizeEnabled(queue)) {
             SubmissionSummary submission = new SubmissionSummary();
             submission.copyFrom(sparkApplication, sparkCluster, getAppConfig());

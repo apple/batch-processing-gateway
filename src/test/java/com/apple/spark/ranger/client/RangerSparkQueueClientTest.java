@@ -5,7 +5,10 @@ import org.testng.annotations.Test;
 
 public class RangerSparkQueueClientTest {
 
-  RangerSparkQueueClient rangerSparkQueueClient = new RangerSparkQueueClient();
+  RangerSparkQueueClient rangerSparkQueueClient =
+      new RangerSparkQueueClient(
+          "https://ranger-1-siri-test.aws.ocean.g.apple.com",
+          "https://solr-1-siri-test.aws.ocean.g.apple.com/solr/ranger_audits");
   String queue = "poc_02";
   String authorizedUser = "raimldpi";
   String unauthorizedUser = "user";

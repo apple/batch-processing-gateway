@@ -36,10 +36,13 @@ public class QueueAuthorizer {
       String.format("statsd.%s.%s.authorizer.timer", SERVICE_ABBR, QUEUE_LABEL);
 
   public QueueAuthorizer(
-      MeterRegistry meterRegistry, Map<String, AppConfig.QueueConfig> queueConfigs) {
+      MeterRegistry meterRegistry,
+      Map<String, AppConfig.QueueConfig> queueConfigs,
+      String policyRestUrl,
+      String auditSolrUrl) {
     this.failureMetrics = new CounterMetricContainer(meterRegistry);
     this.timerMetrics = new TimerMetricContainer(meterRegistry);
-    this.rangerSparkQueueClient = new RangerSparkQueueClient();
+    this.rangerSparkQueueClient = new RangerSparkQueueClient(policyRestUrl, auditSolrUrl);
     this.queueConfigs = queueConfigs;
   }
 

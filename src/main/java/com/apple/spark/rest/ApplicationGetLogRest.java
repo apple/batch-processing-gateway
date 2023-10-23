@@ -110,7 +110,19 @@ public class ApplicationGetLogRest extends RestBase {
 
     this.logDao = new LogDao(dbConnectionString, dbUser, dbPassword, dbName, meterRegistry);
 
-    this.queueAuthorizer = new QueueAuthorizer(meterRegistry, appConfig.getQueueConfigs());
+    AppConfig.Ranger ranger = appConfig.getRanger();
+
+    if (ranger != null) {
+      this.queueAuthorizer =
+          new QueueAuthorizer(
+              meterRegistry,
+              appConfig.getQueueConfigs(),
+              ranger.getSparkQueuePolicyRestUrl(),
+              ranger.getSparkQueueXasecureAuditDestinationSolrUrls());
+    } else {
+      logger.warn("queueAuthorizer is not enabled.");
+      this.queueAuthorizer = null;
+    }
   }
 
   private AmazonS3 s3Client = getS3Client();
@@ -196,7 +208,7 @@ public class ApplicationGetLogRest extends RestBase {
 
       final SparkApplication sparkApplicationResource = getSparkApplicationResource(id);
       String queue = getQueueFromSparkApplication(sparkApplicationResource);
-      if (queueAuthorizer.authorizeEnabled(queue)) {
+      if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
         queueAuthorizer.authorize(queue, "log", getUserTagValue(user));
       }
 
