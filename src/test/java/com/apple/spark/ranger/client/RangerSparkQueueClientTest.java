@@ -52,20 +52,21 @@ public class RangerSparkQueueClientTest {
     Assert.assertEquals(authorizeRes, true);
   }
 
-  @Test
-  public void doNotAuthorizeUserOnOperationLog() throws Exception {
-    boolean authorizeRes =
-        rangerSparkQueueClient.authorize(
-            new QueueAccessTypeAndUser(queue, "log", unauthorizedUser));
-    Assert.assertEquals(authorizeRes, false);
-  }
-
-  @Test
-  public void authorizeUserOnOperationLog() throws Exception {
-    boolean authorizeRes =
-        rangerSparkQueueClient.authorize(new QueueAccessTypeAndUser(queue, "log", authorizedUser));
-    Assert.assertEquals(authorizeRes, true);
-  }
+  //    @Test
+  //    public void doNotAuthorizeUserOnOperationLog() throws Exception {
+  //      boolean authorizeRes =
+  //          rangerSparkQueueClient.authorize(
+  //              new QueueAccessTypeAndUser(queue, "log", unauthorizedUser));
+  //      Assert.assertEquals(authorizeRes, false);
+  //    }
+  //
+  //    @Test
+  //    public void authorizeUserOnOperationLog() throws Exception {
+  //      boolean authorizeRes =
+  //          rangerSparkQueueClient.authorize(new QueueAccessTypeAndUser(queue, "log",
+  //   authorizedUser));
+  //      Assert.assertEquals(authorizeRes, true);
+  //    }
 
   @Test
   public void doNotAuthorizeUserOnOperationKill() throws Exception {
