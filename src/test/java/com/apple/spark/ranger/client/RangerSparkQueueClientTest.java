@@ -1,17 +1,36 @@
 package com.apple.spark.ranger.client;
 
+import com.apple.spark.AppConfig;
+import com.apple.spark.appleintegration.SkateTestSupport;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 public class RangerSparkQueueClientTest {
 
-  RangerSparkQueueClient rangerSparkQueueClient =
-      new RangerSparkQueueClient(
-          "https://ranger-1-siri-test.aws.ocean.g.apple.com",
-          "https://solr-1-siri-test.aws.ocean.g.apple.com/solr/ranger_audits");
+  private final SkateTestSupport testSupport = new SkateTestSupport();
+  private RangerSparkQueueClient rangerSparkQueueClient;
   String queue = "poc_02";
   String authorizedUser = "raimldpi";
   String unauthorizedUser = "user";
+
+  @BeforeClass
+  public void BeforeClass() throws Exception {
+    testSupport.before();
+    AppConfig.Ranger rangerConfig = testSupport.getConfiguration().getRanger();
+    this.rangerSparkQueueClient =
+        new RangerSparkQueueClient(
+            rangerConfig.getSparkQueuePolicyRestUrl(),
+            rangerConfig.getSparkQueueXasecureAuditDestinationSolrUrls(),
+            rangerConfig.getUser(),
+            rangerConfig.getPasswordDecoded());
+  }
+
+  @AfterClass
+  public void AfterClass() {
+    testSupport.after();
+  }
 
   @Test
   public void authorizeUserOnStatusList() throws Exception {

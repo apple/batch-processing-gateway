@@ -22,7 +22,9 @@ public class ActorAssumabilityCheckRestTest {
 
   @BeforeClass
   public static void setupClass() {
-    SharedMetricRegistries.setDefault(registryName);
+    if (SharedMetricRegistries.tryGetDefault() == null) {
+      SharedMetricRegistries.setDefault(registryName);
+    }
     meterRegistry = new SimpleMeterRegistry();
     appconfi = new AppConfig();
     AppConfig.NotaryAppConfig notary = new AppConfig.NotaryAppConfig();

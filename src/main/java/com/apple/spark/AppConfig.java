@@ -754,6 +754,30 @@ public class AppConfig extends Configuration {
     private String sparkQueuePolicyRestUrl;
     private String sparkQueueXasecureAuditDestinationSolrUrls;
 
+    private String user;
+
+    private String password;
+
+    public String getUser() {
+      return user;
+    }
+
+    public void setUser(String user) {
+      this.user = user;
+    }
+
+    public String getPassword() {
+      return password;
+    }
+
+    public String getPasswordDecoded() {
+      return ConfigValue.tryGetEncodedSecretValue(password);
+    }
+
+    public void setPassword(String password) {
+      this.password = password;
+    }
+
     public String getSparkQueuePolicyRestUrl() {
       return sparkQueuePolicyRestUrl;
     }

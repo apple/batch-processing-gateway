@@ -56,6 +56,7 @@ public class AdminRESTClient extends RangerAdminRESTClient {
     LOG.debug("<== RangerAdminRESTClient.init(" + url + ", " + sslConfigFileName + ")");
 
     String restUser = config.get(String.format("%s.%s", propertyPrefix, PLUGIN_USER), null);
+    // TODO: Do not get password from config. rdar://118019413
     String restPass = config.get(String.format("%s.%s", propertyPrefix, PLUGIN_PASSWORD), null);
 
     if (restUser != null && restPass != null) {

@@ -181,7 +181,9 @@ public class ApplicationSubmissionRest extends RestBase {
               meterRegistry,
               queueConfigs,
               ranger.getSparkQueuePolicyRestUrl(),
-              ranger.getSparkQueueXasecureAuditDestinationSolrUrls());
+              ranger.getSparkQueueXasecureAuditDestinationSolrUrls(),
+              ranger.getUser(),
+              ranger.getPasswordDecoded());
     } else {
       logger.warn("queueAuthorizer is not enabled.");
       this.queueAuthorizer = null;

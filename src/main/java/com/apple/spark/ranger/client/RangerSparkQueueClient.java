@@ -30,9 +30,12 @@ public class RangerSparkQueueClient {
 
   private static RangerDefaultAuditHandler auditHandler;
 
-  public RangerSparkQueueClient(String policyRestUrl, String auditSolrUrl) {
-    RangerPluginConfig rangerPluginConfig = getRangerPluginConfig(policyRestUrl, auditSolrUrl);
-    plugin = new RangerBasePlugin(rangerPluginConfig);
+  public RangerSparkQueueClient(
+      String policyRestUrl, String auditSolrUrl, String user, String password) {
+    RangerPluginConfig rangerPluginConfig =
+        getRangerPluginConfig(policyRestUrl, auditSolrUrl, user, password);
+
+    this.plugin = new RangerBasePlugin(rangerPluginConfig);
 
     auditHandler = new RangerDefaultAuditHandler();
 
@@ -68,7 +71,7 @@ public class RangerSparkQueueClient {
   }
 
   private static RangerPluginConfig getRangerPluginConfig(
-      String policyRestUrl, String auditSolrUrl) {
+      String policyRestUrl, String auditSolrUrl, String user, String password) {
     RangerPluginConfig config = new RangerPluginConfig(serviceType, appId, appId, null, null, null);
 
     // audit config
@@ -94,10 +97,8 @@ public class RangerSparkQueueClient {
     config.set(
         String.format("ranger.plugin.%s.policy.rest.client.read.timeoutMs", serviceType), "30000");
 
-    // TODO: Get username and password from env var.
-    config.set(String.format("ranger.plugin.%s.plugin.user", serviceType), "rangerusersync");
-    config.set(
-        String.format("ranger.plugin.%s.plugin.password", serviceType), "UnprivilegedUserP4ss");
+    config.set(String.format("ranger.plugin.%s.plugin.user", serviceType), user);
+    config.set(String.format("ranger.plugin.%s.plugin.password", serviceType), password);
 
     return config;
   }

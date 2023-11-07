@@ -39,10 +39,13 @@ public class QueueAuthorizer {
       MeterRegistry meterRegistry,
       Map<String, AppConfig.QueueConfig> queueConfigs,
       String policyRestUrl,
-      String auditSolrUrl) {
+      String auditSolrUrl,
+      String user,
+      String password) {
     this.failureMetrics = new CounterMetricContainer(meterRegistry);
     this.timerMetrics = new TimerMetricContainer(meterRegistry);
-    this.rangerSparkQueueClient = new RangerSparkQueueClient(policyRestUrl, auditSolrUrl);
+    this.rangerSparkQueueClient =
+        new RangerSparkQueueClient(policyRestUrl, auditSolrUrl, user, password);
     this.queueConfigs = queueConfigs;
   }
 
