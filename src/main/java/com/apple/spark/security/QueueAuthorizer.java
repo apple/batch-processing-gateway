@@ -40,12 +40,11 @@ public class QueueAuthorizer {
       Map<String, AppConfig.QueueConfig> queueConfigs,
       String policyRestUrl,
       String auditSolrUrl,
-      String user,
-      String password) {
+      Long userGroupsCacheDurationInMillis) {
     this.failureMetrics = new CounterMetricContainer(meterRegistry);
     this.timerMetrics = new TimerMetricContainer(meterRegistry);
     this.rangerSparkQueueClient =
-        new RangerSparkQueueClient(policyRestUrl, auditSolrUrl, user, password);
+        new RangerSparkQueueClient(policyRestUrl, auditSolrUrl, userGroupsCacheDurationInMillis);
     this.queueConfigs = queueConfigs;
   }
 

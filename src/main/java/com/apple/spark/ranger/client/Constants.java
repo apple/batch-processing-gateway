@@ -2,7 +2,7 @@ package com.apple.spark.ranger.client;
 
 public class Constants {
 
-  // These values are used as certain suffixes for variables in AdminRESTClient
+  // These values are used as certain suffixes for variables in RangerClient
   public static final String POLICY_REST_URL = "policy.rest.url";
   public static final String POLICY_REST_SSL_CONFIG_FILE = "policy.rest.ssl.config.file";
   public static final String POLICY_REST_CLIENT_CONNECTION_TIMEOUT =
