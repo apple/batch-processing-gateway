@@ -37,7 +37,9 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.google.common.util.concurrent.RateLimiter;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
@@ -167,13 +169,11 @@ public class RestBase {
     return queue.replace(String.format("%s.", YUNIKORN_ROOT_QUEUE), "");
   }
 
-  protected SparkApplicationResourceList getSparkApplicationResourcesByUser(
-      VirtualSparkClusterSpec sparkCluster, String user) {
-    return getSparkApplicationResourcesByLabel(sparkCluster, Constants.PROXY_USER_LABEL, user);
-  }
+  protected SparkApplicationResourceList getSparkApplicationResourcesByLabels(
+      VirtualSparkClusterSpec sparkCluster, String[] labelNames, String[] labelValues) {
 
-  protected SparkApplicationResourceList getSparkApplicationResourcesByLabel(
-      VirtualSparkClusterSpec sparkCluster, String labelName, String labelValue) {
+    assert labelNames.length == labelValues.length : "Label names and label values should equal";
+
     com.codahale.metrics.Timer timer =
         registry.timer(
             this.getClass().getSimpleName() + ".getSparkApplicationResourcesByUser.k8s-time");
@@ -183,11 +183,20 @@ public class RestBase {
           sparkApplicationClient =
               client.resources(SparkApplication.class, SparkApplicationResourceList.class);
 
-      SparkApplicationResourceList list =
-          sparkApplicationClient
-              .inNamespace(sparkCluster.getSparkApplicationNamespace())
-              .withLabel(labelName, labelValue)
-              .list();
+      NonNamespaceOperation<
+              SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
+          inNameSpaceResources =
+              sparkApplicationClient.inNamespace(sparkCluster.getSparkApplicationNamespace());
+
+      FilterWatchListDeletable<
+              SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
+          filteredResources = inNameSpaceResources;
+
+      for (int i = 0; i < labelNames.length; i += 1) {
+        filteredResources = filteredResources.withLabel(labelNames[i], labelValues[i]);
+        logger.info("Filtered with label " + labelNames[i] + ": " + labelValues[i]);
+      }
+      SparkApplicationResourceList list = filteredResources.list();
 
       context.stop();
       if (list == null) {

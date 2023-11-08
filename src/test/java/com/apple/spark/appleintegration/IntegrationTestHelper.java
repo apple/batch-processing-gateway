@@ -114,7 +114,9 @@ public class IntegrationTestHelper {
         requestModifier,
         SparkConstants.COMPLETED_STATE,
         false,
-        false);
+        false,
+        false,
+        true);
   }
 
   // Returning Driver Log, in case specific test cases want to assert on extra conditions
@@ -129,6 +131,26 @@ public class IntegrationTestHelper {
             requestModifier,
             SparkConstants.COMPLETED_STATE,
             true,
+            false,
+            false,
+            true)
+        .get();
+  }
+
+  // Set cleanCRD to false in order to keep the SparkApplication CRD for later query
+  public static String runSparkAppAndGetSubmissionId(
+      String serviceRootUrl,
+      String requestTemplate,
+      Consumer<SubmitApplicationRequest> requestModifier)
+      throws IOException {
+    return runSparkApplication(
+            serviceRootUrl,
+            requestTemplate,
+            requestModifier,
+            SparkConstants.COMPLETED_STATE,
+            false,
+            true,
+            false,
             false)
         .get();
   }
@@ -144,6 +166,8 @@ public class IntegrationTestHelper {
             requestModifier,
             SparkConstants.COMPLETED_STATE,
             false,
+            false,
+            true,
             true)
         .get();
   }
@@ -165,7 +189,9 @@ public class IntegrationTestHelper {
         },
         "FAILED",
         false,
-        false);
+        false,
+        false,
+        true);
   }
 
   public static String generateSubmitApplicationRequestStr(
@@ -411,15 +437,34 @@ public class IntegrationTestHelper {
     return response.body();
   }
 
-  // When driverLog is true, the result type will be Some<String>, otherwise it would be None.
+  // When more than 1 field among driverLog, submissionId, sparkSpec is true, there will be an
+  // Exception
+  // When one of them is true, result type will be Some<String>
+  // When they are all false, result is None
   private static Optional<String> runSparkApplication(
       String serviceRootUrl,
       String requestTemplate,
       Consumer<SubmitApplicationRequest> requestModifier,
       String expectedFinalState,
-      boolean driverLog,
-      boolean sparkSpec)
+      boolean getDriverLog,
+      boolean getSubmissionId,
+      boolean getSparkSpec,
+      boolean cleanCRD)
       throws IOException {
+
+    int cntTrues = 0;
+    if (getDriverLog) {
+      cntTrues++;
+    }
+    if (getSubmissionId) {
+      cntTrues++;
+    }
+    if (getSparkSpec) {
+      cntTrues++;
+    }
+    Assert.assertTrue(
+        cntTrues <= 1, "At most one value among driverLog, submissionId, sparkSpec can be true");
+
     boolean requestTemplateIsYaml = requestTemplate.toLowerCase().endsWith("yaml");
     ObjectMapper objectMapper = generateObjectMapper(requestTemplateIsYaml);
     SubmitApplicationRequest submitApplicationRequest =
@@ -583,26 +628,31 @@ public class IntegrationTestHelper {
         HttpUtils.get(listSubmissionsUrl4, authHeaderName, authHeaderValue);
     Assert.assertEquals(listSubmissionsResponse4, "");
 
-    String deleteUrl = String.format("%s/spark/%s", serviceRootUrl, submissionId);
-    DeleteSubmissionResponse deleteSubmissionResponse =
-        HttpUtils.delete(
-            deleteUrl, authHeaderName, authHeaderValue, DeleteSubmissionResponse.class);
-    Assert.assertNotNull(deleteSubmissionResponse);
-    deleteSubmissionResponse =
-        HttpUtils.delete(
-            deleteUrl, authHeaderName, authHeaderValue, DeleteSubmissionResponse.class);
-    Assert.assertNotNull(deleteSubmissionResponse);
+    // Only deletes the resource when cleanCRD is true
+    if (cleanCRD) {
+      String deleteUrl = String.format("%s/spark/%s", serviceRootUrl, submissionId);
+      DeleteSubmissionResponse deleteSubmissionResponse =
+          HttpUtils.delete(
+              deleteUrl, authHeaderName, authHeaderValue, DeleteSubmissionResponse.class);
+      Assert.assertNotNull(deleteSubmissionResponse);
+      deleteSubmissionResponse =
+          HttpUtils.delete(
+              deleteUrl, authHeaderName, authHeaderValue, DeleteSubmissionResponse.class);
+      Assert.assertNotNull(deleteSubmissionResponse);
 
-    getMySubmissionsResponse =
-        HttpUtils.get(
-            getSubmissionsUrl, authHeaderName, authHeaderValue, GetMySubmissionsResponse.class);
-    Assert.assertFalse(
-        getMySubmissionsResponse.getSubmissions().stream()
-            .anyMatch(t -> t.getSubmissionId().equals(submissionId)));
+      getMySubmissionsResponse =
+          HttpUtils.get(
+              getSubmissionsUrl, authHeaderName, authHeaderValue, GetMySubmissionsResponse.class);
+      Assert.assertFalse(
+          getMySubmissionsResponse.getSubmissions().stream()
+              .anyMatch(t -> t.getSubmissionId().equals(submissionId)));
+    }
 
-    if (driverLog) {
+    if (getDriverLog) {
       return Optional.of(driverLogStr);
-    } else if (sparkSpec) {
+    } else if (getSubmissionId) {
+      return Optional.of(submissionId);
+    } else if (getSparkSpec) {
       return Optional.of(sparkSpecStr);
     } else {
       return Optional.empty();

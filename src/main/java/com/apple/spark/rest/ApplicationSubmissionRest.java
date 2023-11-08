@@ -1090,6 +1090,18 @@ public class ApplicationSubmissionRest extends RestBase {
     return response;
   }
 
+  private SparkApplicationResourceList getSparkApplicationResourcesByUser(
+      VirtualSparkClusterSpec sparkCluster, String user) {
+
+    String[] labelNames = new String[1];
+    labelNames[0] = Constants.PROXY_USER_LABEL;
+
+    String[] labelValues = new String[1];
+    labelValues[0] = user;
+
+    return getSparkApplicationResourcesByLabels(sparkCluster, labelNames, labelValues);
+  }
+
   protected List<Event> getEvents(VirtualSparkClusterSpec sparkCluster, String objectName) {
     Map<String, String> fields = new HashMap<>();
     fields.put("involvedObject.name", objectName);

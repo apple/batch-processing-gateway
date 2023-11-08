@@ -25,7 +25,7 @@ It will use config.yml in root of this project to configure the Skate server. Yo
 config.yml in your local side to use different environments.
  */
 public class ApplicationSubmissionRestIntegrationTest {
-  private static final String skateIntegrationTestResourcesFolderUrl =
+  protected static final String skateIntegrationTestResourcesFolderUrl =
       "s3a://aiml-prod-artifacts/skate_uploaded/skateIntegrationTest/resources";
 
   private final SkateTestSupport testSupport = new SkateTestSupport();

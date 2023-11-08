@@ -176,4 +176,12 @@ public class Constants {
   static {
     STATUSES_MAP.put("statuses", ALL_POSSIBLE_STATUSES);
   }
+
+  public static final List<String> SEARCHABLE_JOB_FIELDS =
+      Arrays.asList(
+          "airflow_dag_name", "application_id", "application_name", "submission_id", "user");
+
+  public static final String DESC_SORT_ORDER = "desc";
+
+  public static final String CREATION_TIME_LABEL = "creationTime";
 }
