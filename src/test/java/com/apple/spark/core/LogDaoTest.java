@@ -38,6 +38,8 @@ public class LogDaoTest {
   private final Double memoryMbSecondCost = 0.000000000372;
   private final Double vCoreSecondCost = 0.000003;
 
+  private final String queue = "poc";
+
   @Test
   public void test() throws Exception {
     Class.forName(H2_DRIVER_CLASS);
@@ -55,6 +57,7 @@ public class LogDaoTest {
     Assert.assertNotNull(logDao);
 
     SubmitApplicationRequest submission = new SubmitApplicationRequest();
+    submission.setQueue(queue);
     logDao.logApplicationSubmission("submission1", "user1", submission);
     logDao.logApplicationId("submission1", "app1");
 
@@ -161,7 +164,8 @@ public class LogDaoTest {
         vCoreSecondCost,
         memoryMbSecondCost);
 
-    Assert.assertEquals(logDao.getSubmissionIdFromAppId("app1"), "submission1");
+    Assert.assertEquals(logDao.getFiledValueFromAppId("submission_id", "app1"), "submission1");
+    Assert.assertEquals(logDao.getFiledValueFromAppId("queue", "app1"), queue);
 
     ResultSet resultSet = logDao.getJobInfoQuery("COMPLETED", "all", 200, 7);
     int size = 0;

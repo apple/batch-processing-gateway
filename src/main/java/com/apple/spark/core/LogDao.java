@@ -117,35 +117,35 @@ public class LogDao {
     }
   }
 
-  public String getSubmissionIdFromAppId(String appId) {
+  public String getFiledValueFromAppId(String fieldName, String appId) {
 
     return timerMetrics.record(
-        () -> getSubmissionIdFromAppIdImpl(appId),
+        () -> getFieldValueFromAppIdImpl(fieldName, appId),
         DB_TIMER_METRIC_NAME,
         Tag.of(OPERATION_TAG, QUERY_SUBMISSION_OPERATION));
   }
 
   // This method returns an empty string if the field value is null
-  private String getSubmissionIdFromAppIdImpl(String appId) {
+  private String getFieldValueFromAppIdImpl(String columnName, String appId) {
     String queryResult = "";
 
     String sql =
         String.format(
-            "SELECT submission_id from %s.application_submission where app_id = ?", dbName);
+            "SELECT %s from %s.application_submission where app_id = ?", columnName, dbName);
 
     try (PreparedStatement statement = dbConnection.getConnection().prepareStatement(sql)) {
       statement.setString(1, appId);
       try (ResultSet resultSet = statement.executeQuery()) {
         boolean seenResult = false;
         while (resultSet.next()) {
-          // there must be one submission ID for any app ID
+          // there must be one record for any app ID
           if (seenResult) {
             logger.warn(String.format("Found multiple records for the same appId: %s"), appId);
             queryResult = "";
             break;
           }
 
-          Object object = resultSet.getObject("submission_id");
+          Object object = resultSet.getObject(columnName);
           if (object == null) {
             queryResult = "";
           } else {

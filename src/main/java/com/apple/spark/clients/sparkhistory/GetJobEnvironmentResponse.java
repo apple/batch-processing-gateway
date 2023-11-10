@@ -19,6 +19,9 @@
 
 package com.apple.spark.clients.sparkhistory;
 
+import static com.apple.spark.clients.sparkhistory.Constants.appNameKey;
+import static com.apple.spark.clients.sparkhistory.Constants.queueKey;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
@@ -48,9 +51,17 @@ public class GetJobEnvironmentResponse {
   }
 
   public String getPodNamePrefix() {
-    String podNamePrefix = "";
-    String key = "";
+    return getValueFromKey(appNameKey);
+  }
+
+  public String getQueue() {
+    return getValueFromKey(queueKey);
+  }
+
+  private String getValueFromKey(String keyName) {
     String value = "";
+    String key = "";
+    String propertyValue = "";
     if (sparkProperties != null) {
       int n = this.sparkProperties.size();
       for (int i = 0; i < n; ++i) {
@@ -58,15 +69,14 @@ public class GetJobEnvironmentResponse {
         // the sparkProperties should have two items in each property
         if (item.size() == 2) {
           key = item.get(0);
-          value = item.get(1);
-          if (key.equalsIgnoreCase(
-              "spark.kubernetes.executor.label.sparkoperator.k8s.io/app-name")) {
-            podNamePrefix = value;
+          propertyValue = item.get(1);
+          if (key.equalsIgnoreCase(keyName)) {
+            value = propertyValue;
             break;
           }
         }
       }
     }
-    return podNamePrefix;
+    return value;
   }
 }

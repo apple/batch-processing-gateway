@@ -36,7 +36,7 @@ import com.apple.spark.core.LogDao;
 import com.apple.spark.core.RestStreamingOutput;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplication;
-// import com.apple.spark.security.QueueAuthorizer;
+import com.apple.spark.security.QueueAuthorizer;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ExceptionUtils;
 import com.codahale.metrics.MetricRegistry;
@@ -90,7 +90,7 @@ public class ApplicationGetLogRest extends RestBase {
   private final MetricRegistry registry;
   private final LogDao logDao;
 
-  //  private final QueueAuthorizer queueAuthorizer;
+  private final QueueAuthorizer queueAuthorizer;
 
   public ApplicationGetLogRest(AppConfig appConfig, MeterRegistry meterRegistry) {
     super(appConfig, meterRegistry);
@@ -110,19 +110,20 @@ public class ApplicationGetLogRest extends RestBase {
 
     this.logDao = new LogDao(dbConnectionString, dbUser, dbPassword, dbName, meterRegistry);
 
-    //    AppConfig.Ranger ranger = appConfig.getRanger();
-    //
-    //    if (ranger != null) {
-    //      this.queueAuthorizer =
-    //          new QueueAuthorizer(
-    //              meterRegistry,
-    //              appConfig.getQueueConfigs(),
-    //              ranger.getSparkQueuePolicyRestUrl(),
-    //              ranger.getSparkQueueXasecureAuditDestinationSolrUrls());
-    //    } else {
-    //      logger.warn("queueAuthorizer is not enabled.");
-    //      this.queueAuthorizer = null;
-    //    }
+    AppConfig.Ranger ranger = appConfig.getRanger();
+
+    if (ranger != null) {
+      this.queueAuthorizer =
+          new QueueAuthorizer(
+              meterRegistry,
+              appConfig.getQueueConfigs(),
+              ranger.getSparkQueuePolicyRestUrl(),
+              ranger.getSparkQueueXasecureAuditDestinationSolrUrls(),
+              ranger.getUserGroupsCacheDurationInMillis());
+    } else {
+      logger.warn("queueAuthorizer is not enabled.");
+      this.queueAuthorizer = null;
+    }
   }
 
   private AmazonS3 s3Client = getS3Client();
@@ -191,13 +192,20 @@ public class ApplicationGetLogRest extends RestBase {
       String id = "";
       if (StringUtils.isEmpty(submissionId)) {
         // search rds database and get the submissionId
-        id = getSubmissionIdFromAppIdFromDB(appId);
+        id = getFieldValueFromAppIdFromDB("submission_id", appId);
         // in case rds database does not have the record, search history server for submissionId
         if (StringUtils.isEmpty(id)) {
-          id = getPodNamePrefixFromAppId(appId);
+          id = getFieldValueFromAppId("podNamePrefix", appId);
         }
       } else {
         id = submissionId;
+      }
+
+      String queue = "";
+      queue = getFieldValueFromAppIdFromDB("queue", appId);
+      // in case rds database does not have the record, search history server for queue
+      if (StringUtils.isEmpty(queue)) {
+        queue = getFieldValueFromAppId("queue", appId);
       }
 
       if (StringUtils.isEmpty(id)) {
@@ -206,12 +214,9 @@ public class ApplicationGetLogRest extends RestBase {
         throw new WebApplicationException(errorMessage, Response.Status.BAD_REQUEST);
       }
 
-      //      final SparkApplication sparkApplicationResource = getSparkApplicationResource(id);
-      //      TODO: Need to fetch queue information from s3 but not crd by default
-      //      String queue = getQueueFromSparkApplication(sparkApplicationResource);
-      //      if (queueAuthorizer.authorizeEnabled(queue)) {
-      //        queueAuthorizer.authorize(queue, "log", getUserTagValue(user));
-      //      }
+      if (queueAuthorizer.authorizeEnabled(queue)) {
+        queueAuthorizer.authorize(queue, "log", getUserTagValue(user));
+      }
 
       // Try to get driver/executor logs from EKS first instead of S3.
       // If s3only is true, skip searching EKS.
@@ -385,8 +390,8 @@ public class ApplicationGetLogRest extends RestBase {
     }
   }
 
-  private String getPodNamePrefixFromAppId(String appId) {
-    String podNamePrefix = "";
+  private String getFieldValueFromAppId(String fieldName, String appId) {
+    String fieldValue = "";
     String response;
     GetJobEnvironmentResponse jobEnvionmentResponse = new GetJobEnvironmentResponse();
     String url =
@@ -397,21 +402,27 @@ public class ApplicationGetLogRest extends RestBase {
       response = get(url, "Host", getAppConfig().getSparkHistoryDns());
       ObjectMapper objectMapper = new ObjectMapper();
       jobEnvionmentResponse = objectMapper.readValue(response, GetJobEnvironmentResponse.class);
-      podNamePrefix = jobEnvionmentResponse.getPodNamePrefix();
+      if (fieldName.equals("podNamePrefix")) {
+        fieldValue = jobEnvionmentResponse.getPodNamePrefix();
+      } else if (fieldName.equals("queue")) {
+        fieldValue = jobEnvionmentResponse.getQueue();
+      } else {
+        throw new Exception(String.format("Field name %s is not supported.", fieldName));
+      }
     } catch (Exception e) {
       logger.error(e.toString());
     }
-    return podNamePrefix;
+    return fieldValue;
   }
 
-  private String getSubmissionIdFromAppIdFromDB(String appId) {
-    String submission_id = "";
+  private String getFieldValueFromAppIdFromDB(String fieldQueried, String appId) {
+    String fieldValue = "";
     try {
-      submission_id = logDao.getSubmissionIdFromAppId(appId);
+      fieldValue = logDao.getFiledValueFromAppId(fieldQueried, appId);
     } catch (Exception e) {
       logger.warn(
-          String.format("Could not get submission_id for appId: %s from database", appId), e);
+          String.format("Could not get %s for appId: %s from database", fieldQueried, appId), e);
     }
-    return submission_id;
+    return fieldValue;
   }
 }
