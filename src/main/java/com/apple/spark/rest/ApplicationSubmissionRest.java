@@ -110,7 +110,7 @@ public class ApplicationSubmissionRest extends RestBase {
 
   private final QueueAuthorizer queueAuthorizer;
   private final long statusCacheExpireMillis;
-  private final LoadingCache<String, GetSubmissionStatusResponseCacheValue>
+  private final LoadingCache<SubmissionIdAndUser, GetSubmissionStatusResponseCacheValue>
       statusCache; // a cache of submission status using submission ID as key
 
   private final Map<String, AppConfig.QueueConfig> queueConfigs;
@@ -140,17 +140,19 @@ public class ApplicationSubmissionRest extends RestBase {
     }
     logger.info("Creating status cache with expire millis: {}", statusCacheExpireMillis);
 
-    CacheLoader<String, GetSubmissionStatusResponseCacheValue> loader;
+    CacheLoader<SubmissionIdAndUser, GetSubmissionStatusResponseCacheValue> loader;
     loader =
-        new CacheLoader<String, GetSubmissionStatusResponseCacheValue>() {
+        new CacheLoader<SubmissionIdAndUser, GetSubmissionStatusResponseCacheValue>() {
           @Override
-          public GetSubmissionStatusResponseCacheValue load(String submissionId) {
+          public GetSubmissionStatusResponseCacheValue load(
+              SubmissionIdAndUser submissionIdAndUser) {
             requestCounters.increment(STATUS_CACHE_LOAD);
+            String submissionId = submissionIdAndUser.getSubmissionId();
             VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
             try {
               GetSubmissionStatusResponse response =
                   getStatusImplWithoutCache(
-                      getSparkApplicationResource(submissionId), submissionId, sparkCluster);
+                      submissionId, sparkCluster, submissionIdAndUser.getUser());
               return new GetSubmissionStatusResponseCacheValue(response);
             } catch (Throwable ex) {
               requestCounters.increment(
@@ -712,26 +714,20 @@ public class ApplicationSubmissionRest extends RestBase {
 
     GetSubmissionStatusResponseCacheValue cacheValue;
 
-    SparkApplication sparkApplication = getSparkApplicationResource(submissionId);
-    String queue = getQueueFromSparkApplication(sparkApplication);
-    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
-      queueAuthorizer.authorize(queue, "status", getUserTagValue(user));
-    }
-
     try {
-      cacheValue = statusCache.get(submissionId);
+      cacheValue = statusCache.get(new SubmissionIdAndUser(submissionId, getUserTagValue(user)));
     } catch (ExecutionException ex) {
       requestCounters.increment(
           STATUS_CACHE_GET_FAILURE, Tag.of("exception", ex.getClass().getSimpleName()));
       logger.warn(String.format("Failed to get status from cache for %s", submissionId), ex);
       VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
-      return getStatusImplWithoutCache(sparkApplication, submissionId, sparkCluster);
+      return getStatusImplWithoutCache(submissionId, sparkCluster, getUserTagValue(user));
     }
 
     if (cacheValue == null) {
       logger.warn("Got null status cache value for {}", submissionId);
       VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
-      return getStatusImplWithoutCache(sparkApplication, submissionId, sparkCluster);
+      return getStatusImplWithoutCache(submissionId, sparkCluster, getUserTagValue(user));
     }
 
     long cacheElapsedTime = System.currentTimeMillis() - cacheValue.getCreatedTimeMillis();
@@ -742,7 +738,7 @@ public class ApplicationSubmissionRest extends RestBase {
       logger.warn(
           "Got expired status cache value ({} millis) for {}", cacheElapsedTime, submissionId);
       VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
-      return getStatusImplWithoutCache(sparkApplication, submissionId, sparkCluster);
+      return getStatusImplWithoutCache(submissionId, sparkCluster, getUserTagValue(user));
     }
 
     if (cacheValue.getResponse() == null) {
@@ -767,97 +763,116 @@ public class ApplicationSubmissionRest extends RestBase {
   }
 
   private GetSubmissionStatusResponse getStatusImplWithoutCache(
-      SparkApplication sparkApplication,
-      String submissionId,
-      VirtualSparkClusterSpec sparkCluster) {
+      String submissionId, VirtualSparkClusterSpec sparkCluster, String user) {
+    com.codahale.metrics.Timer timer =
+        registry.timer(this.getClass().getSimpleName() + ".getStatus.k8s-time");
+    try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
+        com.codahale.metrics.Timer.Context context = timer.time()) {
+      MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
+          sparkApplicationClient =
+              client.resources(SparkApplication.class, SparkApplicationResourceList.class);
 
-    if (sparkApplication == null) {
-      throw new WebApplicationException(
-          String.format("Application submission %s not found", submissionId),
-          Response.Status.NOT_FOUND);
-    }
-    GetSubmissionStatusResponse response = new GetSubmissionStatusResponse();
-    response.copyFrom(sparkApplication);
+      SparkApplication sparkApplication =
+          sparkApplicationClient
+              .inNamespace(sparkCluster.getSparkApplicationNamespace())
+              .withName(submissionId)
+              .get();
 
-    if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())) {
-      if (SparkConstants.RUNNING_STATE.equalsIgnoreCase(response.getApplicationState())
-          || SparkConstants.SPOT_TIMEOUT_STATE.equalsIgnoreCase(response.getApplicationState())) {
-        String url = ConfigUtil.getSparkUIUrl(sparkCluster, submissionId);
-        response.setSparkUIUrl(url);
+      String queue = getQueueFromSparkApplication(sparkApplication);
+      if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
+        queueAuthorizer.authorize(queue, "status", user);
       }
 
-      if ((SparkConstants.COMPLETED_STATE.equalsIgnoreCase(response.getApplicationState())
-              || SparkConstants.FAILED_STATE.equalsIgnoreCase(response.getApplicationState()))
-          && appConfig.getSparkHistoryDns() != null
-          && response.getSparkApplicationId() != null) {
-        String url =
-            ConfigUtil.getSparkHistoryUrl(
-                appConfig.getSparkHistoryDns(), response.getSparkApplicationId());
-        response.setSparkUIUrl(url);
+      context.stop();
+      if (sparkApplication == null) {
+        throw new WebApplicationException(
+            String.format("Application submission %s not found", submissionId),
+            Response.Status.NOT_FOUND);
       }
-    }
+      GetSubmissionStatusResponse response = new GetSubmissionStatusResponse();
+      response.copyFrom(sparkApplication);
 
-    // add more information regarding max running time
-    String extraMessage = "";
-    if (sparkApplication.getMetadata().getLabels() != null) {
-      String maxRunningMillisLabel =
-          sparkApplication.getMetadata().getLabels().get(MAX_RUNNING_MILLIS_LABEL);
-      if (maxRunningMillisLabel != null && !maxRunningMillisLabel.isEmpty()) {
-        try {
-          long maxRunningMillis = Long.parseLong(maxRunningMillisLabel);
-          if (maxRunningMillis > DEFAULT_MAX_RUNNING_MILLIS) {
-            extraMessage =
-                String.format(
-                    "(warning: application is configured with custom max running time: %s millis,"
-                        + " but might be still killed in certain situations like maintenance)",
-                    maxRunningMillis);
-          }
-          if (FAILED_STATE.equals(response.getApplicationState())) {
-            if (response.getTerminationTime() != null && response.getCreationTime() != null) {
-              long runningMillis = response.getTerminationTime() - response.getCreationTime();
-              // check whether running time is close to max running time allowed,
-              // if they are close, add extra information in response
-              if (runningMillis >= maxRunningMillis - TimeUnit.MINUTES.toMillis(2)) {
-                extraMessage = "(application might be killed because of running too long)";
-              }
-            }
-          }
-        } catch (Throwable ex) {
-          logger.warn(String.format("Failed to check max running mills for %s", submissionId), ex);
+      if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())) {
+        if (SparkConstants.RUNNING_STATE.equalsIgnoreCase(response.getApplicationState())
+            || SparkConstants.SPOT_TIMEOUT_STATE.equalsIgnoreCase(response.getApplicationState())) {
+          String url = ConfigUtil.getSparkUIUrl(sparkCluster, submissionId);
+          response.setSparkUIUrl(url);
+        }
+
+        if ((SparkConstants.COMPLETED_STATE.equalsIgnoreCase(response.getApplicationState())
+                || SparkConstants.FAILED_STATE.equalsIgnoreCase(response.getApplicationState()))
+            && appConfig.getSparkHistoryDns() != null
+            && response.getSparkApplicationId() != null) {
+          String url =
+              ConfigUtil.getSparkHistoryUrl(
+                  appConfig.getSparkHistoryDns(), response.getSparkApplicationId());
+          response.setSparkUIUrl(url);
         }
       }
-    }
 
-    // add more information regarding spot timeout
-    String extraSpotTimeoutMessage = "";
-    if (SPOT_TIMEOUT.equals(response.getApplicationState())) {
-      String spotTimeoutMillisLabel =
-          sparkApplication.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
-      long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
-      extraSpotTimeoutMessage =
-          String.format(
-              "(warning: application is configured with spot timeout: %s millis,"
-                  + " and running time has exceed it, please consider kill it and retry "
-                  + "on On-Demand instances by setting spot-instance to False )",
-              spotTimeoutMillisSetting);
-    }
-
-    if (extraMessage != null && !extraMessage.isEmpty()) {
-      String consolidatedMessage = response.getApplicationErrorMessage();
-      if (consolidatedMessage == null) {
-        consolidatedMessage = "";
-      } else {
-        consolidatedMessage = consolidatedMessage + " ";
+      // add more information regarding max running time
+      String extraMessage = "";
+      if (sparkApplication.getMetadata().getLabels() != null) {
+        String maxRunningMillisLabel =
+            sparkApplication.getMetadata().getLabels().get(MAX_RUNNING_MILLIS_LABEL);
+        if (maxRunningMillisLabel != null && !maxRunningMillisLabel.isEmpty()) {
+          try {
+            long maxRunningMillis = Long.parseLong(maxRunningMillisLabel);
+            if (maxRunningMillis > DEFAULT_MAX_RUNNING_MILLIS) {
+              extraMessage =
+                  String.format(
+                      "(warning: application is configured with custom max running time: %s millis,"
+                          + " but might be still killed in certain situations like maintenance)",
+                      maxRunningMillis);
+            }
+            if (FAILED_STATE.equals(response.getApplicationState())) {
+              if (response.getTerminationTime() != null && response.getCreationTime() != null) {
+                long runningMillis = response.getTerminationTime() - response.getCreationTime();
+                // check whether running time is close to max running time allowed,
+                // if they are close, add extra information in response
+                if (runningMillis >= maxRunningMillis - TimeUnit.MINUTES.toMillis(2)) {
+                  extraMessage = "(application might be killed because of running too long)";
+                }
+              }
+            }
+          } catch (Throwable ex) {
+            logger.warn(
+                String.format("Failed to check max running mills for %s", submissionId), ex);
+          }
+        }
       }
-      consolidatedMessage = consolidatedMessage + extraMessage;
 
-      if (extraSpotTimeoutMessage != null && !extraSpotTimeoutMessage.isEmpty()) {
-        consolidatedMessage = consolidatedMessage + extraSpotTimeoutMessage;
+      // add more information regarding spot timeout
+      String extraSpotTimeoutMessage = "";
+      if (SPOT_TIMEOUT.equals(response.getApplicationState())) {
+        String spotTimeoutMillisLabel =
+            sparkApplication.getMetadata().getLabels().get(Constants.SPOT_TIMEOUT_LABEL);
+        long spotTimeoutMillisSetting = Long.parseLong(spotTimeoutMillisLabel);
+        extraSpotTimeoutMessage =
+            String.format(
+                "(warning: application is configured with spot timeout: %s millis,"
+                    + " and running time has exceed it, please consider kill it and retry "
+                    + "on On-Demand instances by setting spot-instance to False )",
+                spotTimeoutMillisSetting);
       }
 
-      response.setApplicationErrorMessage(consolidatedMessage);
+      if (extraMessage != null && !extraMessage.isEmpty()) {
+        String consolidatedMessage = response.getApplicationErrorMessage();
+        if (consolidatedMessage == null) {
+          consolidatedMessage = "";
+        } else {
+          consolidatedMessage = consolidatedMessage + " ";
+        }
+        consolidatedMessage = consolidatedMessage + extraMessage;
+
+        if (extraSpotTimeoutMessage != null && !extraSpotTimeoutMessage.isEmpty()) {
+          consolidatedMessage = consolidatedMessage + extraSpotTimeoutMessage;
+        }
+
+        response.setApplicationErrorMessage(consolidatedMessage);
+      }
+      return response;
     }
-    return response;
   }
 
   @GET()
