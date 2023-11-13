@@ -556,6 +556,12 @@ public class AppConfig extends Configuration {
 
     private Boolean authorizeEnabled = false;
 
+    /**
+     * 11/10/2023 - We need an additional Notary enabled flag This allows us to roll out
+     * Narrative/Notary setup per-queue*
+     */
+    private Boolean notaryEnabled = false;
+
     private List<String> users;
     private Long maxRunningMillis;
     private String driverNodeLabelKey;
@@ -593,8 +599,18 @@ public class AppConfig extends Configuration {
       return authorizeEnabled;
     }
 
+    // Getter for Notary Enabled
+    public Boolean getNotaryEnabled() {
+      return notaryEnabled;
+    }
+
     public void setAuthorizeEnabled(Boolean authorizeEnabled) {
       this.authorizeEnabled = authorizeEnabled;
+    }
+
+    // Setter for Notary Enabled
+    public void setNotaryEnabled(Boolean notaryEnabled) {
+      this.notaryEnabled = notaryEnabled;
     }
 
     public List<String> getUsers() {

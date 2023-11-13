@@ -396,6 +396,64 @@ public class ApplicationSubmissionRest extends RestBase {
     return response;
   }
 
+  /**
+   * Enables or disables notary-related features based on the provided notary application flag. This
+   * method configures the Spark application and its container context to operate with the notary
+   * features if enabled.
+   *
+   * @param notaryApplication A boolean flag indicating whether notary features should be enabled.
+   *     If true, notary features are enabled, otherwise they are disabled.
+   * @param sparkSpec The {@link SparkApplicationSpec} object containing the specifications for the
+   *     Spark application.
+   * @param requestContext The {@link ContainerRequestContext} object representing the container
+   *     request context in which the application is running.
+   * @param appConfig The {@link AppConfig} object containing application-specific configurations.
+   * @param queueConfig The {@link AppConfig.QueueConfig} object containing queue configurations
+   *     which may include notary-related settings.
+   */
+  public void enableNotaryFeatures(
+      boolean notaryApplication,
+      SparkApplicationSpec sparkSpec,
+      ContainerRequestContext requestContext,
+      AppConfig appConfig,
+      AppConfig.QueueConfig queueConfig) {
+
+    if (notaryApplication && (queueConfig != null) && queueConfig.getNotaryEnabled()) {
+      try {
+        Optional<String> personIdOptional = NotaryPersonIdUtil.extractPersonId(requestContext);
+
+        if (personIdOptional.isEmpty()) {
+          // Log the case where personId is not found and skip the rest of Notary setup, we can
+          // throw an exception as well
+          logger.info(
+              "Person ID not found in RequestContext. Skipping notary application processing.");
+          return;
+        }
+
+        String personId = personIdOptional.get();
+        // set the dsid annotation
+        NotaryNarrativeTuriUtil.addNotaryNarrativeTuriAnnotation(sparkSpec, personId);
+        // set up Turi Narrative volume
+        NotaryNarrativeTuriUtil.addNotaryNarrativeTuriVolume(sparkSpec, appConfig, personId);
+        // set mtls certificate and key location as env var of pods
+        NotaryNarrativeTuriUtil.addNotaryNarrativeEnvVar(sparkSpec);
+        // set Conductor Endpoint as Env var
+        ConductorUtil.setConductorEndpoint(appConfig, sparkSpec);
+
+      } catch (NullPointerException e) {
+        logger.error("NullPointerException encountered in processNotaryApplication", e);
+        // Logging and debugging the stack trace would be sufficient as we skip the setup to let
+        // user app run
+      } catch (Exception e) {
+        logger.warn("Failed to create mTLS volume, annotation and environment variable", e);
+        // Log warning is sufficient for now
+      }
+    } else {
+      logger.info("Notary application is not enabled or queueConfig is null");
+      // Logger info is deemed sufficient for now
+    }
+  }
+
   private SubmitApplicationResponse submitSparkCRD(
       VirtualSparkClusterSpec sparkCluster,
       String submissionId,
@@ -538,21 +596,7 @@ public class ApplicationSubmissionRest extends RestBase {
       boolean notaryApplication =
           notaryAppProperty != null && notaryAppProperty.equalsIgnoreCase("true");
 
-      if (notaryApplication) {
-        try {
-          String personId = NotaryPersonIdUtil.extractPersonId(requestContext).get();
-          // set the dsid annotation
-          NotaryNarrativeTuriUtil.addNotaryNarrativeTuriAnnotation(sparkSpec, personId);
-          // set up Turi Narrative volume
-          NotaryNarrativeTuriUtil.addNotaryNarrativeTuriVolume(sparkSpec, appConfig, personId);
-          // set mtls certificate and key location as env var of pods
-          NotaryNarrativeTuriUtil.addNotaryNarrativeEnvVar(sparkSpec);
-          // set Conductor Endpoint as Env var
-          ConductorUtil.setConductorEndpoint(appConfig, sparkSpec);
-        } catch (Exception e) {
-          logger.warn("Failed to create mTLS volume, annotation and environment variable ", e);
-        }
-      }
+      enableNotaryFeatures(notaryApplication, sparkSpec, requestContext, appConfig, queueConfig);
 
       AwsCredentialSparkConfigProvider.addAwsCredentialSparkConfig(sparkSpec, queueConfig);
       CustomResourceDefinitionContext crdContext = KubernetesHelper.getSparkApplicationCrdContext();
