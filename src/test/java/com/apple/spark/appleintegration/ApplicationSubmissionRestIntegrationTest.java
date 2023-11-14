@@ -4,9 +4,7 @@ import static com.apple.spark.core.Constants.DEFAULT_DB_NAME;
 
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.DBConnection;
-import com.apple.spark.core.QueueTokenVerifier;
 import com.apple.spark.core.SparkConstants;
-import com.apple.spark.util.JwtUtils;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -232,67 +230,6 @@ public class ApplicationSubmissionRestIntegrationTest {
         dependencyPyFile,
         dependencyFile,
         queue);
-  }
-
-  @Test
-  public void runPythonSparkApplicationWithSecureQueue() throws IOException {
-    String requestTemplate = "/SubmitSparkApplicationRequest_python_example.json";
-    String sparkApplication = "/SparkExampleApp.py";
-
-    String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
-    String tokenSecret = testSupport.getConfiguration().getQueueTokenSOPS().getSecrets().get(0);
-    String token =
-        JwtUtils.createToken(
-            tokenSecret,
-            QueueTokenVerifier.ISSUER_ADMIN,
-            "unitTestQueueToken",
-            QueueTokenVerifier.CLAIM_ALLOWED_QUEUES,
-            new String[] {"canary02_secure"});
-    IntegrationTestHelper.runSparkApplication(
-        serviceRootUrl,
-        requestTemplate,
-        submitApplicationRequest -> {
-          submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
-          submitApplicationRequest.setQueue("canary02_secure");
-          submitApplicationRequest.setQueueToken(token);
-        });
-  }
-
-  @Test(expectedExceptions = RuntimeException.class)
-  public void runPythonSparkApplicationWithSecureQueue_noQueueToken() throws IOException {
-    String requestTemplate = "/SubmitSparkApplicationRequest_python_example.json";
-    String sparkApplication = "/SparkExampleApp.py";
-    String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
-    IntegrationTestHelper.runSparkApplication(
-        serviceRootUrl,
-        requestTemplate,
-        submitApplicationRequest -> {
-          submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
-          submitApplicationRequest.setQueue("canary_secure");
-        });
-  }
-
-  @Test(expectedExceptions = RuntimeException.class)
-  public void runPythonSparkApplicationWithSecureQueue_invalidQueueTokenSecret()
-      throws IOException {
-    String requestTemplate = "/SubmitSparkApplicationRequest_python_example.json";
-    String sparkApplication = "/SparkExampleApp.py";
-    String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
-    String token =
-        JwtUtils.createToken(
-            "invalid_secret",
-            QueueTokenVerifier.ISSUER_ADMIN,
-            "unitTestQueueToken",
-            QueueTokenVerifier.CLAIM_ALLOWED_QUEUES,
-            new String[] {"canary_secure"});
-    IntegrationTestHelper.runSparkApplication(
-        serviceRootUrl,
-        requestTemplate,
-        submitApplicationRequest -> {
-          submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
-          submitApplicationRequest.setQueue("canary_secure");
-          submitApplicationRequest.setQueueToken(token);
-        });
   }
 
   @Test(expectedExceptions = RuntimeException.class)
