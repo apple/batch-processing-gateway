@@ -2,16 +2,12 @@ package com.apple.spark.ranger.client;
 
 import static com.apple.spark.core.Constants.QUEUE_LABEL;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
 import org.apache.ranger.authorization.hadoop.config.RangerPluginConfig;
 import org.apache.ranger.plugin.audit.RangerDefaultAuditHandler;
 import org.apache.ranger.plugin.policyengine.RangerAccessRequest;
@@ -26,15 +22,12 @@ import org.slf4j.LoggerFactory;
 public class RangerSparkQueueClient {
   private static final Logger logger = LoggerFactory.getLogger(RangerSparkQueueClient.class);
   private static volatile RangerBasePlugin plugin;
-  private static LoadingCache<QueueAccessTypeAndUser, Boolean> queueAccessCache;
   private static final String serviceType = "spark-queue";
-  private static final String appId = "spark-queue";
-  private static final long cacheDuration = 3600000L;
-  private static final int cacheMaxCount = 1000;
+  private static final String appId = "skate-spark-queue-authorizer";
 
   private static RangerDefaultAuditHandler auditHandler;
 
-  private ConcurrentMap<String, Set<String>> userGroups = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, Set<String>> userGroups = new ConcurrentHashMap<>();
 
   private Timer timer = new Timer(true);
 
@@ -53,19 +46,6 @@ public class RangerSparkQueueClient {
     plugin.setResultProcessor(auditHandler);
 
     plugin.init();
-
-    // This is to cache authorize result from ranger server
-    queueAccessCache =
-        CacheBuilder.newBuilder()
-            .expireAfterWrite(cacheDuration, TimeUnit.MILLISECONDS)
-            .maximumSize(cacheMaxCount)
-            .build(
-                new CacheLoader<>() {
-                  public Boolean load(QueueAccessTypeAndUser queueAccessTypeAndUser)
-                      throws Exception {
-                    return authorizeAndUpdateCache(queueAccessTypeAndUser);
-                  }
-                });
 
     populateUserGroupsCache();
     long timerDelayPeriod =
@@ -93,7 +73,8 @@ public class RangerSparkQueueClient {
 
   private static RangerPluginConfig getRangerPluginConfig(
       String policyRestUrl, String auditSolrUrl) {
-    RangerPluginConfig config = new RangerPluginConfig(serviceType, appId, appId, null, null, null);
+    RangerPluginConfig config =
+        new RangerPluginConfig(serviceType, serviceType, appId, null, null, null);
 
     // audit config
     if (auditSolrUrl != null) {
@@ -101,14 +82,15 @@ public class RangerSparkQueueClient {
       config.set("xasecure.audit.destination.solr", "true");
       config.set("xasecure.audit.destination.solr.urls", auditSolrUrl);
       config.set("xasecure.audit.destination.solr.batch.batch.interval.ms", "5000");
+      config.set("xasecure.audit.provider.solr.summary.enabled", "true");
     } else {
-      logger.warn("ranger audit is not enavled.");
+      logger.warn("ranger audit is not enabled.");
     }
 
     // security config
-    config.set(String.format("ranger.plugin.%s.service.name", serviceType), appId);
+    config.set(String.format("ranger.plugin.%s.service.name", serviceType), serviceType);
     config.set(String.format("ranger.plugin.%s.policy.rest.url", serviceType), policyRestUrl);
-    config.set(String.format("ranger.plugin.%s.policy.pollIntervalMs", serviceType), "30000");
+    config.set(String.format("ranger.plugin.%s.policy.pollIntervalMs", serviceType), "300000");
     config.set(
         String.format("ranger.plugin.%s.policy.rest.client.connection.timeoutMs", serviceType),
         "30000");
@@ -124,8 +106,7 @@ public class RangerSparkQueueClient {
    * @param queueAccessTypeAndUser QueueAccessTypeAndUser
    * @return whether a user is authorized
    */
-  private boolean authorizeAndUpdateCache(QueueAccessTypeAndUser queueAccessTypeAndUser)
-      throws Exception {
+  public boolean authorize(QueueAccessTypeAndUser queueAccessTypeAndUser) throws Exception {
     RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
     resource.setValue(QUEUE_LABEL, queueAccessTypeAndUser.getQueue());
 
@@ -138,10 +119,6 @@ public class RangerSparkQueueClient {
     RangerAccessResult result = plugin.isAccessAllowed(request, auditHandler);
 
     return result != null && result.getIsAllowed();
-  }
-
-  public static boolean authorize(QueueAccessTypeAndUser queueAccessTypeAndUser) throws Exception {
-    return queueAccessCache.get(queueAccessTypeAndUser);
   }
 
   private void populateUserGroupsCache() {
