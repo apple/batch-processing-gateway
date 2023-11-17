@@ -1,0 +1,124 @@
+appleAuth: true
+
+# apple-connect-secret name
+appleAuthSecretName:
+
+# notary secret name
+notaryAuthSecretName:
+
+image:
+  registry: docker.apple.com
+  repository: aiml-di-dpi/skate/master
+  tag: skate-1.1.577
+
+swaggerImage:
+  registry: docker-upstream.apple.com
+  repository: swaggerapi/swagger-ui
+  tag: v4.10.3
+
+replicas: 1
+
+resources:
+  requests:
+    memory: '16G'
+    cpu: 4
+  limits:
+    memory: '16G'
+    cpu: 4
+
+rbac:
+  # -- Create and use `rbac` resources
+  create: true
+  clusterRole: "batch-processing-gateway-role"
+  clusterRoleEdit: "edit"
+  clusterRoleBinding: "batch-processing-gateway-crb"
+
+serviceAccounts:
+  batchProcessingGateway:
+    create: true
+    name: "batch-processing-gateway-sa"
+    eksServiceAccountArn: "arn:aws:iam::xxxxxxxxx:role/xxx"
+
+ingress:
+  urlRootPath: /skatev2
+  endpoint: batch-gateway-test-02.aws.ocean.g.apple.com
+  tlsSecretName: 'batch-gateway-test-02.aws.ocean.g.apple.com-tls-secret-2023-02-23'
+
+# Config is provided as a base64-encoded,
+# compressed content which will be projected into pods as /app/app-config.gz.
+encodedConfig: ''
+
+#notary config
+notary:
+  # -- Enable notary authentication for Spark service
+  notaryEnabled: false
+  # -- Enable notary assumability check endpoint service, this valuse must be the same as the "notaryEnabled" above
+  notaryAacEnabled: false
+  notaryAacReplicas: 1
+  proxyImage: docker.apple.com/polymer/notary-proxy:latest
+  proxyAddGroupIDHeaders: false
+  proxyGroupIDsFilter:
+  proxyAllowedGroupIDList:
+  proxyAllowedApplicationIDList:
+  proxyAudienceList:
+    - aprn:apple:turi::notary:application-group:turi-platform
+    - aprn:apple:turi::notary:application-group:aiml-data-platform
+
+# For Swagger UI which visualizes API specs.
+swagger:
+  image: 'docker.apple.com/aiml-dp/automation-tool:swaggerapi_swagger-ui_v4.14.0_amd64'
+
+# app-config for skate pod
+plainConfig:
+  applicationContextPath: /apiv2-gcp
+  defaultSparkConf:
+    spark.kubernetes.submission.connectionTimeout: 30000
+    spark.kubernetes.submission.requestTimeout: 30000
+    spark.kubernetes.driver.connectionTimeout: 30000
+    spark.kubernetes.driver.requestTimeout: 30000
+    spark.sql.debug.maxToStringFields: 75
+  sparkImages:
+    - name: docker.apple.com/aiml-di-dpi/spark/branch-3.2.0-aiml-spark/spark:aiml-pyspark-3.2-s3rss-0.1
+      types:
+        - Python
+      version: "3.2"
+    - name: docker.apple.com/aiml-di-dpi/spark/branch-3.2.0-aiml-spark/spark:aiml-pyspark-3.2-s3rss-0.1
+      types:
+        - Java
+        - Scala
+      version: "3.2"
+  s3Bucket: s3-bucket-artifacts
+  s3Folder: uploaded
+  sparkLogS3Bucket: aiml-xxxyyyzzz-og60-test-only-dummy-4a670e1b-47d6-411f-9ae2-999d3bf68f36
+  sparkLogIndex: index/index.txt
+  batchFileLimit: 2016
+  sparkHistoryDns: sparkhistory.host.com
+  gatewayDns: gateway.host.com
+  sparkHistoryUrl: https://sparkhistory.host.com
+  memoryMbSecondCost: 0.000000000372
+  vCoreSecondCost: 0.000003
+  allowedUsers:
+    - '*'
+  blockedUsers:
+    - blocked_user_1
+  queues:
+    - name: example_queue_1
+  queueTokenSOPS:
+    secrets:
+      - secret$$$1
+  dbStorageSOPS:
+    connectionString: jdbc:mysql://localhost:3306/bpg?useUnicode=yes&characterEncoding=UTF-8&useLegacyDatetimeCode=false&connectTimeout=10000&socketTimeout=30000
+    user: root
+    password: password
+    dbName: bpg
+  server:
+    applicationConnectors:
+      - type: http
+        port: 8080
+  logging:
+    level: INFO
+    loggers:
+      com.apple.spark: INFO
+
+
+

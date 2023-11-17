@@ -1,0 +1,60 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: (unknown)
+    api-approved.kubernetes.io: https://github.com/apple/batch-processing-gateway
+  name: costattributions.costattribution.k8s.io
+spec:
+  group: costattribution.k8s.io
+  names:
+    kind: CostAttribution
+    listKind: CostAttributionList
+    plural: costattributions
+    shortNames:
+      - ca
+    singular: costattribution
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              properties:
+                createdTime:
+                  type: string
+                version:
+                  format: int64
+                  type: integer
+                domain:
+                  type: string
+                tags:
+                  items:
+                    properties:
+                      name:
+                        type: string
+                      required:
+                        type: boolean
+                      description:
+                        type: string
+                    required:
+                      - name
+                      - required
+                    type: object
+                  type: array
+              type: object
+            status:
+              properties:
+                state:
+                  type: string
+              type: object
+          type: object

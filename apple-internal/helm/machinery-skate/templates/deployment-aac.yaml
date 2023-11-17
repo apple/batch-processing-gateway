@@ -1,0 +1,141 @@
+{{- if .Values.notary.notaryAacEnabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bpg-aac
+  labels:
+    app: bpg-aac
+  annotations:
+    reloader.stakater.com/search: "true"
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: bpg-aac
+  template:
+    metadata:
+      labels:
+        app: bpg-aac
+        track: stable
+      annotations:
+        ad.datadoghq.com/skate.check_names: '["skate"]'
+        ad.datadoghq.com/skate.init_configs: '[{"is_jmx": true, "collect_default_metrics": true}]'
+        ad.datadoghq.com/skate.instances: '[{"host": "%%host%%","port":"19081"}]'
+    spec:
+      serviceAccountName: {{ .Values.serviceAccounts.batchProcessingGateway.name }}
+      containers:
+        - name: bpg
+          image: '{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}'
+          command: ["/opt/entrypoint.sh"]
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu }}
+          ports:
+            - containerPort: 8080
+            - containerPort: 8081
+              name: healthcheck
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthcheck
+              port: healthcheck
+            failureThreshold: 3
+            periodSeconds: 15
+            timeoutSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /healthcheck
+              port: healthcheck
+            failureThreshold: 30
+            periodSeconds: 10
+          volumeMounts:
+            {{- if not (empty .Values.encodedConfig) }}
+            - name: configuration
+              mountPath: "/app/"
+              readOnly: true
+            {{- end }}
+            {{- if not (empty .Values.plainConfig) }}
+            - name: configuration
+              mountPath: "/etc/app_config/"
+              readOnly: true
+            {{- end }}
+            - name: spark-prometheus-configuration
+              mountPath: "/etc/prometheus"
+              readOnly: true
+          env:
+            - name: MAX_HEAP_SIZE
+              value: {{ default "-Xmx20G" .Values.maxHeapSize }}
+            - name: CONFIG_FILE_PATH
+              value: "/etc/app_config/app-config.yaml"
+            - name: GZ_FILE_PATH
+              value: "/app/app-config.gz"
+            - name: STATSD_SERVER_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: AWS_STS_REGIONAL_ENDPOINTS
+              value: "regional"
+            - name: STATSD_SERVER_PORT
+              value: "8125"
+            - name: NOTARY_ENABLED
+              value: {{ .Values.notary.notaryEnabled | quote }}
+            - name: NOTARY_AAC_ENABLED
+              value: {{ .Values.notary.notaryAacEnabled | quote }}
+        - name: bpg-auth
+          image: {{ .Values.notary.proxyImage}}
+          command: ["/app/notary-proxy"]
+          ports:
+            - containerPort: 9090
+              name: web
+          env:
+            - name: PORT
+              value: "9090"
+            - name: TURI_DIRECTORY_API_KEY # BJXDGZRWbkN6sazVRHvdnY9F environment variable that notary proxy looks for turi directory api key
+              valueFrom:
+                secretKeyRef: # references the Kubernetes secret we will create later
+                  name:  {{ .Values.notaryAuthSecretName }}
+                  key:  turi_directory_api_key
+            - name: IDMS_APP_ADMIN_PASSWORD # environment variable that notary proxy looks for the IdMS app admin password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.appleAuthSecretName }}
+                  key: apple_idms_app_password
+          envFrom:
+            - secretRef:
+                name: {{ .Values.appleAuthSecretName }}
+            - secretRef:
+                name: {{ .Values.notaryAuthSecretName }}
+          volumeMounts: # volume mounts the notary proxy config into the proxy container
+            - name: notary-proxy-configs
+              mountPath: /app/configs/notary-proxy.yml
+              subPath: notary-proxy.yml
+      volumes:
+        - name: configuration
+        {{- if not (empty .Values.encodedConfig) }}
+          configMap:
+            name: 'bpg-encoded-config'
+            items:
+              - key: 'encoded-config-yaml'
+                path: 'app-config.gz'
+        {{- end }}
+        {{- if not (empty .Values.plainConfig) }}
+          configMap:
+            name: 'bpg-plain-config'
+            items:
+              - key: 'plain-config-yaml'
+                path: 'app-config.yaml'
+        {{- end }}
+        - name: spark-prometheus-configuration
+          configMap:
+            name: 'spark-prometheus'
+{{- if .Values.notary.notaryEnabled }}
+        - name: notary-proxy-configs
+          configMap:
+            name: notary-proxy-config
+{{- end }}
+{{- end }}
+

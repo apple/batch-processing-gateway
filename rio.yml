@@ -200,3 +200,51 @@ pipelines:
     finally:
       tag:
         enabled: true
+
+  - name: publish-release-machinery
+    branchName: release
+    timeout: 95
+    machine:
+      env:
+        APP_VERSION: "1.1"
+        VERSION: skate-${APP_VERSION}.#{}
+        BUILD_TIME: "$(date)"
+    build:
+      template: freestyle:v4:publish
+      steps:
+        - echo "started building step"
+    package:
+      version: ${VERSION}
+      dockerfile:
+        - env:
+            BASE_IMG: docker.apple.com/base-images/ubi9-minimal/java17-runtime:latest
+          dockerfilePath: Dockerfile
+          publish:
+            - repo: docker.apple.com/aiml-di-dpi/skate/master
+    finally:
+      pipelineChain:
+        - pipeline: dpi-skate-publish-machinery-chart
+          buildArguments:
+            - name: "SKATE_VERSION"
+              value: ${VERSION}
+
+  - name: dpi-skate-publish-machinery-chart
+    branchName: release
+    timeout: 95
+    trigger:
+      gitPush: false
+    machine:
+      baseImage: docker.apple.com/cpbuild/cpp:latest
+      env:
+        HELM_CHART: "./apple-internal/helm/machinery-skate"
+        HELM_REPO: "apple-aiml-skate-machinery"
+        IMG_REPO: "aiml-di-dpi/skate/master"
+    build:
+      template: freestyle:v4:publish
+      steps:
+        - chmod +x ./apple-internal/machinery_publish_chart.sh
+        - ./apple-internal/machinery_publish_chart.sh ${BUILD_PARAM_SKATE_VERSION} ${HELM_CHART} ${HELM_REPO} ${IMG_REPO}
+    package:
+      freeform:
+        - publish:
+            - repo: apple-helm-release-local

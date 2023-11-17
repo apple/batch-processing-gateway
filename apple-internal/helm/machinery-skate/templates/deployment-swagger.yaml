@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    meta.helm.sh/release-name: bgp-swagger-ui
+    # meta.helm.sh/release-namespace: skate
+  labels:
+    app: bpg-swagger-ui
+  name: bpg-swagger-ui
+  # namespace: skate
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: bpg-swagger-ui
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: bpg-swagger-ui
+    spec:
+      serviceAccountName: {{ .Values.serviceAccounts.batchProcessingGateway.name }}
+      containers:
+      - env:
+        - name: URL
+          value: /skatev2/openapi.json
+        - name: SUPPORTED_SUBMIT_METHODS
+          value: '[]'
+        image: '{{ .Values.swaggerImage.registry }}/{{ .Values.swaggerImage.repository }}:{{ .Values.swaggerImage.tag }}'
+        imagePullPolicy: IfNotPresent
+        name: skate-swagger-ui
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30

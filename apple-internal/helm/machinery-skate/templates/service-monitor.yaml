@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bpg-monitor-authed
+spec:
+  selector:
+    app: bpg-monitor
+  ports:
+    - protocol: TCP
+      port: 9091
+      targetPort: 9091
