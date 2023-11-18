@@ -19,6 +19,7 @@
 
 package com.apple.spark.api;
 
+import static com.apple.spark.core.Constants.*;
 import static org.apache.spark.network.util.JavaUtils.byteStringAsGb;
 
 import com.apple.spark.AppConfig;
@@ -29,6 +30,11 @@ import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationSpec;
 import com.apple.spark.util.ConfigUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -52,6 +58,8 @@ public class SubmissionSummary extends SubmissionStatus {
   private String sparkVersion;
   private String applicationName;
   private String sparkUIUrl;
+  private String applicationMetricsUrl;
+  private String splunkUrl;
   private List<String> applicationArguments;
 
   public String getSubmissionId() {
@@ -91,6 +99,7 @@ public class SubmissionSummary extends SubmissionStatus {
       VirtualSparkClusterSpec sparkCluster,
       AppConfig appConfig) {
     this.copyFrom(sparkApplication);
+
     if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())
         && (SparkConstants.RUNNING_STATE.equalsIgnoreCase(getApplicationState())
             || SparkConstants.SPOT_TIMEOUT_STATE.equalsIgnoreCase(getApplicationState()))) {
@@ -101,6 +110,62 @@ public class SubmissionSummary extends SubmissionStatus {
       String url =
           ConfigUtil.getSparkHistoryUrl(appConfig.getSparkHistoryDns(), getSparkApplicationId());
       setSparkUIUrl(url);
+    }
+
+    String appMetricsDashboardUrl = appConfig.getAppMetricsDashboardUrl();
+    String splunkBaseUrl = appConfig.getSplunkBaseUrl();
+
+    if (StringUtils.isEmpty(appMetricsDashboardUrl)) {
+      // Make Siri as the default one
+      appMetricsDashboardUrl = SIRI_APP_METRICS_DASHBOARD;
+      logger.warn(
+          String.format(
+              "appMetricsDashboardUrl is not set in Skate configuration, fall back to: %s",
+              SIRI_APP_METRICS_DASHBOARD));
+    } else {
+      logger.info(String.format("appMetricsDashboardUrl is set to: %s", appMetricsDashboardUrl));
+    }
+
+    if (StringUtils.isEmpty(splunkBaseUrl)) {
+      // Make Siri as the default one
+      splunkBaseUrl = SIRI_SPLUNK;
+      logger.warn(
+          String.format(
+              "splunkBaseUrl is not set in Skate configuration, fall back to: %s", SIRI_SPLUNK));
+    } else {
+      logger.info(String.format("splunkBaseUrl is set to: %s", splunkBaseUrl));
+    }
+
+    String fullDashboardUrl = getDashboardUrl(appMetricsDashboardUrl);
+    String fullSplunkUrl = getSplunkUrl(splunkBaseUrl);
+
+    setApplicationMetricsUrl(fullDashboardUrl);
+    setSplunkUrl(fullSplunkUrl);
+  }
+
+  protected String getDashboardUrl(String appMetricsDashboardUrl) {
+
+    // Setting the submission id drop-down bar and time range
+    return String.format(
+        "%s?tpl_var_submission_id=%s&from_ts=%d&to_ts=%d",
+        appMetricsDashboardUrl, submissionId, getCreationTime(), getTerminationTime());
+  }
+
+  protected String getSplunkUrl(String splunkBaseUrl) {
+
+    try {
+      // 1) Adding search query in the url
+      // 2) Raw Url includes spaces, encode it
+      return splunkBaseUrl
+          + (splunkBaseUrl.endsWith("/") ? "" : "/")
+          + "en-US/app/search/search?q="
+          + URLEncoder.encode(
+              String.format(SPLUNK_SEARCH_QUERY, submissionId), StandardCharsets.UTF_8.toString());
+
+    } catch (UnsupportedEncodingException e) {
+      throw new WebApplicationException(
+          String.format("Error while encoding Splunk URL for jobs summary"),
+          Response.Status.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -271,6 +336,22 @@ public class SubmissionSummary extends SubmissionStatus {
 
   public void setSparkUIUrl(String sparkUIUrl) {
     this.sparkUIUrl = sparkUIUrl;
+  }
+
+  public String getApplicationMetricsUrl() {
+    return applicationMetricsUrl;
+  }
+
+  public void setApplicationMetricsUrl(String applicationMetricsUrl) {
+    this.applicationMetricsUrl = applicationMetricsUrl;
+  }
+
+  public String getSplunkUrl() {
+    return splunkUrl;
+  }
+
+  public void setSplunkUrl(String splunkUrl) {
+    this.splunkUrl = splunkUrl;
   }
 
   public List<String> getApplicationArguments() {

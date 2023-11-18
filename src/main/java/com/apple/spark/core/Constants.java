@@ -184,4 +184,11 @@ public class Constants {
   public static final String DESC_SORT_ORDER = "desc";
 
   public static final String CREATION_TIME_LABEL = "creationTime";
+
+  public static final String SIRI_APP_METRICS_DASHBOARD =
+      "https://siri-aiml.datadoghq.com/dashboard/gpu-qb2-6zm/spark-application-metrics";
+
+  public static final String SIRI_SPLUNK = "https://splunk.iso.apple.com";
+  public static final String SPLUNK_SEARCH_QUERY =
+      "search index=aiml-data-infra kubernetes.namespace_name=\"spark-applications*\" kubernetes.pod_name=\"%s*\" | sort time | table log";
 }

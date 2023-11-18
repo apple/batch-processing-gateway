@@ -72,6 +72,11 @@ public class AppConfig extends Configuration {
 
   private Long statusCacheExpireMillis;
 
+  // Making this a list in the future, considering we may use the same gateway for more than 1
+  // accounts
+  private String appMetricsDashboardUrl;
+  private String splunkBaseUrl;
+
   public AppConfig() {}
 
   public String getApplicationContextPath() {
@@ -283,6 +288,22 @@ public class AppConfig extends Configuration {
 
   public void setDriverInitContainers(List<InitContainer> driverInitContainers) {
     this.driverInitContainers = driverInitContainers;
+  }
+
+  public void setAppMetricsDashboardUrl(String appMetricsDashboardUrl) {
+    this.appMetricsDashboardUrl = appMetricsDashboardUrl;
+  }
+
+  public String getAppMetricsDashboardUrl() {
+    return appMetricsDashboardUrl;
+  }
+
+  public void setSplunkBaseUrl(String splunkBaseUrl) {
+    this.splunkBaseUrl = splunkBaseUrl;
+  }
+
+  public String getSplunkBaseUrl() {
+    return splunkBaseUrl;
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
