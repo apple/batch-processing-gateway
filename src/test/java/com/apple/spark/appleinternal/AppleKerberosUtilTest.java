@@ -37,15 +37,15 @@ public class AppleKerberosUtilTest {
           + "  \"mainClass\": \"com.apple.Metrics\",\n"
           + "  \"deps\": {\n"
           + "    \"jars\": [\n"
-          + "     "
-          + " \"s3a://artifacts-bucket/uploaded/20220322_9am/Dependency-0.7.45.jar\",\n"
+          + "      \"s3a://artifacts-bucket/uploaded/20220322_9am/Dependency-0.7.45.jar\",\n"
           + "      \"s3a://artifacts-bucket/uploaded/20220322_9am/some-jar-1.4.4-3.jar\"\n"
           + "    ]\n"
           + "  },\n"
           + "  \"queue\": \"sde\",\n"
           + "  \"sparkConf\": {\n"
           + "    \"spark.hadoop.hive.metastore.sasl.enabled\": \"true\",\n"
-          + "    \"spark.hadoop.hive.metastore.uris\": \"thrift://hive-metastore-siri-test.aws.ocean.g.apple.com:9083\"\n"
+          + "    \"spark.hadoop.hive.metastore.uris\":"
+          + " \"thrift://hive-metastore-siri-test.aws.ocean.g.apple.com:9083\"\n"
           + "  },\n"
           + "  \"driver\": {\n"
           + "    \"cores\": 1,\n"
@@ -85,10 +85,10 @@ public class AppleKerberosUtilTest {
     Assert.assertEquals(sparkSpec.getDriver().getVolumeMounts().get(1).getName(), "narrative");
 
     Assert.assertEquals(
-        sparkSpec.getDriver().getInitContainers().get(0).getEnv().get(0).getName(),
+        sparkSpec.getDriver().getGwInitContainers().get(0).getEnv().get(0).getName(),
         INIT_CONTAINER_ENV_KEY);
     Assert.assertEquals(
-        sparkSpec.getDriver().getInitContainers().get(0).getEnv().stream()
+        sparkSpec.getDriver().getGwInitContainers().get(0).getEnv().stream()
             .filter(envVar -> envVar.getName().equals(INIT_CONTAINER_ENV_KEY))
             .count(),
         1);
@@ -154,7 +154,7 @@ public class AppleKerberosUtilTest {
 
     Assert.assertNull(sparkSpec.getVolumes());
     Assert.assertNull(sparkSpec.getDriver().getVolumeMounts());
-    Assert.assertNull(sparkSpec.getDriver().getInitContainers());
+    Assert.assertNull(sparkSpec.getDriver().getGwInitContainers());
     Assert.assertNull(sparkSpec.getDriver().getEnv());
     Assert.assertNull(sparkSpec.getDriver().getSecurityContext());
   }

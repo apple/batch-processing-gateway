@@ -78,6 +78,10 @@ public class InitContainer {
     return args;
   }
 
+  public void setArgs(List<String> args) {
+    this.args = args;
+  }
+
   public SecurityContext getSecurityContext() {
     return securityContext;
   }

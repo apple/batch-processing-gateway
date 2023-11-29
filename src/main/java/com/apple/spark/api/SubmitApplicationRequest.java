@@ -19,6 +19,7 @@
 
 package com.apple.spark.api;
 
+import com.apple.spark.initContainer.JobInitDependencies;
 import com.apple.spark.operator.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -63,7 +64,8 @@ public class SubmitApplicationRequest {
 
   @Schema(
       description =
-          "Custom tags user specified for cost attribution. The Cost Attribution CRD will control if cost pipeline will support or not")
+          "Custom tags user specified for cost attribution. The Cost Attribution CRD will control"
+              + " if cost pipeline will support or not")
   private Map<String, String> customCostAttributionTags;
 
   @Schema(
@@ -73,7 +75,8 @@ public class SubmitApplicationRequest {
 
   @Schema(
       description =
-          "To set instance architecture that schedules all Spark pods on them, like arm64 and amd64")
+          "To set instance architecture that schedules all Spark pods on them, like arm64 and"
+              + " amd64")
   private String nodeArch;
 
   @Schema(
@@ -110,6 +113,12 @@ public class SubmitApplicationRequest {
   @Hidden private Double executorOverheadFactor;
 
   @Hidden private Double overheadFactor;
+
+  @Schema(
+      description =
+          "Users can attach Spark job's init dependencies to get them downloaded before Spark JVM"
+              + " start")
+  private JobInitDependencies jobInitDependencies;
 
   private Dependencies deps;
 
@@ -300,6 +309,14 @@ public class SubmitApplicationRequest {
 
   public void setExecutor(ExecutorSpec executor) {
     this.executor = executor;
+  }
+
+  public JobInitDependencies getJobInitDependencies() {
+    return jobInitDependencies;
+  }
+
+  public void setJobInitDependencies(JobInitDependencies jobInitDependencies) {
+    this.jobInitDependencies = jobInitDependencies;
   }
 
   public Dependencies getDeps() {

@@ -21,12 +21,16 @@ package com.apple.spark.operator;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.PodDNSConfig;
+import io.fabric8.kubernetes.api.model.SecurityContextBuilder;
 import io.swagger.v3.oas.annotations.Hidden;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -46,10 +50,9 @@ public class SparkPodSpec {
   @Hidden private Long terminationGracePeriodSeconds;
   @Hidden private String serviceAccount;
   @Hidden private List<VolumeMount> volumeMounts;
-  @Hidden private List<InitContainer> initContainers;
-
+  @Hidden private List<InitContainer> gwInitContainers;
+  @Hidden private List<Container> initContainers;
   @Hidden private SecurityContext securityContext;
-
   @Hidden private Affinity affinity;
   @Hidden private PodDNSConfig dnsConfig;
 
@@ -241,11 +244,187 @@ public class SparkPodSpec {
     this.javaOptions = javaOptions;
   }
 
-  public List<InitContainer> getInitContainers() {
+  public List<InitContainer> getGwInitContainers() {
+    return gwInitContainers;
+  }
+
+  public void setGwInitContainers(List<InitContainer> gwInitContainers) {
+    this.gwInitContainers = gwInitContainers;
+
+    if (this.getInitContainers() != null) {
+      for (InitContainer gwInitContainer : this.getGwInitContainers()) {
+        this.initContainers.add(convert2ContainerFromGWInitContainer(gwInitContainer));
+      }
+    }
+  }
+
+  public List<Container> getInitContainers() {
     return initContainers;
   }
 
-  public void setInitContainers(List<InitContainer> initContainers) {
-    this.initContainers = initContainers;
+  public void setInitContainers(List<Container> stdInitContainers) {
+    this.initContainers = stdInitContainers;
+    if (this.getGwInitContainers() != null) {
+      for (InitContainer initContainer : this.getGwInitContainers()) {
+        this.initContainers.add(convert2ContainerFromGWInitContainer(initContainer));
+      }
+    }
+  }
+
+  public static List<InitContainer> convert2InitContainersFromFabric8(
+      List<Container> stdInitContainers) {
+
+    List<InitContainer> initContainers = new ArrayList<>();
+    for (Container stdInitContainer : stdInitContainers) {
+      initContainers.add(convert2InitContainerFromFabric8(stdInitContainer));
+    }
+    return initContainers;
+  }
+
+  private static InitContainer convert2InitContainerFromFabric8(Container stdContainer) {
+
+    InitContainer currentInitContainer =
+        new InitContainer(stdContainer.getName(), stdContainer.getImage());
+
+    currentInitContainer.setEnv(convert2EnvVarFromFabric8(stdContainer.getEnv()));
+
+    currentInitContainer.setSecurityContext(
+        convert2SecurityContextFromFabric8(stdContainer.getSecurityContext()));
+    currentInitContainer.setVolumeMounts(
+        stdContainer.getVolumeMounts().stream()
+            .map(SparkPodSpec::convert2VolumeMountFromFabric8)
+            .collect(Collectors.toList()));
+
+    currentInitContainer.setArgs(stdContainer.getArgs());
+
+    return currentInitContainer;
+  }
+
+  private static List<EnvVar> convert2EnvVarFromFabric8(
+      List<io.fabric8.kubernetes.api.model.EnvVar> ev) {
+
+    return ev.stream()
+        .map(
+            e ->
+                new EnvVar(
+                    e.getName(),
+                    e.getValue(),
+                    e.getValueFrom() != null
+                            && e.getValueFrom().getFieldRef() != null
+                            && e.getValueFrom().getFieldRef().getFieldPath() != null
+                        ? convert2EnvVarSourceFromFabric8(
+                            new ObjectFieldSelector(e.getValueFrom().getFieldRef().getFieldPath()))
+                        : null))
+        .collect(Collectors.toList());
+  }
+
+  private static EnvVarSource convert2EnvVarSourceFromFabric8(
+      ObjectFieldSelector objectFieldSelector) {
+
+    EnvVarSource envVarSource = new EnvVarSource();
+    envVarSource.setFieldRef(objectFieldSelector);
+
+    return envVarSource;
+  }
+
+  private static SecurityContext convert2SecurityContextFromFabric8(
+      io.fabric8.kubernetes.api.model.SecurityContext sc) {
+    SecurityContext gatewaySC = new SecurityContext();
+    gatewaySC.setRunAsGroup(sc.getRunAsGroup());
+    gatewaySC.setRunAsUser(sc.getRunAsUser());
+    return gatewaySC;
+  }
+
+  private static VolumeMount convert2VolumeMountFromFabric8(
+      io.fabric8.kubernetes.api.model.VolumeMount vm) {
+    VolumeMount gatewayVM = new VolumeMount(vm.getName(), vm.getMountPath());
+    gatewayVM.setReadOnly(vm.getReadOnly());
+    gatewayVM.setSubPath(vm.getSubPath());
+    return gatewayVM;
+  }
+
+  public static Container convert2ContainerFromGWInitContainer(InitContainer gwInitContainer) {
+
+    ContainerBuilder currentInitContainerFromGatewayVersionBuilder =
+        new ContainerBuilder()
+            .withName(gwInitContainer.getName())
+            .withImage(gwInitContainer.getImage());
+
+    if (gwInitContainer.getVolumeMounts() != null) {
+      for (VolumeMount vm : gwInitContainer.getVolumeMounts()) {
+        currentInitContainerFromGatewayVersionBuilder
+            .addNewVolumeMount()
+            .withName(vm.getName())
+            .withMountPath(vm.getMountPath())
+            .withReadOnly(vm.getReadOnly())
+            .withSubPath(vm.getSubPath())
+            .endVolumeMount();
+      }
+    }
+
+    if (gwInitContainer.getEnv() != null) {
+      for (EnvVar ev : gwInitContainer.getEnv()) {
+        currentInitContainerFromGatewayVersionBuilder
+            .addNewEnv()
+            .withName(ev.getName())
+            .withValue(ev.getValue())
+            .withValueFrom(convert2EnvVarSourceFromGW(ev.getValueFrom()))
+            .endEnv();
+      }
+    }
+
+    if (gwInitContainer.getSecurityContext() != null) {
+
+      currentInitContainerFromGatewayVersionBuilder.withSecurityContext(
+          convert2SecurityContextFromGW(gwInitContainer.getSecurityContext()));
+    }
+
+    currentInitContainerFromGatewayVersionBuilder.withArgs(gwInitContainer.getArgs());
+
+    return currentInitContainerFromGatewayVersionBuilder.build();
+  }
+
+  private static io.fabric8.kubernetes.api.model.EnvVarSource convert2EnvVarSourceFromGW(
+      EnvVarSource evs) {
+
+    if (evs != null) {
+      io.fabric8.kubernetes.api.model.EnvVarSource envVarSource =
+          new io.fabric8.kubernetes.api.model.EnvVarSource();
+
+      io.fabric8.kubernetes.api.model.ObjectFieldSelector ofs =
+          new io.fabric8.kubernetes.api.model.ObjectFieldSelector();
+      ofs.setFieldPath(evs.getFieldRef().getFieldPath());
+      envVarSource.setFieldRef(ofs);
+
+      return envVarSource;
+    }
+    return null;
+  }
+
+  private static io.fabric8.kubernetes.api.model.SecurityContext convert2SecurityContextFromGW(
+      SecurityContext sc) {
+
+    SecurityContextBuilder securityContextBuilder = new SecurityContextBuilder();
+
+    securityContextBuilder.withRunAsNonRoot(true);
+    securityContextBuilder.withAllowPrivilegeEscalation(false);
+
+    if (sc != null && sc.getRunAsUser() != null) {
+      securityContextBuilder.withRunAsUser(sc.getRunAsUser());
+    }
+    if (sc != null && sc.getRunAsGroup() != null) {
+      securityContextBuilder.withRunAsGroup(sc.getRunAsGroup());
+    }
+    return securityContextBuilder.build();
+  }
+
+  public static List<Container> convert2ContainersFromGWInitContainer(
+      List<InitContainer> initContainers) {
+
+    List<Container> stdContainers = new ArrayList<>();
+    for (InitContainer initContainer : initContainers) {
+      stdContainers.add(convert2ContainerFromGWInitContainer(initContainer));
+    }
+    return stdContainers;
   }
 }

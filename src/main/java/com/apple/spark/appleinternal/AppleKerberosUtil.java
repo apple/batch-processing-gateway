@@ -123,12 +123,13 @@ public class AppleKerberosUtil {
           },
           () -> {
             String errMsg =
-                "Secured HMS can't be used without having delegation-token-tool initContainer in appConfig";
+                "Secured HMS can't be used without having delegation-token-tool initContainer in"
+                    + " appConfig";
             logger.error(errMsg);
             throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
           });
 
-      sparkSpec.getDriver().setInitContainers(initContainers);
+      sparkSpec.getDriver().setGwInitContainers(initContainers);
 
       // Add HADOOP_USER_NAME env variable for driver container
       EnvVar hadoopUserName = new EnvVar("HADOOP_USER_NAME", proxyUser);

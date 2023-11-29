@@ -19,6 +19,7 @@
 
 package com.apple.spark.operator;
 
+import com.apple.spark.initContainer.JobInitDependencies;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -54,9 +55,13 @@ public class SparkApplicationSpec {
   @Hidden private List<Volume> volumes;
   @Hidden private List<VolumeMount> volumeMounts;
 
+  @Hidden private List<Volume> stdVolumes;
+  @Hidden private List<VolumeMount> stdVolumeMounts;
+
   private DriverSpec driver;
   private ExecutorSpec executor;
 
+  private JobInitDependencies jobInitDependencies;
   private Dependencies deps;
   @Hidden private RestartPolicy restartPolicy;
 
@@ -369,6 +374,11 @@ public class SparkApplicationSpec {
 
     public Builder withExecutor(ExecutorSpec executor) {
       this.sparkApplicationSpec.executor = executor;
+      return this;
+    }
+
+    public Builder withJobInitDependencies(JobInitDependencies jobInitDependencies) {
+      this.sparkApplicationSpec.jobInitDependencies = jobInitDependencies;
       return this;
     }
 

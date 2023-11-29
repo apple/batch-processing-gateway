@@ -19,12 +19,15 @@
 
 package com.apple.spark;
 
+import static com.apple.spark.operator.SparkPodSpec.convert2ContainersFromGWInitContainer;
+
 import com.apple.spark.core.ConfigValue;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.core.Configuration;
+import io.fabric8.kubernetes.api.model.Container;
 import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
@@ -43,8 +46,11 @@ public class AppConfig extends Configuration {
 
   private Ranger ranger;
 
-  private List<InitContainer> driverInitContainers;
+  private List<Container> driverInitContainers;
 
+  private List<Container> executorInitContainers;
+
+  private String jobDependenciesInitDockerImage;
   private String s3Bucket;
   private String s3Folder;
   private String sparkLogS3Bucket;
@@ -282,12 +288,29 @@ public class AppConfig extends Configuration {
     return vCoreSecondCost;
   }
 
-  public List<InitContainer> getDriverInitContainers() {
+  public List<Container> getDriverInitContainers() {
     return driverInitContainers;
   }
 
   public void setDriverInitContainers(List<InitContainer> driverInitContainers) {
-    this.driverInitContainers = driverInitContainers;
+
+    this.driverInitContainers = convert2ContainersFromGWInitContainer(driverInitContainers);
+  }
+
+  public List<Container> getExecutorInitContainers() {
+    return executorInitContainers;
+  }
+
+  public void setExecutorInitContainers(List<InitContainer> executorInitContainers) {
+    this.executorInitContainers = convert2ContainersFromGWInitContainer(executorInitContainers);
+  }
+
+  public String getJobDependenciesInitDockerImage() {
+    return jobDependenciesInitDockerImage;
+  }
+
+  public void setJobDependenciesInitDockerImage(String jobDependenciesInitDockerImage) {
+    this.jobDependenciesInitDockerImage = jobDependenciesInitDockerImage;
   }
 
   public void setAppMetricsDashboardUrl(String appMetricsDashboardUrl) {

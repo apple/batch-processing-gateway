@@ -38,10 +38,7 @@ import com.apple.spark.appleinternal.notary.NotaryPersonIdUtil;
 import com.apple.spark.core.*;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.crd.costattrib.CostAttributionSpec;
-import com.apple.spark.operator.DriverInfo;
-import com.apple.spark.operator.SparkApplication;
-import com.apple.spark.operator.SparkApplicationResourceList;
-import com.apple.spark.operator.SparkApplicationSpec;
+import com.apple.spark.operator.*;
 import com.apple.spark.security.QueueAuthorizer;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ConfigUtil;
@@ -324,6 +321,7 @@ public class ApplicationSubmissionRest extends RestBase {
             .withImagePullPolicy(request.getImagePullPolicy())
             .withRestartPolicy(request.getRestartPolicy())
             .withVolumes(request.getVolumes())
+            .withJobInitDependencies(request.getJobInitDependencies())
             .withDeps(request.getDeps())
             .withMonitoringSpec(request.getMonitoring())
             .withPythonVersion(request.getPythonVersion())
@@ -570,6 +568,10 @@ public class ApplicationSubmissionRest extends RestBase {
       // The following line is for Apple only, and should be excluded from Open Source Upstream
       AppleKerberosUtil.enableKerberosSupport(
           sparkSpec, request, appConfig, proxyUser, timerMetrics);
+
+      // Enable built-in initial container to download job's init dependencies for users
+      SparkJobInitDependenciesInitContainerUtil.enableUserInitDependenciesSupport(
+          sparkSpec, request, appConfig);
 
       AppleWhisperUtil.enableWhisperSupport(sparkSpec, proxyUser);
 
@@ -1059,7 +1061,8 @@ public class ApplicationSubmissionRest extends RestBase {
 
                   writeLine(
                       outputStream,
-                      "--- Spark Application Events (eventTime, lastTimestamp, type, reason, message) ---");
+                      "--- Spark Application Events (eventTime, lastTimestamp, type, reason,"
+                          + " message) ---");
                   for (Event event : sparkApplicationEvents) {
                     eventTimeOptional = Optional.ofNullable(event.getEventTime());
                     lastTimestampOptional = Optional.ofNullable(event.getLastTimestamp());
@@ -1077,7 +1080,8 @@ public class ApplicationSubmissionRest extends RestBase {
 
                   writeLine(
                       outputStream,
-                      "--- Spark Driver Events (eventTime, lastTimestamp, type, reason, message) ---");
+                      "--- Spark Driver Events (eventTime, lastTimestamp, type, reason, message)"
+                          + " ---");
                   for (Event event : driverEvents) {
                     eventTimeOptional = Optional.ofNullable(event.getEventTime());
                     lastTimestampOptional = Optional.ofNullable(event.getLastTimestamp());
