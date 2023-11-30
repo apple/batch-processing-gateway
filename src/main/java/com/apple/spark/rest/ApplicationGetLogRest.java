@@ -214,7 +214,7 @@ public class ApplicationGetLogRest extends RestBase {
         throw new WebApplicationException(errorMessage, Response.Status.BAD_REQUEST);
       }
 
-      if (queueAuthorizer.authorizeEnabled(queue)) {
+      if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
         queueAuthorizer.authorize(queue, "log", getUserTagValue(user));
       }
 
