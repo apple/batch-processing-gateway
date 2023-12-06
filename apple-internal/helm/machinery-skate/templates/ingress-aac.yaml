@@ -11,6 +11,14 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /skatev2/$1
     nginx.ingress.kubernetes.io/upstream-hash-by: $binary_remote_addr
     nginx.ingress.kubernetes.io/ssl-passthrough: "false"
+    cert-manager.io/issuer: applecm-corpca
+    cert-manager.io/issuer-kind: AppleCertificateManagerCorpCA
+    cert-manager.io/issuer-group: cmcs.crypto-services.apple.com
+    cert-manager.io/common-name: {{ .Values.ingress.endpoint }}
+    cert-manager.io/private-key-rotation-policy: "Always"
+    cert-manager.io/revision-history-limit: "2"
+    cert-manager.io/duration: {{ .Values.ingress.sslCertDuration | default "8760h" | quote }} # 1 year Duration
+    cert-manager.io/renew-before: {{ .Values.ingress.sslCertRenewBefore | default "360h" | quote }}
 spec:
   rules:
     - host: {{ .Values.ingress.endpoint }}
