@@ -1,0 +1,176 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    api-approved.kubernetes.io: https://github.com/apple/batch-processing-gateway
+  name: virtualsparkclusters.virtualsparkcluster.k8s.io
+spec:
+  group: virtualsparkcluster.k8s.io
+  names:
+    kind: VirtualSparkCluster
+    listKind: VirtualSparkClusterList
+    plural: virtualsparkclusters
+    shortNames:
+      - sc
+    singular: virtualsparkcluster
+  scope: Namespaced
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              properties:
+                weight:
+                  type: integer
+                # needs to be unique
+                id:
+                  type: string
+                eksCluster:
+                  type: string
+                masterUrl:
+                  type: string
+                caCertDataSOPS:
+                  type: string
+                userName:
+                  type: string
+                userTokenSOPS:
+                  type: string
+                httpProxy:
+                  type: string
+                httpsProxy:
+                  type: string
+                sparkApplicationNamespace:
+                  type: string
+                sparkServiceAccount:
+                  type: string
+                sparkVersions:
+                  items:
+                    type: number
+                  type: array
+                queues:
+                  items:
+                    type: string
+                  type: array
+                ttlSeconds:
+                  type: integer
+                timeoutMillis:
+                  type: integer
+                sparkUIUrl:
+                  type: string
+                batchScheduler:
+                  type: string
+                sparkConf:
+                  additionalProperties:
+                    type: string
+                  type: object
+                sparkUIOptions:
+                  properties:
+                    ingressAnnotations:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    ingressTLS:
+                      items:
+                        properties:
+                          hosts:
+                            items:
+                              type: string
+                            type: array
+                          secretName:
+                            type: string
+                        type: object
+                      type: array
+                    ServicePort:
+                      format: int32
+                      type: integer
+                  type: object
+                driver:
+                  properties:
+                    env:
+                      items:
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+                          valueFrom:
+                            properties:
+                              configMapKeyRef:
+                                properties:
+                                  key:
+                                    type: string
+                                  name:
+                                    type: string
+                                  optional:
+                                    type: boolean
+                                required:
+                                  - key
+                                type: object
+                              fieldRef:
+                                properties:
+                                  apiVersion:
+                                    type: string
+                                  fieldPath:
+                                    type: string
+                                required:
+                                  - fieldPath
+                                type: object
+                            type: object
+                        required:
+                          - name
+                        type: object
+                      type: array
+                  type: object
+                executor:
+                  properties:
+                    env:
+                      items:
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+                          valueFrom:
+                            properties:
+                              configMapKeyRef:
+                                properties:
+                                  key:
+                                    type: string
+                                  name:
+                                    type: string
+                                  optional:
+                                    type: boolean
+                                required:
+                                  - key
+                                type: object
+                              fieldRef:
+                                properties:
+                                  apiVersion:
+                                    type: string
+                                  fieldPath:
+                                    type: string
+                                required:
+                                  - fieldPath
+                                type: object
+                            type: object
+                        required:
+                          - name
+                        type: object
+                      type: array
+                  type: object
+              type: object
+            status:
+              properties:
+                state:
+                  type: string
+              type: object
+          type: object
