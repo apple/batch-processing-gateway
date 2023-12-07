@@ -3,11 +3,12 @@ kind: Ingress
 metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
-    cert-manager.io/issuer: applecm-sample-corpca
+    cert-manager.io/issuer: applecm-corpca
     cert-manager.io/issuer-kind: AppleCertificateManagerCorpCA
     cert-manager.io/issuer-group: cmcs.crypto-services.apple.com
     cert-manager.io/common-name: {{ .Values.ingress.endpoint }}
     cert-manager.io/private-key-rotation-policy: "Always"
+    cert-manager.io/revision-history-limit: "2"
     nginx.ingress.kubernetes.io/ssl-passthrough: "false"
     nginx.ingress.kubernetes.io/rewrite-target: /$1
   name: bpg-swagger-ingress
