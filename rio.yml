@@ -54,12 +54,12 @@ pipelines:
         - rm apache-maven-3.8.8-bin.tar.gz
         - apache-maven-3.8.8/bin/mvn clean verify
 
-  - name: publish-release
+  - name: publish-release-2.0
     branchName: release
     timeout: 95
     machine:
       env:
-        APP_VERSION: "1.1"
+        APP_VERSION: "2.0"
         VERSION: skate-${APP_VERSION}.#{}
         BUILD_TIME: "$(date)"
     build:
@@ -81,12 +81,12 @@ pipelines:
             - name: "SKATE_VERSION"
               value: ${VERSION}
 
-  - name: publish-release-gcp
+  - name: publish-release-gcp-2.0
     branchName: release-gcp
     timeout: 95
     machine:
       env:
-        APP_VERSION: "1.1"
+        APP_VERSION: "2.0"
         VERSION: skate-gcp-${APP_VERSION}.#{}
         BUILD_TIME: "$(date)"
     build:
@@ -108,12 +108,12 @@ pipelines:
             - name: "SKATE_VERSION"
               value: ${VERSION}
 
-  - name: publish-release-init-ud
+  - name: publish-release-init-ud-2.0
     branchName: initUD
     timeout: 95
     machine:
       env:
-        APP_VERSION: "1.1"
+        APP_VERSION: "2.0"
         VERSION: skate-${APP_VERSION}.#{}
         BUILD_TIME: "$(date)"
     build:
@@ -135,12 +135,12 @@ pipelines:
             - name: "SKATE_VERSION"
               value: ${VERSION}
 
-  - name: publish-release-jdeps
+  - name: publish-release-jdeps-2.0
     branchName: initUD
     timeout: 95
     machine:
       env:
-        APP_VERSION: "1.1"
+        APP_VERSION: "2.0"
         VERSION: ${APP_VERSION}.#{}
         BUILD_TIME: "$(date)"
     build:
@@ -175,14 +175,14 @@ pipelines:
         - publish:
             - repo: apple-helm-release-local
 
-  - group: publish-dev
+  - group: publish-dev-2.0
     branchRules:
       includePatterns:
         - 'dev-[^/]+'
     timeout: 95
     machine:
       env:
-        APP_VERSION: "1.1"
+        APP_VERSION: "2.0"
         VERSION: skate-${APP_VERSION}.#{}
         BUILD_TIME: "$(date)"
     build:
@@ -250,12 +250,12 @@ pipelines:
       tag:
         enabled: true
 
-  - name: publish-release-machinery
+  - name: publish-release-machinery-2.0
     branchName: release
     timeout: 95
     machine:
       env:
-        APP_VERSION: "1.1"
+        APP_VERSION: "2.0"
         VERSION: skate-${APP_VERSION}.#{}
         BUILD_TIME: "$(date)"
     build:
