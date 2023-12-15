@@ -25,7 +25,6 @@ import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_SCHEDULER;
 import static com.apple.spark.core.Constants.*;
 import static com.apple.spark.core.MonitoringConstants.ENABLE_METRICS_CONF;
 import static com.apple.spark.util.S3ShuffleServiceUtil.applyS3BasedShuffleServiceSparkConf;
-import static com.apple.spark.util.S3ShuffleServiceUtil.enableS3BasedShuffleService;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.*;
@@ -375,10 +374,8 @@ public class ApplicationSubmissionRest extends RestBase {
       applyQueryListenerSparkConf(sparkSpec);
     }
 
-    // apply S3-based Shuffle Service related Spark conf and request can overwrite the default value
-    if (enableS3BasedShuffleService(request)) {
-      applyS3BasedShuffleServiceSparkConf(request, sparkSpec);
-    }
+    // apply Cloud Shuffle Manager related Spark conf and request can overwrite the default value
+    applyS3BasedShuffleServiceSparkConf(request, sparkSpec);
 
     logDao.logApplicationSubmission(submissionId, proxyUser, request);
     SubmitApplicationResponse response =
