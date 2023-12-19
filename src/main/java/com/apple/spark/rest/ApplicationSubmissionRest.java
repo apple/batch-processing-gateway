@@ -375,7 +375,7 @@ public class ApplicationSubmissionRest extends RestBase {
     }
 
     // apply Cloud Shuffle Manager related Spark conf and request can overwrite the default value
-    applyS3BasedShuffleServiceSparkConf(request, sparkSpec);
+    applyS3BasedShuffleServiceSparkConf(request, sparkSpec, appConfig);
 
     logDao.logApplicationSubmission(submissionId, proxyUser, request);
     SubmitApplicationResponse response =

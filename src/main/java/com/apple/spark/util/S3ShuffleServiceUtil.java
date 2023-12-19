@@ -1,8 +1,13 @@
 package com.apple.spark.util;
 
+import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmitApplicationRequest;
 import com.apple.spark.operator.*;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import java.util.*;
+import org.apache.commons.math3.distribution.EnumeratedDistribution;
+import org.apache.commons.math3.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +38,7 @@ public class S3ShuffleServiceUtil {
    * @return
    */
   public static void applyS3BasedShuffleServiceSparkConf(
-      SubmitApplicationRequest request, SparkApplicationSpec sparkSpec) {
+      SubmitApplicationRequest request, SparkApplicationSpec sparkSpec, AppConfig appConfig) {
 
     if (sparkSpec.getSparkConf() == null) {
       sparkSpec.setSparkConf(new HashMap<>());
@@ -178,32 +183,54 @@ public class S3ShuffleServiceUtil {
           .getSparkConf()
           .put(SPARK_SHUFFLE_MANAGER_KEY, SPARK_CLOUD_SHUFFLE_MANAGER_FULL_VALUE);
 
-      // check storage uri
-      if (!sparkSpec.getSparkConf().containsKey(SPARK_CSM_STORAGE_URT_KEY_GA)) {
-        logger.error(String.format(" %s is empty, please check", SPARK_CSM_STORAGE_URT_KEY_GA));
-      }
-
-      if (sparkSpec.getSparkConf().get(SPARK_CSM_STORAGE_URT_KEY_GA) == null) {
-        logger.error(
-            String.format("value of %s is empty, please check", SPARK_CSM_STORAGE_URT_KEY_GA));
-      }
+      // select a storageMasterUri from a list of shuffle S3 buckets, and add into sparkConf
+      String storageMasterUri =
+          "s3a://"
+              + randomSelectShuffleBucketByWeight(appConfig.getShuffleS3Buckets())
+              + "/shuffle_data/";
+      sparkSpec.getSparkConf().put(SPARK_CSM_STORAGE_URT_KEY_GA, storageMasterUri);
 
       /* Disable the decommission feature of vanilla Spark since there is conflict to update map output file status
         when enabling dual shuffle manager, we do not allow user to enable it when dual shuffle manager is used
       */
       sparkSpec.getSparkConf().put("spark.decommission.enabled", "false");
       sparkSpec.getSparkConf().put("spark.storage.decommission.enabled", "false");
-      logger.info(
+      logger.debug(
           String.format(
               "Decommission feature of vanilla Spark is disabled when enabling dual shuffle"
                   + " manager"));
 
-      logger.info(
+      logger.debug(
           String.format(
               "S3-based shuffle service enabled and the shuffle manager name is %s",
               SPARK_CLOUD_SHUFFLE_MANAGER_FULL_VALUE));
-    } else {
-      logger.error("Shuffle Manager user specified is not found, please check !");
     }
+  }
+
+  public static String randomSelectShuffleBucketByWeight(
+      List<AppConfig.ShuffleS3Bucket> shuffleS3Buckets) {
+    String selectedItem = "";
+    List<Pair<String, Double>> items = new ArrayList<>();
+    if (shuffleS3Buckets != null) {
+      try {
+        for (AppConfig.ShuffleS3Bucket shuffleS3Bucket : shuffleS3Buckets) {
+          items.add(new Pair<>(shuffleS3Bucket.getBucketName(), shuffleS3Bucket.getWeight()));
+        }
+        EnumeratedDistribution<String> distribution = new EnumeratedDistribution<>(items);
+
+        // Randomly select an item based on weight
+        selectedItem = distribution.sample();
+        logger.debug("Selected Shuffle Bucket: " + selectedItem);
+      } catch (Exception e) {
+        throw new WebApplicationException(
+            String.format("Failed to select shuffle S3 buckets, please report to admins. %s", e),
+            Response.Status.INTERNAL_SERVER_ERROR);
+      }
+    } else {
+      throw new WebApplicationException(
+          "There is no shuffle S3 buckets available, please report to admins.",
+          Response.Status.INTERNAL_SERVER_ERROR);
+    }
+    return selectedItem;
   }
 }

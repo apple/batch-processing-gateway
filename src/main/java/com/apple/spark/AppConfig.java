@@ -44,6 +44,8 @@ public class AppConfig extends Configuration {
 
   private List<SparkImage> sparkImages;
 
+  private List<ShuffleS3Bucket> shuffleS3Buckets;
+
   private Ranger ranger;
 
   private List<Container> driverInitContainers;
@@ -115,6 +117,14 @@ public class AppConfig extends Configuration {
 
   public void setSparkImages(List<SparkImage> sparkImages) {
     this.sparkImages = sparkImages;
+  }
+
+  public List<ShuffleS3Bucket> getShuffleS3Buckets() {
+    return shuffleS3Buckets;
+  }
+
+  public void setShuffleS3Buckets(List<ShuffleS3Bucket> shuffleS3Buckets) {
+    this.shuffleS3Buckets = shuffleS3Buckets;
   }
 
   public String getS3Bucket() {
@@ -557,6 +567,36 @@ public class AppConfig extends Configuration {
 
     public String getUserTokenSOPSDecoded() {
       return ConfigValue.tryGetEncodedSecretValue(userTokenSOPS);
+    }
+  }
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class ShuffleS3Bucket {
+
+    private String bucketName;
+    private double weight;
+
+    public ShuffleS3Bucket() {}
+
+    public ShuffleS3Bucket(String bucketName, double weight) {
+      this.bucketName = bucketName;
+      this.weight = weight;
+    }
+
+    public double getWeight() {
+      return weight;
+    }
+
+    public void setWeight(double weight) {
+      this.weight = weight;
+    }
+
+    public String getBucketName() {
+      return bucketName;
+    }
+
+    public void setBucketName(String bucketName) {
+      this.bucketName = bucketName;
     }
   }
 
