@@ -250,8 +250,8 @@ public class SparkPodSpec {
 
   public void setGwInitContainers(List<InitContainer> gwInitContainers) {
     this.gwInitContainers = gwInitContainers;
-
-    if (this.getInitContainers() != null) {
+    if (!this.gwInitContainers.isEmpty()) {
+      if (this.getInitContainers() == null) this.setInitContainers(new ArrayList<>());
       for (InitContainer gwInitContainer : this.getGwInitContainers()) {
         this.initContainers.add(convert2ContainerFromGWInitContainer(gwInitContainer));
       }
@@ -264,11 +264,6 @@ public class SparkPodSpec {
 
   public void setInitContainers(List<Container> stdInitContainers) {
     this.initContainers = stdInitContainers;
-    if (this.getGwInitContainers() != null) {
-      for (InitContainer initContainer : this.getGwInitContainers()) {
-        this.initContainers.add(convert2ContainerFromGWInitContainer(initContainer));
-      }
-    }
   }
 
   public static List<InitContainer> convert2InitContainersFromFabric8(
@@ -406,14 +401,17 @@ public class SparkPodSpec {
 
     SecurityContextBuilder securityContextBuilder = new SecurityContextBuilder();
 
-    securityContextBuilder.withRunAsNonRoot(true);
-    securityContextBuilder.withAllowPrivilegeEscalation(false);
-
     if (sc != null && sc.getRunAsUser() != null) {
       securityContextBuilder.withRunAsUser(sc.getRunAsUser());
     }
     if (sc != null && sc.getRunAsGroup() != null) {
       securityContextBuilder.withRunAsGroup(sc.getRunAsGroup());
+    }
+    if (sc != null && sc.getRunAsNonRoot() != null) {
+      securityContextBuilder.withRunAsNonRoot(sc.getRunAsNonRoot());
+    }
+    if (sc != null && sc.getAllowPrivilegeEscalation() != null) {
+      securityContextBuilder.withAllowPrivilegeEscalation(sc.getAllowPrivilegeEscalation());
     }
     return securityContextBuilder.build();
   }

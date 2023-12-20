@@ -30,6 +30,7 @@ public class SecurityContext {
   private Long runAsUser;
   private Long runAsGroup;
   private Long fsGroup;
+  private Boolean runAsNonRoot;
   private Boolean allowPrivilegeEscalation;
 
   public Boolean getPrivileged() {
@@ -70,5 +71,13 @@ public class SecurityContext {
 
   public void setFsGroup(Long fsGroup) {
     this.fsGroup = fsGroup;
+  }
+
+  public Boolean getRunAsNonRoot() {
+    return runAsNonRoot;
+  }
+
+  public void setRunAsNonRoot(Boolean runAsNonRoot) {
+    this.runAsNonRoot = runAsNonRoot;
   }
 }

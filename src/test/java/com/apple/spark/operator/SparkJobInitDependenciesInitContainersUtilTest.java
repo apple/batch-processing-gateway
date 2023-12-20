@@ -1,6 +1,7 @@
 package com.apple.spark.operator;
 
 import static com.apple.spark.appleinternal.AppleKerberosUtilConstants.DELEGATION_CONTAINER_NAME;
+import static com.apple.spark.appleinternal.AppleKerberosUtilConstants.INIT_CONTAINER_ENV_KEY;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmitApplicationRequest;
@@ -132,6 +133,9 @@ public class SparkJobInitDependenciesInitContainersUtilTest {
     Assert.assertEquals(
         sparkSpec.getDriver().getInitContainers().get(0).getVolumeMounts().get(0).getName(),
         "dependencies");
+
+    Assert.assertEquals(sparkSpec.getDriver().getGwInitContainers(), null);
+    Assert.assertEquals(sparkSpec.getDriver().getInitContainers().size(), 1);
   }
 
   @Test
@@ -168,6 +172,16 @@ public class SparkJobInitDependenciesInitContainersUtilTest {
     Assert.assertEquals(
         sparkSpec.getDriver().getInitContainers().get(0).getVolumeMounts().get(0).getName(),
         "dependencies");
+
+    Assert.assertEquals(
+        sparkSpec.getDriver().getInitContainers().get(1).getEnv().get(0).getName(),
+        INIT_CONTAINER_ENV_KEY);
+    Assert.assertEquals(
+        sparkSpec.getDriver().getGwInitContainers().get(0).getEnv().get(0).getName(),
+        INIT_CONTAINER_ENV_KEY);
+
+    Assert.assertEquals(sparkSpec.getDriver().getGwInitContainers().size(), 1);
+    Assert.assertEquals(sparkSpec.getDriver().getInitContainers().size(), 2);
   }
 
   @Test
@@ -194,7 +208,7 @@ public class SparkJobInitDependenciesInitContainersUtilTest {
     Assert.assertEquals(sparkSpec.getVolumes().get(2).getName(), "dependencies");
 
     Assert.assertEquals(
-        sparkSpec.getDriver().getInitContainers().get(0).getVolumeMounts().get(0).getName(),
+        sparkSpec.getDriver().getInitContainers().get(1).getVolumeMounts().get(0).getName(),
         "dependencies");
 
     Assert.assertEquals(sparkSpec.getDriver().getVolumeMounts().get(0).getName(), "token-store");
@@ -202,7 +216,46 @@ public class SparkJobInitDependenciesInitContainersUtilTest {
     Assert.assertEquals(sparkSpec.getDriver().getVolumeMounts().get(2).getName(), "dependencies");
 
     Assert.assertEquals(
-        sparkSpec.getDriver().getInitContainers().get(0).getVolumeMounts().get(0).getName(),
-        "dependencies");
+        sparkSpec.getDriver().getInitContainers().get(0).getEnv().get(0).getName(),
+        INIT_CONTAINER_ENV_KEY);
+    Assert.assertEquals(
+        sparkSpec.getDriver().getGwInitContainers().get(0).getEnv().get(0).getName(),
+        INIT_CONTAINER_ENV_KEY);
+
+    Assert.assertEquals(sparkSpec.getDriver().getGwInitContainers().size(), 1);
+    Assert.assertEquals(sparkSpec.getDriver().getInitContainers().size(), 2);
+  }
+
+  @Test
+  public void disableUserDependenciesInitContainersTestAfterKerberos() {
+
+    SparkApplicationSpec sparkSpec = new SparkApplicationSpec();
+    SubmitApplicationRequest request =
+        ApplicationSubmissionHelper.parseSubmitRequest(REQUEST_BODY_JSON, CONTENT_TYPE);
+    TimerMetricContainer timerMetric = new TimerMetricContainer(meterRegistry);
+
+    DriverSpec driverSpec = new DriverSpec();
+    sparkSpec.setDriver(driverSpec);
+
+    List<InitContainer> driverInitContainers =
+        Collections.singletonList(new InitContainer(DELEGATION_CONTAINER_NAME, CONTAINER_IMAGE));
+    appConfig.setDriverInitContainers(driverInitContainers);
+    AppleKerberosUtil.enableKerberosSupport(sparkSpec, request, appConfig, proxyUser, timerMetric);
+
+    Assert.assertEquals(sparkSpec.getVolumes().get(0).getName(), "narrative");
+    Assert.assertEquals(sparkSpec.getVolumes().get(1).getName(), "token-store");
+
+    Assert.assertEquals(sparkSpec.getDriver().getVolumeMounts().get(0).getName(), "token-store");
+    Assert.assertEquals(sparkSpec.getDriver().getVolumeMounts().get(1).getName(), "narrative");
+
+    Assert.assertEquals(sparkSpec.getDriver().getGwInitContainers().size(), 1);
+    Assert.assertEquals(sparkSpec.getDriver().getInitContainers().size(), 1);
+
+    Assert.assertEquals(
+        sparkSpec.getDriver().getInitContainers().get(0).getEnv().get(0).getName(),
+        INIT_CONTAINER_ENV_KEY);
+    Assert.assertEquals(
+        sparkSpec.getDriver().getGwInitContainers().get(0).getEnv().get(0).getName(),
+        INIT_CONTAINER_ENV_KEY);
   }
 }

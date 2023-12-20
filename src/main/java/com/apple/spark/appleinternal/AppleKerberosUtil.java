@@ -104,6 +104,8 @@ public class AppleKerberosUtil {
                             .getName()
                             .equals(AppleKerberosUtilConstants.DELEGATION_CONTAINER_NAME))
                 .findFirst();
+        logger.info("AppleKerberosUtil can find the init container: {} ", firstInitContainer);
+
       } catch (Exception e) {
         String errMsg = "Secured HMS can't be used without having initContainer in appConfig";
         logger.error(errMsg);
@@ -120,6 +122,11 @@ public class AppleKerberosUtil {
             } else {
               container.setEnv(Collections.singletonList(userPrincipal));
             }
+            SecurityContext kerbSecurityContext = new SecurityContext();
+            kerbSecurityContext.setRunAsNonRoot(false);
+            kerbSecurityContext.setAllowPrivilegeEscalation(true);
+            kerbSecurityContext.setRunAsGroup(1000L);
+            container.setSecurityContext(kerbSecurityContext);
           },
           () -> {
             String errMsg =
