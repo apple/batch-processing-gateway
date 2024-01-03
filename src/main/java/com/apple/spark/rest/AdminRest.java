@@ -32,6 +32,7 @@ import com.apple.spark.core.RestStreamingOutput;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplication;
 import com.apple.spark.operator.SparkApplicationResourceList;
+import com.apple.spark.security.QueueAuthorizer;
 import com.apple.spark.security.User;
 import com.apple.spark.util.ConfigUtil;
 import com.apple.spark.util.ExceptionUtils;
@@ -67,11 +68,28 @@ import org.slf4j.LoggerFactory;
 @Path(ADMIN_API)
 @Produces(MediaType.APPLICATION_JSON)
 public class AdminRest extends RestBase {
-
   private static final Logger logger = LoggerFactory.getLogger(AdminRest.class);
+  private final QueueAuthorizer queueAuthorizer;
+  private final Map<String, AppConfig.QueueConfig> queueConfigs;
 
   public AdminRest(AppConfig appConfig, MeterRegistry meterRegistry) {
     super(appConfig, meterRegistry);
+
+    this.queueConfigs = appConfig.getQueueConfigs();
+    AppConfig.Ranger ranger = appConfig.getRanger();
+
+    if (ranger != null) {
+      this.queueAuthorizer =
+          new QueueAuthorizer(
+              meterRegistry,
+              queueConfigs,
+              ranger.getSparkQueuePolicyRestUrl(),
+              ranger.getSparkQueueXasecureAuditDestinationSolrUrls(),
+              ranger.getUserGroupsCacheDurationInMillis());
+    } else {
+      logger.warn("queueAuthorizer is not enabled.");
+      this.queueAuthorizer = null;
+    }
   }
 
   @GET
@@ -587,6 +605,56 @@ public class AdminRest extends RestBase {
                   outputStream.flush();
                 } catch (Throwable ex) {
                   logger.warn("Failed to get statuses info", ex);
+                  ExceptionUtils.meterException();
+                }
+              }
+            })
+        .build();
+  }
+
+  @GET
+  @Path("queues")
+  @Timed
+  @Operation(
+      summary = "Get all queues",
+      tags = {"Admin"})
+  @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
+  public Response queues(@Parameter(hidden = true) @Auth User user) {
+
+    return Response.ok(
+            new RestStreamingOutput() {
+              @Override
+              public void write(OutputStream outputStream) throws WebApplicationException {
+                try {
+
+                  Map<String, List<String>> queuesMap = new HashMap<>();
+
+                  List<VirtualSparkClusterSpec> sparkClusters = getSparkClusters();
+
+                  List<String> queues =
+                      sparkClusters.stream()
+                          .flatMap(sparkCluster -> sparkCluster.getQueues().stream())
+                          .distinct()
+                          .filter(
+                              queue ->
+                                  (queueAuthorizer == null)
+                                      || (!queueAuthorizer.authorizeEnabled(queue))
+                                      || (queueAuthorizer.isAuthorized(
+                                          queue, "list", user.getName())))
+                          // Queues configured in Skate don't contain a `root.` prefix
+                          .map(queue -> YUNIKORN_ROOT_QUEUE + "." + queue)
+                          .collect(Collectors.toList());
+
+                  queuesMap.put("queues", queues);
+
+                  ObjectMapper mapper = new ObjectMapper();
+                  String queuesJson =
+                      mapper.writerWithDefaultPrettyPrinter().writeValueAsString(queuesMap);
+                  writeLine(outputStream, queuesJson);
+
+                  outputStream.flush();
+                } catch (Throwable ex) {
+                  logger.warn("Failed to get queues info", ex);
                   ExceptionUtils.meterException();
                 }
               }

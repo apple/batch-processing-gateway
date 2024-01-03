@@ -1,6 +1,7 @@
 package com.apple.spark.appleintegration;
 
 import static com.apple.spark.appleintegration.ApplicationSubmissionRestIntegrationTest.skateIntegrationTestResourcesFolderUrl;
+import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_ROOT_QUEUE;
 
 import com.apple.spark.api.GetJobsResponse;
 import com.apple.spark.core.Constants;
@@ -41,6 +42,17 @@ public class AdminRestIntegrationTest {
     for (String status : Constants.ALL_POSSIBLE_STATUSES) {
       Assert.assertTrue(response.contains(status));
     }
+  }
+
+  @Test
+  public void testQueues() {
+    final String authHeaderName = "X-Appleconnect-Acaccountname";
+    final String authHeaderValue = "raimldpi";
+    String fullUrl = serviceRootUrl + "/admin/queues";
+    String response = HttpUtils.get(fullUrl, authHeaderName, authHeaderValue);
+
+    final String queue = YUNIKORN_ROOT_QUEUE + "." + "gateway-ci";
+    Assert.assertTrue(response.contains(queue));
   }
 
   @Test
