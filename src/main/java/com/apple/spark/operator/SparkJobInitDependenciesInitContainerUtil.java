@@ -32,7 +32,7 @@ public class SparkJobInitDependenciesInitContainerUtil {
 
   // todo make this configurable
   public static final String DEFAULT_USER_DEPENDENCIES_INIT_CONTAINER_IMAGE_URI =
-      "docker.apple.com/aiml-di-dpi/skate/job-init-deps:1.1.7";
+      "docker.apple.com/aiml/di-batch/user-dependencies:0.1-2";
   public static final long DEFAULT_USER_DEPENDENCIES_INIT_CONTAINER_DEFAULT_USER_ID = 65534L;
   public static final long DEFAULT_USER_DEPENDENCIES_INIT_CONTAINER_DEFAULT_GROUP_ID = 65534L;
 
