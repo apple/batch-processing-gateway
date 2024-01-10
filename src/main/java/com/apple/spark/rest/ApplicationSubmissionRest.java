@@ -715,11 +715,17 @@ public class ApplicationSubmissionRest extends RestBase {
     requestCounters.increment(
         REQUEST_METRIC_NAME, Tag.of("name", "get_spec"), Tag.of("user", user.getName()));
     SparkApplication sparkApplication = getSparkApplicationResource(submissionId);
-    String queue = getQueueFromSparkApplication(sparkApplication);
-    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
-      queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+    SparkApplicationSpec sparkApplicationSpec = null;
+    String queue = "";
+
+    // Check if spark application exists
+    if (sparkApplication != null) {
+      queue = getQueueFromSparkApplication(sparkApplication);
+      if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
+        queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+      }
+      sparkApplicationSpec = removeEnvFromSpec(sparkApplication.getSpec());
     }
-    SparkApplicationSpec sparkApplicationSpec = removeEnvFromSpec(sparkApplication.getSpec());
     return sparkApplicationSpec;
   }
 
@@ -821,9 +827,11 @@ public class ApplicationSubmissionRest extends RestBase {
               .withName(submissionId)
               .get();
 
-      String queue = getQueueFromSparkApplication(sparkApplication);
-      if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
-        queueAuthorizer.authorize(queue, "status", user);
+      if (sparkApplication != null) {
+        String queue = getQueueFromSparkApplication(sparkApplication);
+        if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
+          queueAuthorizer.authorize(queue, "status", user);
+        }
       }
 
       context.stop();
@@ -955,11 +963,15 @@ public class ApplicationSubmissionRest extends RestBase {
 
     VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
     SparkApplication sparkApplicationResource = getSparkApplicationResource(submissionId);
-    String queue = getQueueFromSparkApplication(sparkApplicationResource);
-    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
-      queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+
+    if (sparkApplicationResource != null) {
+      String queue = getQueueFromSparkApplication(sparkApplicationResource);
+      if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
+        queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+      }
     }
-    if (sparkApplicationResource.getStatus() == null
+    if (sparkApplicationResource == null
+        || sparkApplicationResource.getStatus() == null
         || sparkApplicationResource.getStatus().getDriverInfo() == null) {
       return new GetDriverInfoResponse();
     }
@@ -1014,12 +1026,14 @@ public class ApplicationSubmissionRest extends RestBase {
         Tag.of("user", user.getName()));
 
     final SparkApplication sparkApplicationResource = getSparkApplicationResource(submissionId);
-    String queue = getQueueFromSparkApplication(sparkApplicationResource);
-    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
-      queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+    SparkApplicationSpec sparkApplicationSpec = null;
+    if (sparkApplicationResource != null) {
+      String queue = getQueueFromSparkApplication(sparkApplicationResource);
+      if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
+        queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+      }
+      sparkApplicationSpec = removeEnvFromSpec(sparkApplicationResource.getSpec());
     }
-    SparkApplicationSpec sparkApplicationSpec =
-        removeEnvFromSpec(sparkApplicationResource.getSpec());
 
     ObjectMapper objectMapper =
         new ObjectMapper(
@@ -1210,7 +1224,7 @@ public class ApplicationSubmissionRest extends RestBase {
         appConfig.getQueues().stream().filter(t -> t.getName().equals(queue)).findFirst();
     if (queueConfigOptional.isPresent()) {
       AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
-      if (queueConfig != null && queueConfig.getMaxRunningMillis() != null) {
+      if (queueConfig.getMaxRunningMillis() != null) {
         return queueConfig.getMaxRunningMillis();
       }
     }

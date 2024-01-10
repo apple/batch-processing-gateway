@@ -138,7 +138,6 @@ public class RangerSparkQueueClient {
                 + userStore.getUserStoreUpdateTime());
         if (userStore.getUserGroupMapping() != null) {
           logger.info("Size of user group mapping is " + userStore.getUserGroupMapping().size());
-          logger.debug("User store returned is \n" + userStore.getUserGroupMapping());
           // first remove the existing users from cache that are not present in latest user store
           for (String existingUser : userGroups.keySet()) {
             if (!userStore.getUserGroupMapping().containsKey(existingUser)) {
