@@ -136,6 +136,7 @@ public class ApplicationSubmissionHelper {
       String submissionId,
       SubmitApplicationRequest request,
       Map<String, String> defaultSparkConf,
+      Map<String, String> fixedSparkConf,
       VirtualSparkClusterSpec sparkCluster) {
 
     Map<String, String> sparkConf = null;
@@ -164,6 +165,13 @@ public class ApplicationSubmissionHelper {
         sparkConf = new HashMap<>();
       }
       sparkConf.putAll(request.getSparkConf());
+    }
+
+    if (fixedSparkConf != null) {
+      if (sparkConf == null) {
+        sparkConf = new HashMap<>();
+      }
+      sparkConf.putAll(fixedSparkConf);
     }
 
     if (!StringUtils.isEmpty(request.getApplicationName())) {

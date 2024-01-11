@@ -326,7 +326,7 @@ public class ApplicationSubmissionRest extends RestBase {
             .withPythonVersion(request.getPythonVersion())
             .withTimeToLiveSeconds(sparkCluster.getTtlSeconds())
             .extendSparkConf(
-                getSparkConf(submissionId, request, appConfig.getDefaultSparkConf(), sparkCluster))
+                getSparkConf(submissionId, request, appConfig.getDefaultSparkConf(), appConfig.getFixedSparkConf(), sparkCluster))
             .withSparkUIConfiguration(getSparkUIConfiguration(submissionId, sparkCluster))
             .extendVolumes(getVolumes(request, sparkCluster))
             .extendVolumeMounts(getVolumeMounts(request, sparkCluster));
