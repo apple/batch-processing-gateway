@@ -365,6 +365,38 @@ public class ApplicationSubmissionHelperTest {
   }
 
   @Test
+  public void getSparkConf_nonEmptyFixedSparkConf() {
+    Map<String, String> defaultSparkConf = new HashMap<>();
+    Map<String, String> fixedSparkConf = new HashMap<>();
+    defaultSparkConf.put("defaultKey1", "defaultValue1");
+    defaultSparkConf.put("defaultKey2", "defaultValue2");
+
+    fixedSparkConf.put("defaultKey1", "fixedValue1");
+    fixedSparkConf.put("defaultKey2", "fixedValue2");
+
+    SubmitApplicationRequest request = new SubmitApplicationRequest();
+    VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
+    Map<String, String> sparkConf =
+        ApplicationSubmissionHelper.getSparkConf(
+            "submission1", request, defaultSparkConf, fixedSparkConf, sparkCluster);
+
+    Assert.assertEquals(sparkConf.get("defaultKey1"), "fixedValue1");
+    Assert.assertEquals(sparkConf.get("defaultKey2"), "fixedValue2");
+
+    Map<String, String> requestSparkConf = new HashMap<>();
+    requestSparkConf.put("defaultKey1", "requestValue1");
+    requestSparkConf.put("defaultKey2", "requestValue2");
+    request.setSparkConf(requestSparkConf);
+
+    sparkConf =
+        ApplicationSubmissionHelper.getSparkConf(
+            "submission1", request, defaultSparkConf, fixedSparkConf, sparkCluster);
+
+    Assert.assertEquals(sparkConf.get("defaultKey1"), "fixedValue1");
+    Assert.assertEquals(sparkConf.get("defaultKey2"), "fixedValue2");
+  }
+
+  @Test
   public void getVolumes() {
     SubmitApplicationRequest request = new SubmitApplicationRequest();
     VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
