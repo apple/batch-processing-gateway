@@ -3,8 +3,9 @@ appleAuth: true
 # apple-connect-secret name
 appleAuthSecretName:
 
-# notary secret name
-notaryAuthSecretName:
+# whisper secret name
+whisperSecretName:
+
 
 image:
   registry: docker.apple.com
@@ -47,6 +48,10 @@ ingress:
 # Config is provided as a base64-encoded,
 # compressed content which will be projected into pods as /app/app-config.gz.
 encodedConfig: ''
+
+appleConnect:
+  appId: '99999'
+  appKey: 'valuesExampleAppKey'
 
 #notary config
 notary:
@@ -119,6 +124,3 @@ plainConfig:
     level: INFO
     loggers:
       com.apple.spark: INFO
-
-
-

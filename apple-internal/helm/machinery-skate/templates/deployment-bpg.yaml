@@ -145,20 +145,18 @@ spec:
             - name: TURI_DIRECTORY_API_KEY # BJXDGZRWbkN6sazVRHvdnY9F environment variable that notary proxy looks for turi directory api key
               valueFrom:
                 secretKeyRef: # references the Kubernetes secret we will create later
-                  name: {{ .Values.notaryAuthSecretName }}
+                  name: {{ .Values.whisperSecretName }}
                   key: turi_directory_api_key
             - name: IDMS_APP_ADMIN_PASSWORD # environment variable that notary proxy looks for the IdMS app admin password
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.appleAuthSecretName }}
+                  name: {{ .Values.whisperSecretName }}
                   key: apple_idms_app_password
           envFrom:
             - secretRef:
-                name: {{ .Values.appleAuthSecretName }}
-            - secretRef:
-                name: {{ .Values.notaryAuthSecretName }}
+                name: {{ .Values.whisperSecretName }}
           volumeMounts: # volume mounts the notary proxy config into the proxy container
-            - name: notary-proxy-configs
+            - name: notary-proxy-config
               mountPath: /app/configs/notary-proxy.yml
               subPath: notary-proxy.yml
 {{- end }}
@@ -181,9 +179,11 @@ spec:
         - name: spark-prometheus-configuration
           configMap:
             name: 'spark-prometheus'
-{{- if .Values.notary.notaryEnabled }}
-        - name: notary-proxy-configs
+        {{- if .Values.notary.notaryEnabled }}
+        - name: notary-proxy-config
           configMap:
             name: notary-proxy-config
-{{- end }}
-
+            items:
+              - key: 'notary-proxy.yml'
+                path: 'notary-proxy.yml'
+        {{- end }}
