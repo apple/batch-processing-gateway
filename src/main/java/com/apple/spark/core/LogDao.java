@@ -191,21 +191,33 @@ public class LogDao {
     String sql =
         String.format(
             "INSERT INTO %s.application_submission(submission_id, user, spark_version,"
-                + " request_body,queue) VALUES (?, ?, ?, ?,?) ON DUPLICATE KEY UPDATE user=?,"
-                + " spark_version=?, request_body=?, queue=?",
+                + " request_body, queue, arguments) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE user=?,"
+                + " spark_version=?, request_body=?, queue=?, arguments=?",
             dbName);
 
     logger.info("Executing SQL: {}", sql);
     try (PreparedStatement statement = dbConnection.getConnection().prepareStatement(sql)) {
       statement.setString(1, submissionId);
+
       statement.setString(2, user);
       statement.setString(3, submission.getSparkVersion());
       statement.setString(4, requestBody);
       statement.setString(5, submission.getQueue());
-      statement.setString(6, user);
-      statement.setString(7, submission.getSparkVersion());
-      statement.setString(8, requestBody);
-      statement.setString(9, submission.getQueue());
+      if (submission.getArguments() != null) {
+        statement.setString(6, String.join(" ", submission.getArguments()));
+      } else {
+        statement.setString(6, "");
+      }
+
+      statement.setString(7, user);
+      statement.setString(8, submission.getSparkVersion());
+      statement.setString(9, requestBody);
+      statement.setString(10, submission.getQueue());
+      if (submission.getArguments() != null) {
+        statement.setString(11, String.join(" ", submission.getArguments()));
+      } else {
+        statement.setString(11, "");
+      }
 
       statement.executeUpdate();
     } catch (Throwable ex) {
@@ -456,6 +468,7 @@ public class LogDao {
                 + "    status VARCHAR(255) NULL,\n"
                 + "    app_id VARCHAR(255) NULL,\n"
                 + "    request_body TEXT NULL,\n"
+                + "    arguments TEXT NULL,\n"
                 + "    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n"
                 + "    finished_time TIMESTAMP NULL,\n"
                 + "    start_time TIMESTAMP NULL,\n"

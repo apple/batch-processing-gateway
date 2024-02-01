@@ -55,25 +55,7 @@ public class SubmissionStatus {
       }
     }
 
-    if (this.terminationTime == null) {
-      if (this.getApplicationState() != null) {
-        if (this.getApplicationState().equals(RUNNING_STATE)
-            || this.getApplicationState().equals(SUBMITTED_STATE)) {
-          this.setDuration(System.currentTimeMillis() - getCreationTime());
-        } else {
-          /* When terminationTime is null, spark k8s operator or spark gateway will assign some other state,
-          like FAILED, SUBMISSION_FAILED, etc. In this case, we will set the duration as 0 to cover the corner case
-          */
-          this.setDuration(FAILED_SUBMISSION_DURATION);
-        }
-      } else {
-        // when termination time is null and application state is null, set the duration to 0 as
-        // well
-        this.setDuration(FAILED_SUBMISSION_DURATION);
-      }
-    } else {
-      this.setDuration(getTerminationTime() - getCreationTime());
-    }
+    setDurationByStatus();
 
     if (sparkApplicationResource.getMetadata().getLabels() != null) {
       String spotInstanceLabel = "";
@@ -109,6 +91,34 @@ public class SubmissionStatus {
       }
     }
 
+    setAppStatusIfEmpty();
+  }
+
+  // This method requires status, creationTime and TerminationTime being pre-set
+  public void setDurationByStatus() {
+    if (this.terminationTime == null) {
+      if (this.getApplicationState() != null) {
+        if (this.getApplicationState().equals(RUNNING_STATE)
+            || this.getApplicationState().equals(SUBMITTED_STATE)) {
+          this.setDuration(System.currentTimeMillis() - getCreationTime());
+        } else {
+          /* When terminationTime is null, spark k8s operator or spark gateway will assign some other state,
+          like FAILED, SUBMISSION_FAILED, etc. In this case, we will set the duration as 0 to cover the corner case
+          */
+          this.setDuration(FAILED_SUBMISSION_DURATION);
+        }
+      } else {
+        // when termination time is null and application state is null, set the duration to 0 as
+        // well
+        this.setDuration(FAILED_SUBMISSION_DURATION);
+      }
+    } else {
+      this.setDuration(getTerminationTime() - getCreationTime());
+    }
+  }
+
+  // Setting UNKNOWN state
+  public void setAppStatusIfEmpty() {
     if (this.getApplicationState() == null) {
       this.setApplicationState(Constants.UNKNOWN_STATE);
     }

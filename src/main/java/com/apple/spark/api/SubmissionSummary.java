@@ -100,20 +100,15 @@ public class SubmissionSummary extends SubmissionStatus {
       AppConfig appConfig) {
     this.copyFrom(sparkApplication);
 
-    if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())
-        && (SparkConstants.RUNNING_STATE.equalsIgnoreCase(getApplicationState())
-            || SparkConstants.SPOT_TIMEOUT_STATE.equalsIgnoreCase(getApplicationState()))) {
-      String url = ConfigUtil.getSparkUIUrl(sparkCluster, submissionId);
-      setSparkUIUrl(url);
-    } else if (SparkConstants.COMPLETED_STATE.equalsIgnoreCase(getApplicationState())
-        || SparkConstants.FAILED_STATE.equalsIgnoreCase(getApplicationState())) {
-      String url =
-          ConfigUtil.getSparkHistoryUrl(appConfig.getSparkHistoryDns(), getSparkApplicationId());
-      setSparkUIUrl(url);
-    }
+    setSparkUIUrlBasedOnState(sparkCluster, appConfig);
+
+    setAppMetricsUrlBasedOnConfig(appConfig);
+    setSplunkUrlBasedOnConfig(appConfig);
+  }
+
+  public void setAppMetricsUrlBasedOnConfig(AppConfig appConfig) {
 
     String appMetricsDashboardUrl = appConfig.getAppMetricsDashboardUrl();
-    String splunkBaseUrl = appConfig.getSplunkBaseUrl();
 
     if (StringUtils.isEmpty(appMetricsDashboardUrl)) {
       // Make Siri as the default one
@@ -125,6 +120,13 @@ public class SubmissionSummary extends SubmissionStatus {
     } else {
       logger.info(String.format("appMetricsDashboardUrl is set to: %s", appMetricsDashboardUrl));
     }
+    String fullDashboardUrl = getDashboardUrl(appMetricsDashboardUrl);
+    setApplicationMetricsUrl(fullDashboardUrl);
+  }
+
+  public void setSplunkUrlBasedOnConfig(AppConfig appConfig) {
+
+    String splunkBaseUrl = appConfig.getSplunkBaseUrl();
 
     if (StringUtils.isEmpty(splunkBaseUrl)) {
       // Make Siri as the default one
@@ -135,12 +137,22 @@ public class SubmissionSummary extends SubmissionStatus {
     } else {
       logger.info(String.format("splunkBaseUrl is set to: %s", splunkBaseUrl));
     }
-
-    String fullDashboardUrl = getDashboardUrl(appMetricsDashboardUrl);
     String fullSplunkUrl = getSplunkUrl(splunkBaseUrl);
-
-    setApplicationMetricsUrl(fullDashboardUrl);
     setSplunkUrl(fullSplunkUrl);
+  }
+
+  public void setSparkUIUrlBasedOnState(VirtualSparkClusterSpec sparkCluster, AppConfig appConfig) {
+    if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())
+        && (SparkConstants.RUNNING_STATE.equalsIgnoreCase(getApplicationState())
+            || SparkConstants.SPOT_TIMEOUT_STATE.equalsIgnoreCase(getApplicationState()))) {
+      String url = ConfigUtil.getSparkUIUrl(sparkCluster, submissionId);
+      setSparkUIUrl(url);
+    } else if (SparkConstants.COMPLETED_STATE.equalsIgnoreCase(getApplicationState())
+        || SparkConstants.FAILED_STATE.equalsIgnoreCase(getApplicationState())) {
+      String url =
+          ConfigUtil.getSparkHistoryUrl(appConfig.getSparkHistoryDns(), getSparkApplicationId());
+      setSparkUIUrl(url);
+    }
   }
 
   protected String getDashboardUrl(String appMetricsDashboardUrl) {
@@ -232,8 +244,8 @@ public class SubmissionSummary extends SubmissionStatus {
       setExecutorInstances(executorInstances);
       setExecutorMemoryGB(executorMemoryGB);
       setExecutorCores(executorCores);
-      setTotalMemoryGB(executorInstances * executorMemoryGB + driverMemoryGB);
-      setTotalCores(executorInstances * executorCores + driverCores);
+
+      setTotalResourcesBasedOnSpec();
 
       if (user != null) {
         setUser(user);
@@ -256,6 +268,13 @@ public class SubmissionSummary extends SubmissionStatus {
         }
       }
     }
+  }
+
+  // This method sets total cores and memory
+  // It assumes executorInstances, executorMemoryGB and driverMemoryGB has already been set
+  public void setTotalResourcesBasedOnSpec() {
+    setTotalMemoryGB(executorInstances * executorMemoryGB + driverMemoryGB);
+    setTotalCores(executorInstances * executorCores + driverCores);
   }
 
   public String getDagName() {
