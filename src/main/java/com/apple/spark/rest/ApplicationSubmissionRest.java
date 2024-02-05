@@ -325,8 +325,7 @@ public class ApplicationSubmissionRest extends RestBase {
             .withMonitoringSpec(request.getMonitoring())
             .withPythonVersion(request.getPythonVersion())
             .withTimeToLiveSeconds(sparkCluster.getTtlSeconds())
-            .extendSparkConf(
-                getSparkConf(submissionId, request, appConfig.getDefaultSparkConf(), sparkCluster))
+            .extendSparkConf(getSparkConf(submissionId, request, appConfig, sparkCluster))
             .withSparkUIConfiguration(getSparkUIConfiguration(submissionId, sparkCluster))
             .extendVolumes(getVolumes(request, sparkCluster))
             .extendVolumeMounts(getVolumeMounts(request, sparkCluster));

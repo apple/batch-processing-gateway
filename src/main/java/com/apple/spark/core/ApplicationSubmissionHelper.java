@@ -135,10 +135,11 @@ public class ApplicationSubmissionHelper {
   public static Map<String, String> getSparkConf(
       String submissionId,
       SubmitApplicationRequest request,
-      Map<String, String> defaultSparkConf,
+      AppConfig appConfig,
       VirtualSparkClusterSpec sparkCluster) {
 
     Map<String, String> sparkConf = null;
+    Map<String, String> defaultSparkConf = appConfig.getDefaultSparkConf();
 
     if (defaultSparkConf != null) {
       if (sparkConf == null) {
@@ -156,6 +157,32 @@ public class ApplicationSubmissionHelper {
       }
       for (Map.Entry<String, String> entry : sparkCluster.getSparkConf().entrySet()) {
         sparkConf.put(entry.getKey(), substitutionSparkConfigValue(entry.getValue(), submissionId));
+      }
+    }
+
+    String queueName = request.getQueue();
+    AppConfig.QueueConfig queueConfig =
+        Optional.ofNullable(appConfig.getQueues())
+            .flatMap(
+                queues -> queues.stream().filter(q -> q.getName().equals(queueName)).findFirst())
+            .orElse(null);
+    AppConfig.IRCConfig ircConfig = appConfig.getIrc();
+    if (queueConfig != null && ircConfig != null) {
+      if (sparkConf == null) {
+        sparkConf = new HashMap<>();
+      }
+      if (queueConfig.getIrcEnabled()) {
+        sparkConf.put("spark.sql.defaultCatalog", "iceberg");
+        sparkConf.put("spark.sql.catalog.iceberg.uri", ircConfig.getIrcEndpoint());
+        sparkConf.put("spark.sql.catalogImplementation", "in-memory");
+        if (ircConfig.getIrcSecurityEnabled()) {
+          sparkConf.put(
+              "spark.sql.catalog.iceberg.catalog-impl",
+              "org.apache.iceberg.rest.RESTNotaryCatalog");
+        } else {
+          sparkConf.put(
+              "spark.sql.catalog.iceberg.catalog-impl", "org.apache.iceberg.rest.RESTCatalog");
+        }
       }
     }
 

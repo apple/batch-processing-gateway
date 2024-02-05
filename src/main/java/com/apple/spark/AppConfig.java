@@ -646,6 +646,8 @@ public class AppConfig extends Configuration {
      */
     private Boolean notaryEnabled = false;
 
+    private Boolean ircEnabled = false;
+
     private List<String> users;
     private Long maxRunningMillis;
     private String driverNodeLabelKey;
@@ -695,6 +697,14 @@ public class AppConfig extends Configuration {
     // Setter for Notary Enabled
     public void setNotaryEnabled(Boolean notaryEnabled) {
       this.notaryEnabled = notaryEnabled;
+    }
+
+    public Boolean getIrcEnabled() {
+      return ircEnabled;
+    }
+
+    public void setIrcEnabled(Boolean ircEnabled) {
+      this.ircEnabled = ircEnabled;
     }
 
     public List<String> getUsers() {
@@ -1006,6 +1016,37 @@ public class AppConfig extends Configuration {
 
     public void setConductorEndpoint(String conductorEndpoint) {
       this.conductorEndpoint = conductorEndpoint;
+    }
+  }
+
+  @Valid private IRCConfig irc;
+
+  public IRCConfig getIrc() {
+    return irc;
+  }
+
+  public void setIrc(IRCConfig irc) {
+    this.irc = irc;
+  }
+
+  public static class IRCConfig {
+    @JsonProperty private String ircEndpoint;
+    @JsonProperty private Boolean ircSecurityEnabled;
+
+    public String getIrcEndpoint() {
+      return ircEndpoint;
+    }
+
+    public void setIrcEndpoint(String ircEndpoint) {
+      this.ircEndpoint = ircEndpoint;
+    }
+
+    public Boolean getIrcSecurityEnabled() {
+      return ircSecurityEnabled;
+    }
+
+    public void setIrcSecurityEnabled(Boolean ircSecurityEnabled) {
+      this.ircSecurityEnabled = ircSecurityEnabled;
     }
   }
 }
