@@ -663,6 +663,7 @@ public class AppConfig extends Configuration {
     private List<String> allowedAssumeRoles;
     private String defaultAssumeRole;
     private String defaultQueueArch;
+    private boolean disableRuntimeLimit;
     private boolean supportGpu = false;
 
     public String getName() {
@@ -842,6 +843,14 @@ public class AppConfig extends Configuration {
 
     public void setExecutorSpotNodeLabelKey(String executorSpotNodeLabelKey) {
       this.executorSpotNodeLabelKey = executorSpotNodeLabelKey;
+    }
+
+    public boolean isDisableRuntimeLimit() {
+      return disableRuntimeLimit;
+    }
+
+    public void setDisableRuntimeLimit(boolean disableRuntimeLimit) {
+      this.disableRuntimeLimit = disableRuntimeLimit;
     }
   }
 
