@@ -52,6 +52,7 @@ public class RangerSparkQueueClient {
         userGroupsCacheDurationInMillis != null
             ? Math.max(userGroupsCacheDurationInMillis, DEFAULT_MIN_CACHE_REFRESH_MS)
             : DEFAULT_MIN_CACHE_REFRESH_MS;
+
     if (userGroupsCacheDurationInMillis != null
         && userGroupsCacheDurationInMillis < DEFAULT_MIN_CACHE_REFRESH_MS) {
       logger.warn(
@@ -109,7 +110,6 @@ public class RangerSparkQueueClient {
   public boolean authorize(QueueAccessTypeAndUser queueAccessTypeAndUser) throws Exception {
     RangerAccessResourceImpl resource = new RangerAccessResourceImpl();
     resource.setValue(QUEUE_LABEL, queueAccessTypeAndUser.getQueue());
-
     String user = queueAccessTypeAndUser.getUser();
 
     RangerAccessRequest request =
@@ -129,13 +129,8 @@ public class RangerSparkQueueClient {
               .getAdminClient()
               .getUserStoreIfUpdated(lastKnownUserStoreVersion, lastActivationTime);
       if (userStore != null) {
-        lastKnownUserStoreVersion = userStore.getUserStoreVersion();
-        lastActivationTime = System.currentTimeMillis();
-        logger.info(
-            "User group mapping lastKnownVersion: "
-                + lastKnownUserStoreVersion
-                + " updateTime: "
-                + userStore.getUserStoreUpdateTime());
+        /* TODO: Need to fix getUserStoreIfUpdated() as it can't retrieve updated user store information correctly
+        rdar://122576178 */
         if (userStore.getUserGroupMapping() != null) {
           logger.info("Size of user group mapping is " + userStore.getUserGroupMapping().size());
           // first remove the existing users from cache that are not present in latest user store
