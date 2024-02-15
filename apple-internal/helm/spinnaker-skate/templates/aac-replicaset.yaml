@@ -108,6 +108,13 @@ spec:
                 secretKeyRef:
                   name: notary-proxy
                   key: IDMS_APP_ADMIN_PASSWORD
+{{- if .Values.notary.notaryOIDCEnabled }}
+            - name: IDMS_OIDC_CLIENT_SECRET # environment variable that notary proxy looks for the IdMS oidc client secret
+              valueFrom:
+                secretKeyRef:
+                  name: notary-proxy
+                  key: IDMS_OIDC_CLIENT_SECRET
+{{- end }}
           volumeMounts: # volume mounts the notary proxy config into the proxy container
             - name: notary-proxy-configs
               mountPath: /app/configs/notary-proxy.yml
