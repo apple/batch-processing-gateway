@@ -110,7 +110,9 @@ public class Constants {
   public static final String DNS_CONFIG_OPTION_NDOTS_VALUE = "1";
   public static final int MAX_EXECUTOR_INSTANCES = 5000;
   public static final String ADMIN_SUBMISSIONS_TAG = "admin_submissions";
-
+  public static final String LIST_JOBS_TAG = "list_jobs";
+  public static final String LIST_JOBS_SQL_RESULTS_TAG = "list_jobs_sql_results";
+  public static final String LIST_JOBS_SQL_COUNT_TAG = "list_jobs_sql_count";
   // Counters
   public static final String STATUS_CACHE_LOAD =
       String.format("statsd.%s.status_cache.load", SERVICE_ABBR);
@@ -136,6 +138,17 @@ public class Constants {
 
   public static final String MONITOR_DROPPED_EVENT =
       String.format("statsd.%s.monitor.dropped_event", SERVICE_ABBR);
+
+  public static final String LIST_JOBS_SQL_RESULTS_METRIC_NAME =
+      String.format("statsd.%s.list_jobs_sql_results.latency", SERVICE_ABBR);
+  public static final String LIST_JOBS_SQL_COUNT_METRIC_NAME =
+      String.format("statsd.%s.list_jobs_sql_count.latency", SERVICE_ABBR);
+  public static final String LIST_JOBS_LATENCY_METRIC_NAME =
+      String.format("statsd.%s.list_jobs.latency", SERVICE_ABBR);
+  public static final String LIST_JOBS_REQUEST_METRIC_NAME =
+      String.format("statsd.%s.list_jobs.request", SERVICE_ABBR);
+  public static final String LIST_JOBS_ERROR_METRIC_NAME =
+      String.format("statsd.%s.list_jobs.error", Constants.SERVICE_ABBR);
 
   public static final String DEFAULT_APPLICATION_CONTEXT_PATH = "/skatev2";
 
@@ -177,13 +190,27 @@ public class Constants {
     STATUSES_MAP.put("statuses", ALL_POSSIBLE_STATUSES);
   }
 
-  public static final List<String> SEARCHABLE_JOB_FIELDS =
-      Arrays.asList(
-          "airflow_dag_name", "application_id", "application_name", "submission_id", "user");
-
+  public static final String ASC_SORT_ORDER = "asc";
   public static final String DESC_SORT_ORDER = "desc";
-
   public static final String CREATION_TIME_LABEL = "creationTime";
+
+  // DB column names used in /admin/jobs API
+  public static final String CREATED_TIME_COLUMN_NAME = "created_time";
+  public static final String DURATION_COLUMN_NAME = "duration";
+  public static final List<String> SORTABLE_COLUMN_NAMES =
+      List.of(
+          "dag_name",
+          "app_id",
+          "app_name",
+          CREATED_TIME_COLUMN_NAME,
+          DURATION_COLUMN_NAME,
+          "queue",
+          "status",
+          "submission_id",
+          "finished_time",
+          "user");
+
+  public static final List<String> SORT_ORDERS = List.of(ASC_SORT_ORDER, DESC_SORT_ORDER);
 
   public static final String SIRI_APP_METRICS_DASHBOARD =
       "https://siri-aiml.datadoghq.com/dashboard/gpu-qb2-6zm/spark-application-metrics";

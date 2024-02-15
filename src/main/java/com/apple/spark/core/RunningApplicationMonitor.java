@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -261,6 +262,10 @@ public class RunningApplicationMonitor {
     return runningApplications.size();
   }
 
+  public ConcurrentMap<NamespaceAndName, RunningAppInfo> getRunningApplications() {
+    return runningApplications;
+  }
+
   /**
    * Kill an application by deleting the driver pod.
    *
@@ -311,7 +316,6 @@ public class RunningApplicationMonitor {
 
     private final long creationTimeMillis;
     private final long maxRunningMillis;
-
     private final long SpotTimeoutMillis;
 
     public RunningAppInfo(long creationTimeMillis, long maxRunningMillis, long spotTimeoutMillis) {

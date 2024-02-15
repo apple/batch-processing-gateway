@@ -21,6 +21,7 @@ package com.apple.spark.rest;
 
 import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_ROOT_QUEUE;
 import static com.apple.spark.core.Constants.*;
+import static org.apache.spark.network.util.JavaUtils.byteStringAsGb;
 
 import com.apple.spark.AppConfig;
 import com.apple.spark.api.GetJobsResponse;
@@ -28,6 +29,7 @@ import com.apple.spark.api.SubmissionStatus;
 import com.apple.spark.api.SubmissionSummary;
 import com.apple.spark.core.Constants;
 import com.apple.spark.core.KubernetesHelper;
+import com.apple.spark.core.LogDao;
 import com.apple.spark.core.RestStreamingOutput;
 import com.apple.spark.crd.VirtualSparkClusterSpec;
 import com.apple.spark.operator.SparkApplication;
@@ -58,6 +60,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.security.PermitAll;
@@ -69,11 +74,35 @@ import org.slf4j.LoggerFactory;
 @Produces(MediaType.APPLICATION_JSON)
 public class AdminRest extends RestBase {
   private static final Logger logger = LoggerFactory.getLogger(AdminRest.class);
+  private final LogDao logDao;
+  private String dbName;
+  private final Map<String, VirtualSparkClusterSpec> sparkClusterMap = new HashMap<>();
+  private final List<VirtualSparkClusterSpec> sparkClusters;
   private final QueueAuthorizer queueAuthorizer;
   private final Map<String, AppConfig.QueueConfig> queueConfigs;
 
   public AdminRest(AppConfig appConfig, MeterRegistry meterRegistry) {
+
     super(appConfig, meterRegistry);
+
+    String dbConnectionString = null;
+    String dbUser = null;
+    String dbPassword = null;
+
+    if (appConfig.getDbStorageSOPS() != null) {
+      dbConnectionString = appConfig.getDbStorageSOPS().getConnectionString();
+      dbUser = appConfig.getDbStorageSOPS().getUser();
+      dbPassword = appConfig.getDbStorageSOPS().getPasswordDecodedValue();
+      dbName = appConfig.getDbStorageSOPS().getDbName();
+    }
+
+    this.logDao = new LogDao(dbConnectionString, dbUser, dbPassword, dbName, meterRegistry);
+
+    this.sparkClusters = getSparkClusters();
+
+    for (VirtualSparkClusterSpec sparkCluster : this.sparkClusters) {
+      sparkClusterMap.put(sparkCluster.getId(), sparkCluster);
+    }
 
     this.queueConfigs = appConfig.getQueueConfigs();
     AppConfig.Ranger ranger = appConfig.getRanger();
@@ -127,7 +156,7 @@ public class AdminRest extends RestBase {
   }
 
   @GET
-  @Path("jobs")
+  @Path("jobsV1")
   @Timed
   @Operation(
       summary = "List job submissions from specific queue with filters",
@@ -164,7 +193,7 @@ public class AdminRest extends RestBase {
                       + "submission_id, and user.")
           @QueryParam("q")
           String q,
-      @Parameter(description = "Sort the list by the specified column. Default: creation_time")
+      @Parameter(description = "Sort the list by the specified column. Default: created_time")
           @QueryParam("sort")
           String sort,
       @Parameter(description = "Sort the data by specified sort column and order. Default: desc")
@@ -176,7 +205,6 @@ public class AdminRest extends RestBase {
           String perPage)
       // TODO: Add @Auth User
       throws IOException, KubernetesClientException {
-    requestCounters.increment(REQUEST_METRIC_NAME, Tag.of("name", ADMIN_SUBMISSIONS_TAG));
 
     logger.info("LogClientInfo: user {}, {}, Client-Version {}", "listJobs", clientVersion);
 
@@ -205,7 +233,7 @@ public class AdminRest extends RestBase {
     int pageNum = Integer.parseInt(page);
     int perPageNum = Integer.parseInt(perPage);
 
-    return listJobsImpl(
+    return listJobsImplV1(
         queue,
         submissionId,
         applicationId,
@@ -224,6 +252,119 @@ public class AdminRest extends RestBase {
         perPageNum);
   }
 
+  @GET
+  @Path("jobs")
+  @Timed
+  @Operation(
+      summary = "List job submissions with filters",
+      tags = {"Admin"})
+  @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
+  @ApiResponse(responseCode = "500", description = "Internal server error")
+  public String listJobsV2(
+      @Parameter(hidden = true) @DefaultValue("none") @HeaderParam("Client-Version")
+          String clientVersion,
+      @Parameter(description = "Filter by queue", required = true) @QueryParam("queue")
+          String queue,
+      @Parameter(description = "Filter by submission id") @QueryParam("submission_id")
+          String submissionId,
+      @Parameter(description = "Filter by application id") @QueryParam("application_id")
+          String applicationId,
+      @Parameter(description = "Filter by application name") @QueryParam("application_name")
+          String applicationName,
+      @Parameter(description = "Filter by user") @QueryParam("user") String user,
+      @Parameter(description = "Filter by airflow dag name") @QueryParam("airflow_dag_name")
+          String airflowDagName,
+      @Parameter(description = "Filter by status") @QueryParam("status") String status,
+      @Parameter(description = "Filter by creation time") @QueryParam("creation_start_epoch_ms")
+          String creationStartEpochMs,
+      @Parameter(description = "Filter by creation time") @QueryParam("creation_end_epoch_ms")
+          String creationEndEpochMs,
+      @Parameter(description = "Filter by termination time")
+          @QueryParam("termination_start_epoch_ms")
+          String terminationStartEpochMs,
+      @Parameter(description = "Filter by termination time") @QueryParam("termination_end_epoch_ms")
+          String terminationEndEpochMs,
+      @Parameter(
+              description =
+                  " Search airflow_dag_name, application_id, application_name,\n"
+                      + "submission_id, and user.")
+          @QueryParam("q")
+          String q,
+      @Parameter(description = "Sort the list by the specified column. Default: created_time")
+          @QueryParam("sort")
+          String sort,
+      @Parameter(description = "Sort the data by specified sort column and order. Default: desc")
+          @QueryParam("sort_order")
+          String sortOrder,
+      @Parameter(description = "Returns the records starting from this offset") @QueryParam("start")
+          String start,
+      @Parameter(description = "Returns this number of records") @QueryParam("num") String num,
+      @Auth User userRequested)
+      throws IOException, KubernetesClientException {
+
+    logger.info("LogClientInfo: user {}, {}, Client-Version {}", "listJobs", clientVersion);
+
+    // Apply default value
+    if (isEmpty(sort)) {
+      sort = CREATED_TIME_COLUMN_NAME;
+    }
+    if (isEmpty(sortOrder)) {
+      sortOrder = DESC_SORT_ORDER;
+    }
+    if (isEmpty(start)) {
+      // Default should start from row 0, due to it's the first row according to Mysql syntax
+      start = "0";
+    }
+    if (isEmpty(num)) {
+      num = "200";
+    }
+
+    if (!SORTABLE_COLUMN_NAMES.contains(sort)) {
+      throw new WebApplicationException(
+          String.format(
+              "Sort parameter must be one of sortable column names: %s, but it's: ",
+              String.join(", ", SORTABLE_COLUMN_NAMES), sort),
+          Response.Status.BAD_REQUEST);
+    }
+    if (!SORT_ORDERS.contains(sortOrder.toLowerCase())) {
+      throw new WebApplicationException(
+          String.format(
+              "Sort order must be one of: %s, but it's: ",
+              String.join(", ", SORT_ORDERS), sortOrder),
+          Response.Status.BAD_REQUEST);
+    }
+
+    int startInt = Integer.parseInt(start);
+    int numInt = Integer.parseInt(num);
+
+    String finalSort = sort;
+    String finalSortOrder = sortOrder;
+
+    return timerMetrics.record(
+        () ->
+            listJobsImplV2(
+                queue,
+                submissionId,
+                applicationId,
+                applicationName,
+                user,
+                airflowDagName,
+                status,
+                creationStartEpochMs,
+                creationEndEpochMs,
+                terminationStartEpochMs,
+                terminationEndEpochMs,
+                q,
+                finalSort,
+                finalSortOrder,
+                startInt,
+                numInt,
+                userRequested),
+        LIST_JOBS_LATENCY_METRIC_NAME,
+        Tag.of("name", LIST_JOBS_TAG),
+        Tag.of("user", userRequested.getName()));
+  }
+
   private boolean notEmpty(String field) {
     return (field != null) && (!field.isEmpty());
   }
@@ -233,7 +374,7 @@ public class AdminRest extends RestBase {
   }
 
   // Queue is mandatory
-  private String listJobsImpl(
+  private String listJobsImplV1(
       String queue,
       String submissionId,
       String applicationId,
@@ -270,7 +411,7 @@ public class AdminRest extends RestBase {
       }
 
       // Queue name in gateway configuration doesn't include root. prefix
-      String queueInBPGConf = queue.split(YUNIKORN_ROOT_QUEUE + ".")[1];
+      String queueInBPGConf = queueWithoutRootPrefix(queue);
       List<VirtualSparkClusterSpec> queueOnClusters =
           sparkClusters.stream()
               .filter(sparkCluster -> sparkCluster.getQueues().contains(queueInBPGConf))
@@ -358,6 +499,253 @@ public class AdminRest extends RestBase {
     }
   }
 
+  private String queueWithoutRootPrefix(String queue) {
+    return queue.split(YUNIKORN_ROOT_QUEUE + ".")[1];
+  }
+
+  // When Ranger/queue auth is not enabled in this account, return all queues;
+  // Otherwise, return the queues that either this user has list access, or queue auth is not
+  // enabled on it
+  private List<String> getAllAuthorizedQueues(User user) {
+    return this.sparkClusters.stream()
+        .flatMap(sparkCluster -> sparkCluster.getQueues().stream())
+        .distinct()
+        .filter(
+            queue ->
+                (queueAuthorizer == null)
+                    || (!queueAuthorizer.authorizeEnabled(queue))
+                    || (queueAuthorizer.isAuthorized(queue, "list", user.getName())))
+        .collect(Collectors.toList());
+  }
+
+  // Parameters' validity is checked by the caller, this method assumes they are legal, although
+  // some of them can be null
+  private String listJobsImplV2(
+      String queue,
+      String submissionId,
+      String applicationId,
+      String applicationName,
+      String user,
+      String airflowDagName,
+      String status,
+      String creationStartEpochMs,
+      String creationEndEpochMs,
+      String terminationStartEpochMs,
+      String terminationEndEpochMs,
+      String q,
+      String sort,
+      String sortOrder,
+      int start,
+      int num,
+      User userRequested)
+      throws KubernetesClientException {
+    try {
+
+      requestCounters.increment(
+          LIST_JOBS_REQUEST_METRIC_NAME,
+          Tag.of("name", LIST_JOBS_TAG),
+          Tag.of("user", userRequested.getName()));
+
+      List<SubmissionSummary> filteredSubmissions = new ArrayList<>();
+
+      StringBuilder query =
+          new StringBuilder(
+              // Only return records within the past 2 years
+              String.format(
+                  "SELECT * FROM %s.application_submission"
+                      + " WHERE %s >= CURRENT_DATE - INTERVAL '2' YEAR",
+                  dbName, CREATED_TIME_COLUMN_NAME));
+
+      // Add filters related with queue authZ
+      List<String> allAuthorizedQueues =
+          getAllAuthorizedQueues(userRequested).stream()
+              .map(qq -> String.format("queue = '%s'", qq))
+              .collect(Collectors.toList());
+      if (allAuthorizedQueues.size() != 0) {
+        query.append(" AND (");
+        query.append(String.join(" OR ", allAuthorizedQueues));
+        query.append(")");
+      }
+
+      if (!isEmpty(queue)) {
+        // We don't merge all the queue-related filters, for better readability, plus, the
+        // optimization is basic for a db engine
+        query.append(String.format(" AND queue = '%s'", queueWithoutRootPrefix(queue)));
+      }
+      if (!isEmpty(submissionId)) {
+        query.append(String.format(" AND submission_id = '%s'", submissionId));
+      }
+      if (!isEmpty(applicationId)) {
+        query.append(String.format(" AND app_id = '%s'", applicationId));
+      }
+      if (!isEmpty(applicationName)) {
+        query.append(String.format(" AND app_name = '%s'", applicationName));
+      }
+      if (!isEmpty(user)) {
+        query.append(String.format(" AND user = '%s'", user));
+      }
+      if (!isEmpty(airflowDagName)) {
+        query.append(String.format(" AND dag_name = '%s'", airflowDagName));
+      }
+      if (!isEmpty(status)) {
+        query.append(String.format(" AND status = '%s'", status));
+      }
+      if (!isEmpty(creationStartEpochMs)) {
+        query.append(String.format(" AND created_time >= %s", creationStartEpochMs));
+      }
+      if (!isEmpty(creationEndEpochMs)) {
+        query.append(String.format(" AND created_time <= %s", creationEndEpochMs));
+      }
+      if (!isEmpty(terminationStartEpochMs)) {
+        query.append(String.format(" AND finished_time >= %s", terminationStartEpochMs));
+      }
+      if (!isEmpty(terminationEndEpochMs)) {
+        query.append(String.format(" AND finished_time <= %s", terminationEndEpochMs));
+      }
+
+      if (!isEmpty(q)) {
+        query.append(
+            String.format(
+                " AND ( dag_name like '%%%s%%'"
+                    + " OR app_id like '%%%s%%'"
+                    + " OR app_name like '%%%s%%'"
+                    + " OR queue like '%%%s%%'"
+                    + " OR submission_id like '%%%s%%'"
+                    + " OR user like '%%%s%%'"
+                    + ") ",
+                q, q, q, q, q, q, q));
+      }
+
+      // Duration is not one column of the table, so the sort won't be done here, but after we get
+      // the results from DB and have it set
+      if (!sort.equals(DURATION_COLUMN_NAME)) {
+        query.append(String.format(" ORDER BY %s", sort));
+        query.append(String.format(" %s", sortOrder));
+      }
+
+      query.append(String.format(" LIMIT %s OFFSET %s", num, start));
+
+      try (ResultSet resultSet =
+          queryDBAndMeasureTime(
+              query.toString(), LIST_JOBS_SQL_RESULTS_METRIC_NAME, LIST_JOBS_SQL_RESULTS_TAG)) {
+
+        logger.info("Query for getting all eligible jobs: \n" + query + "\n");
+
+        while (resultSet.next()) {
+
+          String resultSetSubmissionId = resultSet.getString("submission_id");
+          String resultSetUser = resultSet.getString("user");
+          String resultSetSparkVersion = resultSet.getString("spark_version");
+          String resultSetQueue = resultSet.getString("queue");
+          String resultSetStatus = resultSet.getString("status");
+          String resultSetAppId = resultSet.getString("app_id");
+          Timestamp resultSetCreatedTime = resultSet.getTimestamp("created_time");
+          Timestamp resultSetFinishedTime = resultSet.getTimestamp("finished_time");
+          String resultSetAppName = resultSet.getString("app_name");
+          String resultSetDagName = resultSet.getString("dag_name");
+          int resultSetDriverCore = resultSet.getInt("driver_core");
+          int resultSetDriverMemoryMb = resultSet.getInt("driver_memory_mb");
+          int resultSetNumberExecutor = resultSet.getInt("number_executor");
+          int resultSetExecutorCore = resultSet.getInt("executor_core");
+          int resultSetExecutorMemoryMb = resultSet.getInt("executor_memory_mb");
+          String resultSetArguments = resultSet.getString("arguments");
+          // Two columns from the table are not used: start_time & task_name
+
+          SubmissionSummary summary = new SubmissionSummary();
+
+          summary.setSubmissionId(resultSetSubmissionId);
+          summary.setUser(resultSetUser);
+          summary.setSparkVersion(resultSetSparkVersion);
+          summary.setQueue(YUNIKORN_ROOT_QUEUE + "." + resultSetQueue);
+          summary.setApplicationState(resultSetStatus);
+          summary.setSparkApplicationId(resultSetAppId);
+          if (resultSetCreatedTime != null) {
+            summary.setCreationTime(resultSetCreatedTime.getTime());
+          }
+          if (resultSetFinishedTime != null) {
+            summary.setTerminationTime(resultSetFinishedTime.getTime());
+          }
+          summary.setApplicationName(resultSetAppName);
+          summary.setDagName(resultSetDagName);
+          summary.setDriverCores(resultSetDriverCore);
+          summary.setExecutorInstances(resultSetNumberExecutor);
+          summary.setExecutorCores(resultSetExecutorCore);
+
+          if (resultSetArguments != null) {
+            summary.setApplicationArguments(Arrays.asList(resultSetArguments.split(" ")));
+          }
+
+          // Set the following fields based on existing parameters
+          summary.setDurationByStatus();
+          summary.setAppStatusIfEmpty();
+
+          summary.setDriverMemoryGB(byteStringAsGb(String.format("%sM", resultSetDriverMemoryMb)));
+          summary.setExecutorMemoryGB(
+              byteStringAsGb(String.format("%sM", resultSetExecutorMemoryMb)));
+
+          // Set total cores and memory
+          summary.setTotalResourcesBasedOnSpec();
+
+          String clusterId = resultSetSubmissionId.split("-")[0];
+          VirtualSparkClusterSpec sparkCluster = sparkClusterMap.get(clusterId);
+          // It's possible that the specific Spark cluster that runs this Spark application is not
+          // part of Skate's
+          // sparkCluster configurations. This typically means the Spark cluster is already
+          // decommissioned or not served
+          // as one of the backend clusters for this gateway. Since this usually happens after a
+          // long time the job
+          // finished, and Spark eventLogs is nonetheless discarded after 10 days, we'll leave this
+          // field empty in this
+          // case
+          if (sparkCluster != null) {
+            summary.setSparkUIUrlBasedOnState(sparkCluster, appConfig);
+          }
+
+          summary.setAppMetricsUrlBasedOnConfig(appConfig);
+          summary.setSplunkUrlBasedOnConfig(appConfig);
+
+          filteredSubmissions.add(summary);
+        }
+      }
+
+      // Sort the results separately if it's on duration, as this field is not in database and set
+      // only after we retrieve the results
+      if (sort.equals(DURATION_COLUMN_NAME)) {
+        filteredSubmissions.sort(
+            Comparator.comparing(
+                SubmissionSummary::getDuration,
+                sortOrder.equals(DESC_SORT_ORDER)
+                    ? Comparator.reverseOrder()
+                    : Comparator.naturalOrder()));
+      }
+
+      // We don't need to pass in num, due to the information is inside filteredSubmissions
+      return toStringV2(filteredSubmissions, start);
+
+    } catch (SQLException | IOException ex) {
+      recordExceptionForJobs(ex, userRequested);
+      logger.warn("Exception occurs in AdminRest/Jobs: " + ex.getMessage());
+      ex.printStackTrace();
+      throw new RuntimeException(ex);
+    } catch (Throwable ex) {
+      recordExceptionForJobs(ex, userRequested);
+      throw ex;
+    }
+  }
+
+  private ResultSet queryDBAndMeasureTime(String query, String metricName, String tagName) {
+
+    return timerMetrics.record(() -> logDao.dbQuery(query), metricName, Tag.of("name", tagName));
+  }
+
+  private void recordExceptionForJobs(Throwable ex, User user) {
+    requestCounters.increment(
+        LIST_JOBS_ERROR_METRIC_NAME,
+        Tag.of("exception", ex.getClass().getSimpleName()),
+        Tag.of("name", LIST_JOBS_TAG),
+        Tag.of("user", user.getName()));
+  }
+
   private String pagenationAndToString(List<SubmissionSummary> submissions, int page, int perPage)
       throws IOException {
 
@@ -367,6 +755,20 @@ public class AdminRest extends RestBase {
     List<SubmissionSummary> jobsInPage =
         submissions.stream().skip((page - 1) * perPage).limit(perPage).collect(Collectors.toList());
     jobs.setJobs(jobsInPage);
+
+    ObjectMapper objectMapper = new ObjectMapper();
+    StringBuilder submissionStr = new StringBuilder();
+
+    submissionStr.append(objectMapper.writeValueAsString(jobs));
+    return submissionStr.toString();
+  }
+
+  private String toStringV2(List<SubmissionSummary> submissions, int start) throws IOException {
+
+    GetJobsResponse jobs = new GetJobsResponse();
+
+    jobs.set_page_info(Map.of("start", start, "num", submissions.size()));
+    jobs.setJobs(submissions);
 
     ObjectMapper objectMapper = new ObjectMapper();
     StringBuilder submissionStr = new StringBuilder();

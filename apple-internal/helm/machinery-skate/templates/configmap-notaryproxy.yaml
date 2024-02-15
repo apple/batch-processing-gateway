@@ -26,7 +26,7 @@ data:
       # if provided, the authenticated person must be a member of any of the allowed groups, otherwise a 403 will be returned.
       allowedGroupIDs: {{ .Values.notary.proxyAllowedGroupIDList | toJson }}
     appleConnect:
-      appId: {{ .Values.appleConnect.appID }}
+      appId: {{ .Values.appleConnect.appId }}
       appIdKey: {{ .Values.appleConnect.appKey }}
       rv: 1
       allowA3: true
@@ -40,4 +40,4 @@ data:
       # if domain is not provided, the notary cookie will be set to the domain is requested from.
       domain: apple.com
       audience: {{ .Values.notary.proxyAudienceList | toYaml | nindent 8 }}
-  {{- end }}
+{{- end }}

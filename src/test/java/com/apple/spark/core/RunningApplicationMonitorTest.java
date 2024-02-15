@@ -27,7 +27,9 @@ import com.apple.spark.util.DateTimeUtils;
 import io.micrometer.core.instrument.logging.LoggingMeterRegistry;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -128,5 +130,43 @@ public class RunningApplicationMonitorTest {
     // sleep for a while to make sure the application exceeds max running time
     Thread.sleep(10);
     Assert.assertTrue(runningAppInfo.exceedSpotTimeout());
+  }
+
+  @Test
+  public void testDisableMaxRuntimeLimit() {
+
+    VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
+    RunningApplicationMonitor monitor =
+        Mockito.spy(
+            new RunningApplicationMonitor(
+                sparkCluster, new Timer(true), 10000l, new LoggingMeterRegistry()));
+
+    SparkApplication sparkApplicationResource = new SparkApplication();
+    sparkApplicationResource
+        .getMetadata()
+        .setLabels(Map.of(Constants.MAX_RUNNING_MILLIS_LABEL, Long.toString(Long.MAX_VALUE)));
+    sparkApplicationResource.getMetadata().setName("test-application");
+    sparkApplicationResource.getMetadata().setNamespace("streaming-namespace");
+    sparkApplicationResource.setStatus(new SparkApplicationStatus());
+    sparkApplicationResource.getStatus().setApplicationState(new ApplicationState());
+    sparkApplicationResource.getStatus().getApplicationState().setState("RUNNING");
+    sparkApplicationResource
+        .getMetadata()
+        .setCreationTimestamp(DateTimeUtils.format(Instant.now()));
+
+    Assert.assertEquals(monitor.getApplicationCount(), 0);
+    monitor.onUpdate(null, sparkApplicationResource);
+    Assert.assertEquals(monitor.getApplicationCount(), 1);
+
+    monitor.deleteLongRunningApplications();
+    Assert.assertEquals(monitor.getApplicationCount(), 1);
+    Assert.assertEquals(
+        monitor
+            .getRunningApplications()
+            .get(new NamespaceAndName("streaming-namespace", "test-application"))
+            .getMaxRunningMillis(),
+        Long.MAX_VALUE);
+    Mockito.verify(monitor, Mockito.times(0))
+        .killApplication("streaming-namespace", "test-application");
   }
 }

@@ -90,6 +90,7 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.annotation.security.PermitAll;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -325,13 +326,7 @@ public class ApplicationSubmissionRest extends RestBase {
             .withMonitoringSpec(request.getMonitoring())
             .withPythonVersion(request.getPythonVersion())
             .withTimeToLiveSeconds(sparkCluster.getTtlSeconds())
-            .extendSparkConf(
-                getSparkConf(
-                    submissionId,
-                    request,
-                    appConfig.getDefaultSparkConf(),
-                    appConfig.getFixedSparkConf(),
-                    sparkCluster))
+            .extendSparkConf(getSparkConf(submissionId, request, appConfig, sparkCluster))
             .withSparkUIConfiguration(getSparkUIConfiguration(submissionId, sparkCluster))
             .extendVolumes(getVolumes(request, sparkCluster))
             .extendVolumeMounts(getVolumeMounts(request, sparkCluster));
@@ -454,6 +449,39 @@ public class ApplicationSubmissionRest extends RestBase {
     }
   }
 
+  long getMaxRuntimeMillis(String queue, @Nullable Map<String, String> sparkConf) {
+    long maxRunningMillis;
+    if (appConfig.getQueueConfigs().get(queue).isDisableRuntimeLimit()) {
+      maxRunningMillis = Long.MAX_VALUE;
+    } else {
+      maxRunningMillis = DEFAULT_MAX_RUNNING_MILLIS;
+    }
+    // Allow overrides from user-provided Spark config
+    if (sparkConf != null) {
+      String confValue = sparkConf.get(CONFIG_MAX_RUNNING_MILLIS);
+      if (confValue != null && !confValue.isEmpty()) {
+        try {
+          maxRunningMillis = Long.parseLong(confValue);
+        } catch (Throwable ex) {
+          throw new WebApplicationException(
+              String.format(
+                  "Invalid value for config %s: %s", CONFIG_MAX_RUNNING_MILLIS, confValue),
+              Response.Status.BAD_REQUEST);
+        }
+        // make sure max running time not exceed the configured value for the queue
+        long maxRunningMillisForQueue = getMaxRunningMillisForQueue(queue);
+        if (maxRunningMillisForQueue < maxRunningMillis) {
+          throw new WebApplicationException(
+              String.format(
+                  "maxRunningMillis %s is too large than allowed %s for queue %s",
+                  maxRunningMillis, maxRunningMillisForQueue, queue),
+              Response.Status.BAD_REQUEST);
+        }
+      }
+    }
+    return maxRunningMillis;
+  }
+
   private SubmitApplicationResponse submitSparkCRD(
       VirtualSparkClusterSpec sparkCluster,
       String submissionId,
@@ -494,30 +522,7 @@ public class ApplicationSubmissionRest extends RestBase {
           .getLabels()
           .put(QUEUE_LABEL, YUNIKORN_ROOT_QUEUE + "." + queue);
 
-      long maxRunningMillis = DEFAULT_MAX_RUNNING_MILLIS;
-      // check max running time from request
-      if (request.getSparkConf() != null) {
-        String confValue = request.getSparkConf().get(CONFIG_MAX_RUNNING_MILLIS);
-        if (confValue != null && !confValue.isEmpty()) {
-          try {
-            maxRunningMillis = Long.parseLong(confValue);
-          } catch (Throwable ex) {
-            throw new WebApplicationException(
-                String.format(
-                    "Invalid value for config %s: %s", CONFIG_MAX_RUNNING_MILLIS, confValue),
-                Response.Status.BAD_REQUEST);
-          }
-          // make sure max running time not exceed the configured value for the queue
-          long maxRunningMillisForQueue = getMaxRunningMillisForQueue(parentQueue);
-          if (maxRunningMillisForQueue < maxRunningMillis) {
-            throw new WebApplicationException(
-                String.format(
-                    "maxRunningMillis %s is too large than allowed %s for queue %s",
-                    maxRunningMillis, maxRunningMillisForQueue, queue),
-                Response.Status.BAD_REQUEST);
-          }
-        }
-      }
+      long maxRunningMillis = getMaxRuntimeMillis(parentQueue, request.getSparkConf());
       sparkApplication
           .getMetadata()
           .getLabels()
@@ -720,11 +725,17 @@ public class ApplicationSubmissionRest extends RestBase {
     requestCounters.increment(
         REQUEST_METRIC_NAME, Tag.of("name", "get_spec"), Tag.of("user", user.getName()));
     SparkApplication sparkApplication = getSparkApplicationResource(submissionId);
-    String queue = getQueueFromSparkApplication(sparkApplication);
-    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
-      queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+    SparkApplicationSpec sparkApplicationSpec = null;
+    String queue = "";
+
+    // Check if spark application exists
+    if (sparkApplication != null) {
+      queue = getQueueFromSparkApplication(sparkApplication);
+      if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
+        queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+      }
+      sparkApplicationSpec = removeEnvFromSpec(sparkApplication.getSpec());
     }
-    SparkApplicationSpec sparkApplicationSpec = removeEnvFromSpec(sparkApplication.getSpec());
     return sparkApplicationSpec;
   }
 
@@ -826,9 +837,11 @@ public class ApplicationSubmissionRest extends RestBase {
               .withName(submissionId)
               .get();
 
-      String queue = getQueueFromSparkApplication(sparkApplication);
-      if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
-        queueAuthorizer.authorize(queue, "status", user);
+      if (sparkApplication != null) {
+        String queue = getQueueFromSparkApplication(sparkApplication);
+        if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
+          queueAuthorizer.authorize(queue, "status", user);
+        }
       }
 
       context.stop();
@@ -960,11 +973,15 @@ public class ApplicationSubmissionRest extends RestBase {
 
     VirtualSparkClusterSpec sparkCluster = getSparkCluster(submissionId);
     SparkApplication sparkApplicationResource = getSparkApplicationResource(submissionId);
-    String queue = getQueueFromSparkApplication(sparkApplicationResource);
-    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
-      queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+
+    if (sparkApplicationResource != null) {
+      String queue = getQueueFromSparkApplication(sparkApplicationResource);
+      if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
+        queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+      }
     }
-    if (sparkApplicationResource.getStatus() == null
+    if (sparkApplicationResource == null
+        || sparkApplicationResource.getStatus() == null
         || sparkApplicationResource.getStatus().getDriverInfo() == null) {
       return new GetDriverInfoResponse();
     }
@@ -1019,12 +1036,14 @@ public class ApplicationSubmissionRest extends RestBase {
         Tag.of("user", user.getName()));
 
     final SparkApplication sparkApplicationResource = getSparkApplicationResource(submissionId);
-    String queue = getQueueFromSparkApplication(sparkApplicationResource);
-    if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
-      queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+    SparkApplicationSpec sparkApplicationSpec = null;
+    if (sparkApplicationResource != null) {
+      String queue = getQueueFromSparkApplication(sparkApplicationResource);
+      if (queueAuthorizer != null && queueAuthorizer.authorizeEnabled(queue)) {
+        queueAuthorizer.authorize(queue, "describe", getUserTagValue(user));
+      }
+      sparkApplicationSpec = removeEnvFromSpec(sparkApplicationResource.getSpec());
     }
-    SparkApplicationSpec sparkApplicationSpec =
-        removeEnvFromSpec(sparkApplicationResource.getSpec());
 
     ObjectMapper objectMapper =
         new ObjectMapper(
@@ -1215,7 +1234,9 @@ public class ApplicationSubmissionRest extends RestBase {
         appConfig.getQueues().stream().filter(t -> t.getName().equals(queue)).findFirst();
     if (queueConfigOptional.isPresent()) {
       AppConfig.QueueConfig queueConfig = queueConfigOptional.get();
-      if (queueConfig != null && queueConfig.getMaxRunningMillis() != null) {
+      if (queueConfig.isDisableRuntimeLimit()) {
+        return Long.MAX_VALUE;
+      } else if (queueConfig.getMaxRunningMillis() != null) {
         return queueConfig.getMaxRunningMillis();
       }
     }

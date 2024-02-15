@@ -25,11 +25,24 @@ data:
       groupIDsFilter: {{ .Values.notary.proxyGroupIDsFilter | toJson }}
       # if provided, the authenticated person must be a member of any of the allowed groups, otherwise a 403 will be returned.
       allowedGroupIDs: {{ .Values.notary.proxyAllowedGroupIDList | toJson }}
+      {{- if .Values.notary.notaryOIDCEnabled }}
+      # discoverPath exposes a unauthenticated path for clients to fetch discovery information about the service
+      # idms app config info is automatically included, customized info can be included in `discoverExtraMetadata` field
+      discoverPath: {{ .Values.notary.discoverPath }}
+      {{- end }}
     appleConnect:
       appId: {{ .Values.appleConnect.appID }}
       appIdKey: {{ .Values.appleConnect.appKey }}
       rv: 1
       allowA3: true
+    {{- if .Values.notary.notaryOIDCEnabled }}
+    oidc:
+      # clientId is the idms Oauth2 client app ID
+      clientId: {{ .Values.notary.oidc.clientId }}
+      # redirectURL must be format as `https://<your server host>/<oidc callback path>`
+      # notary proxy will parse the url and handle the redirect auth call to the <oidc callback path>
+      redirectURL: {{ .Values.notary.oidc.redirectURL }}
+    {{- end }}
     notary:
       # set this to true will allow notary application token to be validated from `Authorization` header
       allowApplication: true
@@ -38,6 +51,6 @@ data:
       # a json map representing custom claims to include in the notary token.
       claims:
       # if domain is not provided, the notary cookie will be set to the domain is requested from.
-      domain: apple.com
+      domain: {{ .Values.notary.domain }}
       audience: {{ .Values.notary.proxyAudienceList | toYaml | nindent 8 }}
 {{- end }}

@@ -4,6 +4,7 @@ import static com.apple.spark.appleintegration.ApplicationSubmissionRestIntegrat
 import static com.apple.spark.core.BatchSchedulerConstants.YUNIKORN_ROOT_QUEUE;
 
 import com.apple.spark.api.GetJobsResponse;
+import com.apple.spark.api.SubmissionSummary;
 import com.apple.spark.core.Constants;
 import com.apple.spark.util.HttpUtils;
 import java.io.IOException;
@@ -17,6 +18,8 @@ public class AdminRestIntegrationTest {
   private final SkateTestSupport testSupport = new SkateTestSupport();
 
   private String serviceRootUrl;
+
+  private String GATEWAY_CI_WITH_PREFIX = YUNIKORN_ROOT_QUEUE + "." + "gateway-ci";
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -51,8 +54,7 @@ public class AdminRestIntegrationTest {
     String fullUrl = serviceRootUrl + "/admin/queues";
     String response = HttpUtils.get(fullUrl, authHeaderName, authHeaderValue);
 
-    final String queue = YUNIKORN_ROOT_QUEUE + "." + "gateway-ci";
-    Assert.assertTrue(response.contains(queue));
+    Assert.assertTrue(response.contains(GATEWAY_CI_WITH_PREFIX));
   }
 
   @Test
@@ -64,12 +66,35 @@ public class AdminRestIntegrationTest {
     final String authHeaderName = "X-Appleconnect-Acaccountname";
     final String authHeaderValue = "raimldpi";
 
-    String fullUrl = serviceRootUrl + "/admin/jobs?queue=root.gateway-ci";
+    // Preparation: Submit a job
+    String submissionId =
+        IntegrationTestHelper.runSparkAppAndGetSubmissionId(
+            serviceRootUrl,
+            requestTemplate,
+            submitApplicationRequest -> {
+              submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
+              submitApplicationRequest.setQueue("gateway-ci");
+            });
 
-    String responseBeforeSubmissionStr = HttpUtils.get(fullUrl, authHeaderName, authHeaderValue);
-    GetJobsResponse responseBeforeSubmission =
-        HttpUtils.parseJson(responseBeforeSubmissionStr, GetJobsResponse.class);
-    int numJobsBeforeSubmission = responseBeforeSubmission.get_page_info().get("total");
+    String filterUrl =
+        serviceRootUrl + "/admin/jobs?queue=root.gateway-ci&submission_id=" + submissionId;
+    String responseFilteredStr = HttpUtils.get(filterUrl, authHeaderName, authHeaderValue);
+    GetJobsResponse responseFiltered =
+        HttpUtils.parseJson(responseFilteredStr, GetJobsResponse.class);
+
+    Assert.assertEquals((int) responseFiltered.get_page_info().get("num"), 1);
+  }
+
+  @Test
+  public void testJobsWithQueueParam() throws IOException {
+
+    String requestTemplate = "/SubmitSparkApplicationRequest_python_example.json";
+    String sparkApplication = "/SparkExampleApp.py";
+    String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
+    final String authHeaderName = "X-Appleconnect-Acaccountname";
+    final String authHeaderValue = "raimldpi";
+
+    String fullUrl = serviceRootUrl + "/admin/jobs?queue=root.gateway-ci";
 
     // Preparation: Submit a job
     String submissionId =
@@ -84,14 +109,70 @@ public class AdminRestIntegrationTest {
     String responseStr = HttpUtils.get(fullUrl, authHeaderName, authHeaderValue);
     GetJobsResponse response = HttpUtils.parseJson(responseStr, GetJobsResponse.class);
 
-    Assert.assertEquals((int) response.get_page_info().get("total"), numJobsBeforeSubmission + 1);
+    for (SubmissionSummary job : response.getJobs()) {
+      Assert.assertEquals(job.getQueue(), GATEWAY_CI_WITH_PREFIX);
+    }
+  }
 
-    String filterUrl =
-        serviceRootUrl + "/admin/jobs?queue=root.gateway-ci&submission_id=" + submissionId;
-    String responseFilteredStr = HttpUtils.get(filterUrl, authHeaderName, authHeaderValue);
-    GetJobsResponse responseFiltered =
-        HttpUtils.parseJson(responseFilteredStr, GetJobsResponse.class);
+  @Test
+  public void testJobsWithQueueAndUserParam() throws IOException {
 
-    Assert.assertEquals((int) responseFiltered.get_page_info().get("total"), 1);
+    String requestTemplate = "/SubmitSparkApplicationRequest_python_example.json";
+    String sparkApplication = "/SparkExampleApp.py";
+    String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
+    final String authHeaderName = "X-Appleconnect-Acaccountname";
+    final String authHeaderValue = "raimldpi";
+
+    String fullUrl = serviceRootUrl + "/admin/jobs?queue=root.gateway-ci&user=chenzhao_guo";
+
+    // Preparation: Submit a job
+    String submissionId =
+        IntegrationTestHelper.runSparkAppAndGetSubmissionId(
+            serviceRootUrl,
+            requestTemplate,
+            submitApplicationRequest -> {
+              submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
+              submitApplicationRequest.setQueue("gateway-ci");
+            });
+
+    String responseStr = HttpUtils.get(fullUrl, authHeaderName, authHeaderValue);
+    GetJobsResponse response = HttpUtils.parseJson(responseStr, GetJobsResponse.class);
+
+    for (SubmissionSummary job : response.getJobs()) {
+      Assert.assertEquals(job.getQueue(), GATEWAY_CI_WITH_PREFIX);
+      Assert.assertEquals(job.getUser(), "chenzhao_guo");
+    }
+  }
+
+  @Test
+  public void testJobsWithSortByParam() throws IOException {
+
+    String requestTemplate = "/SubmitSparkApplicationRequest_python_example.json";
+    String sparkApplication = "/SparkExampleApp.py";
+    String sparkApplicationFile = skateIntegrationTestResourcesFolderUrl + sparkApplication;
+    final String authHeaderName = "X-Appleconnect-Acaccountname";
+    final String authHeaderValue = "raimldpi";
+
+    String fullUrl = serviceRootUrl + "/admin/jobs?sort=duration";
+
+    // Preparation: Submit a job
+    String submissionId =
+        IntegrationTestHelper.runSparkAppAndGetSubmissionId(
+            serviceRootUrl,
+            requestTemplate,
+            submitApplicationRequest -> {
+              submitApplicationRequest.setMainApplicationFile(sparkApplicationFile);
+              submitApplicationRequest.setQueue("gateway-ci");
+            });
+
+    String responseStr = HttpUtils.get(fullUrl, authHeaderName, authHeaderValue);
+    GetJobsResponse response = HttpUtils.parseJson(responseStr, GetJobsResponse.class);
+
+    // Default order is desc
+    Long lastDuration = Long.MAX_VALUE;
+    for (SubmissionSummary job : response.getJobs()) {
+      Assert.assertTrue(job.getDuration() < lastDuration);
+      lastDuration = job.getDuration();
+    }
   }
 }

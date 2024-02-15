@@ -15,7 +15,7 @@ package:
   dockerfile:
     perApplication: false
     dockerfilePath: Dockerfile
-    
+
 security:
   scanReports:
     dockerfile:
