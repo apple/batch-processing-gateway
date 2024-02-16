@@ -60,6 +60,8 @@ notary:
   # -- Enable notary assumability check endpoint service, this valuse must be the same as the "notaryEnabled" above
   notaryAacEnabled: false
   notaryAacReplicas: 1
+  # -- For enabling OIDC, set both notaryOIDCEnabled & notaryEnabled to true
+  notaryOIDCEnabled: false
   proxyImage: docker.apple.com/polymer/notary-proxy:latest
   proxyAddGroupIDHeaders: false
   proxyGroupIDsFilter:
@@ -68,6 +70,16 @@ notary:
   proxyAudienceList:
     - aprn:apple:turi::notary:application-group:turi-platform
     - aprn:apple:turi::notary:application-group:aiml-data-platform
+    - aprn:apple:turi::notary:application-group:polymer
+  domain: apple.com
+  discoverPath: /skatev2/.discover
+  oidc:
+    # [REQUIRED] clientId is the idms Oauth2 client app ID. This doesn't have a default value, user has to set one
+    clientId: 
+    # [REQUIRED] redirectURL must be format as `https://<your server host>/<oidc callback path>`
+    # notary proxy will parse the url and handle the redirect auth call to the <oidc callback path>
+    # This doesn't have a default value, user has to set one
+    redirectURL:
 
 # For Swagger UI which visualizes API specs.
 swagger:
