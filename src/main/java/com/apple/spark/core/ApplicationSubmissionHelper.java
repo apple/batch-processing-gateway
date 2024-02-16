@@ -140,6 +140,7 @@ public class ApplicationSubmissionHelper {
 
     Map<String, String> sparkConf = null;
     Map<String, String> defaultSparkConf = appConfig.getDefaultSparkConf();
+    Map<String, String> fixedSparkConf = appConfig.getFixedSparkConf();
 
     if (defaultSparkConf != null) {
       if (sparkConf == null) {

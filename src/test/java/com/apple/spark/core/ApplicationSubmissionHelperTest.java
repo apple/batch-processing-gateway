@@ -244,7 +244,6 @@ public class ApplicationSubmissionHelperTest {
   public void getSparkConf_nonEmptyDefaultSparkConf() {
     AppConfig appConfig = new AppConfig();
     Map<String, String> defaultSparkConf = new HashMap<>();
-    Map<String, String> fixedSparkConf = null;
     defaultSparkConf.put("defaultKey1", "defaultValue1");
     defaultSparkConf.put("defaultKey2", "defaultValue2");
     appConfig.setDefaultSparkConf(defaultSparkConf);
@@ -406,6 +405,9 @@ public class ApplicationSubmissionHelperTest {
   public void getSparkConf_nonEmptyFixedSparkConf() {
     Map<String, String> defaultSparkConf = new HashMap<>();
     Map<String, String> fixedSparkConf = new HashMap<>();
+    AppConfig appConfig = new AppConfig();
+    appConfig.setDefaultSparkConf(defaultSparkConf);
+    appConfig.setFixedSparkConf(fixedSparkConf);
     defaultSparkConf.put("defaultKey1", "defaultValue1");
     defaultSparkConf.put("defaultKey2", "defaultValue2");
 
@@ -415,8 +417,7 @@ public class ApplicationSubmissionHelperTest {
     SubmitApplicationRequest request = new SubmitApplicationRequest();
     VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
     Map<String, String> sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, fixedSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
 
     Assert.assertEquals(sparkConf.get("defaultKey1"), "fixedValue1");
     Assert.assertEquals(sparkConf.get("defaultKey2"), "fixedValue2");
@@ -427,8 +428,7 @@ public class ApplicationSubmissionHelperTest {
     request.setSparkConf(requestSparkConf);
 
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, fixedSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
 
     Assert.assertEquals(sparkConf.get("defaultKey1"), "fixedValue1");
     Assert.assertEquals(sparkConf.get("defaultKey2"), "fixedValue2");
