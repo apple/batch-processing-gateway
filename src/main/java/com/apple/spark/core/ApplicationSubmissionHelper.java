@@ -176,6 +176,9 @@ public class ApplicationSubmissionHelper {
         sparkConf.put("spark.sql.defaultCatalog", "iceberg");
         sparkConf.put("spark.sql.catalog.iceberg.uri", ircConfig.getIrcEndpoint());
         sparkConf.put("spark.sql.catalogImplementation", "in-memory");
+        if (queueConfig.getIrcWarehouse() != null) {
+          sparkConf.put("spark.sql.warehouse.dir", queueConfig.getIrcWarehouse());
+        }
         if (ircConfig.getIrcSecurityEnabled()) {
           sparkConf.put(
               "spark.sql.catalog.iceberg.catalog-impl",

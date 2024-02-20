@@ -104,6 +104,13 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.whisperSecretName }}
                   key: apple_idms_app_password
+          {{- if .Values.notary.notaryOIDCEnabled }}
+            - name: IDMS_OIDC_CLIENT_SECRET # environment variable that notary proxy looks for the IdMS oidc client secret
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.whisperSecretName }}
+                  key: appl_idms_oidc_client_secret
+          {{- end }}
           envFrom:
             - secretRef:
                 name: {{ .Values.whisperSecretName }}

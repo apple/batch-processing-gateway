@@ -656,6 +656,7 @@ public class AppConfig extends Configuration {
     private Boolean notaryEnabled = false;
 
     private Boolean ircEnabled = false;
+    private String ircWarehouse;
 
     private List<String> users;
     private Long maxRunningMillis;
@@ -715,6 +716,14 @@ public class AppConfig extends Configuration {
 
     public void setIrcEnabled(Boolean ircEnabled) {
       this.ircEnabled = ircEnabled;
+    }
+
+    public String getIrcWarehouse() {
+      return ircWarehouse;
+    }
+
+    public void setIrcWarehouse(String ircWarehouse) {
+      this.ircWarehouse = ircWarehouse;
     }
 
     public List<String> getUsers() {

@@ -435,6 +435,57 @@ public class ApplicationSubmissionHelperTest {
   }
 
   @Test
+  public void getSparkConf_enableIRCWithWarehouse() {
+    AppConfig appConfig = new AppConfig();
+    Map<String, String> defaultSparkConf = new HashMap<>();
+    defaultSparkConf.put("spark.sql.warehouse.dir", "s3a://hms/warehouse");
+    appConfig.setDefaultSparkConf(defaultSparkConf);
+    AppConfig.QueueConfig queueConfig = new AppConfig.QueueConfig();
+    queueConfig.setName("poc");
+    queueConfig.setIrcEnabled(true);
+    queueConfig.setIrcWarehouse("s3a://update-me/warehouse");
+    appConfig.setQueues(List.of(queueConfig));
+    AppConfig.IRCConfig ircConfig = new AppConfig.IRCConfig();
+    ircConfig.setIrcEndpoint("https://irc.apple.com");
+    ircConfig.setIrcSecurityEnabled(true);
+    appConfig.setIrc(ircConfig);
+
+    SubmitApplicationRequest request = new SubmitApplicationRequest();
+    request.setQueue("poc");
+
+    VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
+
+    Map<String, String> sparkConf =
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
+    Assert.assertEquals(sparkConf.get("spark.sql.warehouse.dir"), "s3a://update-me/warehouse");
+  }
+
+  @Test
+  public void getSparkConf_enableIRCNoWarehouse() {
+    AppConfig appConfig = new AppConfig();
+    Map<String, String> defaultSparkConf = new HashMap<>();
+    defaultSparkConf.put("spark.sql.warehouse.dir", "s3a://hms/warehouse");
+    appConfig.setDefaultSparkConf(defaultSparkConf);
+    AppConfig.QueueConfig queueConfig = new AppConfig.QueueConfig();
+    queueConfig.setName("poc");
+    queueConfig.setIrcEnabled(true);
+    appConfig.setQueues(List.of(queueConfig));
+    AppConfig.IRCConfig ircConfig = new AppConfig.IRCConfig();
+    ircConfig.setIrcEndpoint("https://irc.apple.com");
+    ircConfig.setIrcSecurityEnabled(true);
+    appConfig.setIrc(ircConfig);
+
+    SubmitApplicationRequest request = new SubmitApplicationRequest();
+    request.setQueue("poc");
+
+    VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
+
+    Map<String, String> sparkConf =
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
+    Assert.assertEquals(sparkConf.get("spark.sql.warehouse.dir"), "s3a://hms/warehouse");
+  }
+
+  @Test
   public void getVolumes() {
     SubmitApplicationRequest request = new SubmitApplicationRequest();
     VirtualSparkClusterSpec sparkCluster = new VirtualSparkClusterSpec();
