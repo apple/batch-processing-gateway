@@ -1,9 +1,12 @@
-defaultSparkConf:
+defaultSparkConf: # optional default spark configuration example, can be reset / overriden by client api call 
   spark.kubernetes.submission.connectionTimeout: 30000
   spark.kubernetes.submission.requestTimeout: 30000
   spark.kubernetes.driver.connectionTimeout: 30000
   spark.kubernetes.driver.requestTimeout: 30000
   spark.sql.debug.maxToStringFields: 75
+fixedSparkConf: # optional fixed / enforced spark configuration example, cannot be reset by client api call 
+  spark.authenticate: true
+  spark.network.crypto.enabled: true
 
 sparkClusters:
   - weight: 100
