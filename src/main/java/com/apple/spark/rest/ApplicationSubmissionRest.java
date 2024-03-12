@@ -71,7 +71,6 @@ import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -156,7 +155,8 @@ public class ApplicationSubmissionRest extends RestBase {
             AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
             try {
               GetSubmissionStatusResponse response =
-                  getStatusImplWithoutCache(getSparkApplicationResource(submissionId), submissionId, sparkCluster);
+                  getStatusImplWithoutCache(
+                      getSparkApplicationResource(submissionId), submissionId, sparkCluster);
               return new GetSubmissionStatusResponseCacheValue(response);
             } catch (Throwable ex) {
               requestCounters.increment(
@@ -296,8 +296,7 @@ public class ApplicationSubmissionRest extends RestBase {
             .withDeps(request.getDeps())
             .withPythonVersion(request.getPythonVersion())
             .withTimeToLiveSeconds(sparkCluster.getTtlSeconds())
-            .extendSparkConf(
-                getSparkConf(submissionId, request, appConfig.getDefaultSparkConf(), sparkCluster))
+            .extendSparkConf(getSparkConf(submissionId, request, appConfig, sparkCluster))
             .withSparkUIConfiguration(getSparkUIConfiguration(submissionId, sparkCluster))
             .extendVolumes(getVolumes(request, sparkCluster));
 
@@ -346,23 +345,18 @@ public class ApplicationSubmissionRest extends RestBase {
         registry.timer(this.getClass().getSimpleName() + ".submitApplication.k8s-time");
 
     try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
-         com.codahale.metrics.Timer.Context context = timer.time()) {
+        com.codahale.metrics.Timer.Context context = timer.time()) {
       SparkApplication sparkApplication = new SparkApplication();
       sparkApplication.setApiVersion(SparkConstants.SPARK_OPERATOR_API_VERSION);
       sparkApplication.setKind(SparkConstants.SPARK_APPLICATION_KIND);
       sparkApplication.getMetadata().setName(submissionId);
-      sparkApplication
-          .getMetadata()
-          .setNamespace(sparkCluster.getSparkApplicationNamespace());
+      sparkApplication.getMetadata().setNamespace(sparkCluster.getSparkApplicationNamespace());
 
       if (sparkApplication.getMetadata().getLabels() == null) {
         sparkApplication.getMetadata().setLabels(new HashMap<>());
       }
       if (sparkSpec.getProxyUser() != null) {
-        sparkApplication
-            .getMetadata()
-            .getLabels()
-            .put(PROXY_USER_LABEL, sparkSpec.getProxyUser());
+        sparkApplication.getMetadata().getLabels().put(PROXY_USER_LABEL, sparkSpec.getProxyUser());
       }
       if (request.getApplicationName() != null) {
         String applicationNameLabelValue =
@@ -417,7 +411,7 @@ public class ApplicationSubmissionRest extends RestBase {
       sparkApplication.setSpec(sparkSpec);
 
       MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
-              sparkApplicationClient =
+          sparkApplicationClient =
               client.resources(SparkApplication.class, SparkApplicationResourceList.class);
 
       sparkApplicationClient.create(sparkApplication);
@@ -467,13 +461,13 @@ public class ApplicationSubmissionRest extends RestBase {
     try (KubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
         com.codahale.metrics.Timer.Context context = timer.time()) {
       MixedOperation<SparkApplication, SparkApplicationResourceList, Resource<SparkApplication>>
-              sparkApplicationClient =
+          sparkApplicationClient =
               client.resources(SparkApplication.class, SparkApplicationResourceList.class);
 
       sparkApplicationClient
-              .inNamespace(sparkCluster.getSparkApplicationNamespace())
-              .withName(submissionId)
-              .delete();
+          .inNamespace(sparkCluster.getSparkApplicationNamespace())
+          .withName(submissionId)
+          .delete();
       context.stop();
       return new DeleteSubmissionResponse();
     }
@@ -513,8 +507,7 @@ public class ApplicationSubmissionRest extends RestBase {
     requestCounters.increment(
         REQUEST_METRIC_NAME, Tag.of("name", "get_spec"), Tag.of("user", user.getName()));
     SparkApplication sparkApplication = getSparkApplicationResource(submissionId);
-    SparkApplicationSpec sparkApplicationSpec =
-        removeEnvFromSpec(sparkApplication.getSpec());
+    SparkApplicationSpec sparkApplicationSpec = removeEnvFromSpec(sparkApplication.getSpec());
     return sparkApplicationSpec;
   }
 
@@ -558,13 +551,15 @@ public class ApplicationSubmissionRest extends RestBase {
           STATUS_CACHE_GET_FAILURE, Tag.of("exception", ex.getClass().getSimpleName()));
       logger.warn(String.format("Failed to get status from cache for %s", submissionId), ex);
       AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
-      return getStatusImplWithoutCache(getSparkApplicationResource(submissionId), submissionId, sparkCluster);
+      return getStatusImplWithoutCache(
+          getSparkApplicationResource(submissionId), submissionId, sparkCluster);
     }
 
     if (cacheValue == null) {
       logger.warn("Got null status cache value for {}", submissionId);
       AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
-      return getStatusImplWithoutCache(getSparkApplicationResource(submissionId), submissionId, sparkCluster);
+      return getStatusImplWithoutCache(
+          getSparkApplicationResource(submissionId), submissionId, sparkCluster);
     }
 
     long cacheElapsedTime = System.currentTimeMillis() - cacheValue.getCreatedTimeMillis();
@@ -575,7 +570,8 @@ public class ApplicationSubmissionRest extends RestBase {
       logger.warn(
           "Got expired status cache value ({} millis) for {}", cacheElapsedTime, submissionId);
       AppConfig.SparkCluster sparkCluster = getSparkCluster(submissionId);
-      return getStatusImplWithoutCache(getSparkApplicationResource(submissionId), submissionId, sparkCluster);
+      return getStatusImplWithoutCache(
+          getSparkApplicationResource(submissionId), submissionId, sparkCluster);
     }
 
     if (cacheValue.getResponse() == null) {
@@ -600,65 +596,64 @@ public class ApplicationSubmissionRest extends RestBase {
   }
 
   private GetSubmissionStatusResponse getStatusImplWithoutCache(
-          SparkApplication sparkApplication, String submissionId, AppConfig.SparkCluster sparkCluster) {
+      SparkApplication sparkApplication, String submissionId, AppConfig.SparkCluster sparkCluster) {
 
-      if (sparkApplication == null) {
-        throw new WebApplicationException(
-            String.format("Application submission %s not found", submissionId),
-            Response.Status.NOT_FOUND);
-      }
-      GetSubmissionStatusResponse response = new GetSubmissionStatusResponse();
-      response.copyFrom(sparkApplication);
+    if (sparkApplication == null) {
+      throw new WebApplicationException(
+          String.format("Application submission %s not found", submissionId),
+          Response.Status.NOT_FOUND);
+    }
+    GetSubmissionStatusResponse response = new GetSubmissionStatusResponse();
+    response.copyFrom(sparkApplication);
 
-      if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())
-          && SparkConstants.RUNNING_STATE.equalsIgnoreCase(response.getApplicationState())) {
-        String url = ConfigUtil.getSparkUIUrl(sparkCluster, submissionId);
-        response.setSparkUIUrl(url);
-      }
+    if (!StringUtils.isEmpty(sparkCluster.getSparkUIUrl())
+        && SparkConstants.RUNNING_STATE.equalsIgnoreCase(response.getApplicationState())) {
+      String url = ConfigUtil.getSparkUIUrl(sparkCluster, submissionId);
+      response.setSparkUIUrl(url);
+    }
 
-      // add more information regarding max running time
-      String extraMessage = "";
-      if (sparkApplication.getMetadata().getLabels() != null) {
-        String maxRunningMillisLabel =
-            sparkApplication.getMetadata().getLabels().get(MAX_RUNNING_MILLIS_LABEL);
-        if (maxRunningMillisLabel != null && !maxRunningMillisLabel.isEmpty()) {
-          try {
-            long maxRunningMillis = Long.parseLong(maxRunningMillisLabel);
-            if (maxRunningMillis > DEFAULT_MAX_RUNNING_MILLIS) {
-              extraMessage =
-                  String.format(
-                      "(warning: application is configured with custom max running time: %s millis,"
-                          + " but might be still killed in certain situations like maintenance)",
-                      maxRunningMillis);
-            }
-            if (FAILED_STATE.equals(response.getApplicationState())) {
-              if (response.getTerminationTime() != null && response.getCreationTime() != null) {
-                long runningMillis = response.getTerminationTime() - response.getCreationTime();
-                // check whether running time is close to max running time allowed,
-                // if they are close, add extra information in response
-                if (runningMillis >= maxRunningMillis - TimeUnit.MINUTES.toMillis(2)) {
-                  extraMessage = "(application might be killed because of running too long)";
-                }
+    // add more information regarding max running time
+    String extraMessage = "";
+    if (sparkApplication.getMetadata().getLabels() != null) {
+      String maxRunningMillisLabel =
+          sparkApplication.getMetadata().getLabels().get(MAX_RUNNING_MILLIS_LABEL);
+      if (maxRunningMillisLabel != null && !maxRunningMillisLabel.isEmpty()) {
+        try {
+          long maxRunningMillis = Long.parseLong(maxRunningMillisLabel);
+          if (maxRunningMillis > DEFAULT_MAX_RUNNING_MILLIS) {
+            extraMessage =
+                String.format(
+                    "(warning: application is configured with custom max running time: %s millis,"
+                        + " but might be still killed in certain situations like maintenance)",
+                    maxRunningMillis);
+          }
+          if (FAILED_STATE.equals(response.getApplicationState())) {
+            if (response.getTerminationTime() != null && response.getCreationTime() != null) {
+              long runningMillis = response.getTerminationTime() - response.getCreationTime();
+              // check whether running time is close to max running time allowed,
+              // if they are close, add extra information in response
+              if (runningMillis >= maxRunningMillis - TimeUnit.MINUTES.toMillis(2)) {
+                extraMessage = "(application might be killed because of running too long)";
               }
             }
-          } catch (Throwable ex) {
-            logger.warn(
-                String.format("Failed to check max running mills for %s", submissionId), ex);
           }
+        } catch (Throwable ex) {
+          logger.warn(String.format("Failed to check max running mills for %s", submissionId), ex);
         }
       }
-      if (extraMessage != null && !extraMessage.isEmpty()) {
-        String consolidatedMessage = response.getApplicationErrorMessage();
-        if (consolidatedMessage == null) {
-          consolidatedMessage = "";
-        } else {
-          consolidatedMessage = consolidatedMessage + " ";
-        }
-        consolidatedMessage = consolidatedMessage + extraMessage;
-        response.setApplicationErrorMessage(consolidatedMessage);
+    }
+    if (extraMessage != null && !extraMessage.isEmpty()) {
+      String consolidatedMessage = response.getApplicationErrorMessage();
+      if (consolidatedMessage == null) {
+        consolidatedMessage = "";
+      } else {
+        consolidatedMessage = consolidatedMessage + " ";
       }
+      consolidatedMessage = consolidatedMessage + extraMessage;
+      response.setApplicationErrorMessage(consolidatedMessage);
+    }
 
-      return response;
+    return response;
   }
 
   @GET()
@@ -750,8 +745,7 @@ public class ApplicationSubmissionRest extends RestBase {
         Tag.of("name", "describe_application"),
         Tag.of("user", user.getName()));
 
-    final SparkApplication sparkApplicationResource =
-        getSparkApplicationResource(submissionId);
+    final SparkApplication sparkApplicationResource = getSparkApplicationResource(submissionId);
     SparkApplicationSpec sparkApplicationSpec =
         removeEnvFromSpec(sparkApplicationResource.getSpec());
 
@@ -864,12 +858,12 @@ public class ApplicationSubmissionRest extends RestBase {
     try (DefaultKubernetesClient client = KubernetesHelper.getK8sClient(sparkCluster);
         com.codahale.metrics.Timer.Context context = timer.time()) {
       EventList eventList =
-              client
-                      .v1()
-                      .events()
-                      .inNamespace(sparkCluster.getSparkApplicationNamespace())
-                      .withFields(fields)
-                      .list();
+          client
+              .v1()
+              .events()
+              .inNamespace(sparkCluster.getSparkApplicationNamespace())
+              .withFields(fields)
+              .list();
       context.stop();
       if (eventList == null) {
         return Collections.EMPTY_LIST;
