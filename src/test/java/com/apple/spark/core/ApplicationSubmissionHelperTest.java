@@ -324,6 +324,45 @@ public class ApplicationSubmissionHelperTest {
   }
 
   @Test
+  public void getSparkConf_nonEmptyFixedSparkConf() {
+    Map<String, String> defaultSparkConf = new HashMap<>();
+    Map<String, String> fixedSparkConf = new HashMap<>();
+    AppConfig appConfig = new AppConfig();
+    appConfig.setDefaultSparkConf(defaultSparkConf);
+    appConfig.setFixedSparkConf(fixedSparkConf);
+
+    // Given default configuration
+    defaultSparkConf.put("defaultKey1", "defaultValue1");
+    defaultSparkConf.put("defaultKey2", "defaultValue2");
+
+    // Overriding default configuration with fixed config
+    fixedSparkConf.put("defaultKey1", "fixedValue1");
+    fixedSparkConf.put("defaultKey2", "fixedValue2");
+
+    SubmitApplicationRequest request = new SubmitApplicationRequest();
+    AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
+    Map<String, String> sparkConf =
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
+
+    // Assert fixed config takes precedence over the default config
+    Assert.assertEquals(sparkConf.get("defaultKey1"), "fixedValue1");
+    Assert.assertEquals(sparkConf.get("defaultKey2"), "fixedValue2");
+
+    Map<String, String> requestSparkConf = new HashMap<>();
+    // Set client / request provided config
+    requestSparkConf.put("defaultKey1", "requestValue1");
+    requestSparkConf.put("defaultKey2", "requestValue2");
+    request.setSparkConf(requestSparkConf);
+
+    sparkConf =
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
+
+    // Assert fixed config takes precedence over the client requested config
+    Assert.assertEquals(sparkConf.get("defaultKey1"), "fixedValue1");
+    Assert.assertEquals(sparkConf.get("defaultKey2"), "fixedValue2");
+  }
+
+  @Test
   public void getVolumes() {
     SubmitApplicationRequest request = new SubmitApplicationRequest();
     AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();

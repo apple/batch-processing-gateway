@@ -35,6 +35,7 @@ public class AppConfig extends Configuration {
 
   private String applicationContextPath;
   private Map<String, String> defaultSparkConf;
+  private Map<String, String> fixedSparkConf;
 
   private List<SparkCluster> sparkClusters;
 
@@ -82,6 +83,14 @@ public class AppConfig extends Configuration {
 
   public void setDefaultSparkConf(Map<String, String> defaultSparkConf) {
     this.defaultSparkConf = defaultSparkConf;
+  }
+
+  public void setFixedSparkConf(Map<String, String> fixedSparkConf) {
+    this.fixedSparkConf = fixedSparkConf;
+  }
+
+  public Map<String, String> getFixedSparkConf() {
+    return this.fixedSparkConf;
   }
 
   public List<SparkCluster> getSparkClusters() {
