@@ -148,10 +148,12 @@ public class ApplicationSubmissionHelper {
   public static Map<String, String> getSparkConf(
       String submissionId,
       SubmitApplicationRequest request,
-      Map<String, String> defaultSparkConf,
+      AppConfig appConfig,
       AppConfig.SparkCluster sparkCluster) {
 
     Map<String, String> sparkConf = null;
+    Map<String, String> defaultSparkConf = appConfig.getDefaultSparkConf();
+    Map<String, String> fixedSparkConf = appConfig.getFixedSparkConf();
 
     if (defaultSparkConf != null) {
       if (sparkConf == null) {
@@ -180,6 +182,13 @@ public class ApplicationSubmissionHelper {
       for (Map.Entry<String, String> entry : request.getSparkConf().entrySet()) {
         sparkConf.put(entry.getKey(), entry.getValue());
       }
+    }
+
+    if (fixedSparkConf != null) {
+      if (sparkConf == null) {
+        sparkConf = new HashMap<>();
+      }
+      sparkConf.putAll(fixedSparkConf);
     }
 
     if (!StringUtils.isEmpty(request.getApplicationName())) {

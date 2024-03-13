@@ -95,35 +95,33 @@ public class ApplicationSubmissionHelperTest {
 
   @Test
   public void getSparkConf_nullDefaultSparkConf() {
+    AppConfig appConfig = new AppConfig();
     Map<String, String> defaultSparkConf = null;
+    appConfig.setDefaultSparkConf(defaultSparkConf);
 
     SubmitApplicationRequest request = new SubmitApplicationRequest();
     AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
     Map<String, String> sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
 
     Assert.assertNull(sparkConf);
 
     sparkCluster.setSparkConf(new HashMap<>());
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 0);
 
     sparkCluster.getSparkConf().put("key1", "value1");
     sparkCluster.getSparkConf().put("key2", "value2");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 2);
     Assert.assertEquals(sparkConf.get("key1"), "value1");
     Assert.assertEquals(sparkConf.get("key2"), "value2");
 
     request.setSparkConf(new HashMap<>());
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 2);
     Assert.assertEquals(sparkConf.get("key1"), "value1");
     Assert.assertEquals(sparkConf.get("key2"), "value2");
@@ -131,8 +129,7 @@ public class ApplicationSubmissionHelperTest {
     request.getSparkConf().put("key2", "value2_overwrite");
     request.getSparkConf().put("key3", "value3");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 3);
     Assert.assertEquals(sparkConf.get("key1"), "value1");
     Assert.assertEquals(sparkConf.get("key2"), "value2_overwrite");
@@ -144,8 +141,7 @@ public class ApplicationSubmissionHelperTest {
     // set application name in request, then spark conf could contain the spark.app.name config
     request.setApplicationName("app1");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 4);
     Assert.assertEquals(sparkConf.get("key1"), "value1");
     Assert.assertEquals(sparkConf.get("key2"), "value2_overwrite");
@@ -157,41 +153,38 @@ public class ApplicationSubmissionHelperTest {
         .getSparkConf()
         .put("key-with-submission-id", "value-{spark-application-resource-name}");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.get("key-with-submission-id"), "value-submission1");
   }
 
   @Test
   public void getSparkConf_emptyDefaultSparkConf() {
+    AppConfig appConfig = new AppConfig();
     Map<String, String> defaultSparkConf = new HashMap<>();
+    appConfig.setDefaultSparkConf(defaultSparkConf);
 
     SubmitApplicationRequest request = new SubmitApplicationRequest();
     AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
     Map<String, String> sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertTrue(sparkConf.isEmpty());
 
     sparkCluster.setSparkConf(new HashMap<>());
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 0);
 
     sparkCluster.getSparkConf().put("key1", "value1");
     sparkCluster.getSparkConf().put("key2", "value2");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 2);
     Assert.assertEquals(sparkConf.get("key1"), "value1");
     Assert.assertEquals(sparkConf.get("key2"), "value2");
 
     request.setSparkConf(new HashMap<>());
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 2);
     Assert.assertEquals(sparkConf.get("key1"), "value1");
     Assert.assertEquals(sparkConf.get("key2"), "value2");
@@ -199,8 +192,7 @@ public class ApplicationSubmissionHelperTest {
     request.getSparkConf().put("key2", "value2_overwrite");
     request.getSparkConf().put("key3", "value3");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 3);
     Assert.assertEquals(sparkConf.get("key1"), "value1");
     Assert.assertEquals(sparkConf.get("key2"), "value2_overwrite");
@@ -212,8 +204,7 @@ public class ApplicationSubmissionHelperTest {
     // set application name in request, then spark conf could contain the spark.app.name config
     request.setApplicationName("app1");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 4);
     Assert.assertEquals(sparkConf.get("key1"), "value1");
     Assert.assertEquals(sparkConf.get("key2"), "value2_overwrite");
@@ -225,37 +216,35 @@ public class ApplicationSubmissionHelperTest {
         .getSparkConf()
         .put("key-with-submission-id", "value-{spark-application-resource-name}");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.get("key-with-submission-id"), "value-submission1");
   }
 
   @Test
   public void getSparkConf_nonEmptyDefaultSparkConf() {
+    AppConfig appConfig = new AppConfig();
     Map<String, String> defaultSparkConf = new HashMap<>();
     defaultSparkConf.put("defaultKey1", "defaultValue1");
     defaultSparkConf.put("defaultKey2", "defaultValue2");
+    appConfig.setDefaultSparkConf(defaultSparkConf);
 
     SubmitApplicationRequest request = new SubmitApplicationRequest();
     AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
     Map<String, String> sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 2);
     Assert.assertEquals(sparkConf, defaultSparkConf);
 
     sparkCluster.setSparkConf(new HashMap<>());
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 2);
     Assert.assertEquals(sparkConf, defaultSparkConf);
 
     sparkCluster.getSparkConf().put("key1", "value1");
     sparkCluster.getSparkConf().put("key2", "value2");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 4);
     Assert.assertEquals(sparkConf.get("defaultKey1"), "defaultValue1");
     Assert.assertEquals(sparkConf.get("defaultKey2"), "defaultValue2");
@@ -264,8 +253,7 @@ public class ApplicationSubmissionHelperTest {
 
     request.setSparkConf(new HashMap<>());
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 4);
     Assert.assertEquals(sparkConf.get("defaultKey1"), "defaultValue1");
     Assert.assertEquals(sparkConf.get("defaultKey2"), "defaultValue2");
@@ -275,8 +263,7 @@ public class ApplicationSubmissionHelperTest {
     request.getSparkConf().put("key2", "value2_overwrite");
     request.getSparkConf().put("key3", "value3");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 5);
     Assert.assertEquals(sparkConf.get("defaultKey1"), "defaultValue1");
     Assert.assertEquals(sparkConf.get("defaultKey2"), "defaultValue2");
@@ -287,8 +274,7 @@ public class ApplicationSubmissionHelperTest {
     // spark cluster's spark conf overwrites default spark conf
     sparkCluster.getSparkConf().put("defaultKey2", "defaultValue2_overwrite");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 5);
     Assert.assertEquals(sparkConf.get("defaultKey1"), "defaultValue1");
     Assert.assertEquals(sparkConf.get("defaultKey2"), "defaultValue2_overwrite");
@@ -299,8 +285,7 @@ public class ApplicationSubmissionHelperTest {
     // submission request's spark conf overwrites default spark conf
     request.getSparkConf().put("defaultKey1", "defaultValue1_overwrite");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 5);
     Assert.assertEquals(sparkConf.get("defaultKey1"), "defaultValue1_overwrite");
     Assert.assertEquals(sparkConf.get("defaultKey2"), "defaultValue2_overwrite");
@@ -314,8 +299,7 @@ public class ApplicationSubmissionHelperTest {
     // set application name in request, then spark conf could contain the spark.app.name config
     request.setApplicationName("app1");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.size(), 6);
     Assert.assertEquals(sparkConf.get("defaultKey1"), "defaultValue1_overwrite");
     Assert.assertEquals(sparkConf.get("defaultKey2"), "defaultValue2_overwrite");
@@ -327,8 +311,7 @@ public class ApplicationSubmissionHelperTest {
     // check submission id populated correctly from default spark config
     defaultSparkConf.put("key-with-submission-id", "value-{spark-application-resource-name}");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.get("key-with-submission-id"), "value-submission1");
 
     // check submission id populated correctly from spark config inside spark cluster
@@ -336,9 +319,47 @@ public class ApplicationSubmissionHelperTest {
         .getSparkConf()
         .put("key-with-submission-id", "value2-{spark-application-resource-name}");
     sparkConf =
-        ApplicationSubmissionHelper.getSparkConf(
-            "submission1", request, defaultSparkConf, sparkCluster);
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
     Assert.assertEquals(sparkConf.get("key-with-submission-id"), "value2-submission1");
+  }
+
+  @Test
+  public void getSparkConf_nonEmptyFixedSparkConf() {
+    Map<String, String> defaultSparkConf = new HashMap<>();
+    Map<String, String> fixedSparkConf = new HashMap<>();
+    AppConfig appConfig = new AppConfig();
+    appConfig.setDefaultSparkConf(defaultSparkConf);
+    appConfig.setFixedSparkConf(fixedSparkConf);
+
+    // Given default configuration
+    defaultSparkConf.put("defaultKey1", "defaultValue1");
+    defaultSparkConf.put("defaultKey2", "defaultValue2");
+
+    // Overriding default configuration with fixed config
+    fixedSparkConf.put("defaultKey1", "fixedValue1");
+    fixedSparkConf.put("defaultKey2", "fixedValue2");
+
+    SubmitApplicationRequest request = new SubmitApplicationRequest();
+    AppConfig.SparkCluster sparkCluster = new AppConfig.SparkCluster();
+    Map<String, String> sparkConf =
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
+
+    // Assert fixed config takes precedence over the default config
+    Assert.assertEquals(sparkConf.get("defaultKey1"), "fixedValue1");
+    Assert.assertEquals(sparkConf.get("defaultKey2"), "fixedValue2");
+
+    Map<String, String> requestSparkConf = new HashMap<>();
+    // Set client / request provided config
+    requestSparkConf.put("defaultKey1", "requestValue1");
+    requestSparkConf.put("defaultKey2", "requestValue2");
+    request.setSparkConf(requestSparkConf);
+
+    sparkConf =
+        ApplicationSubmissionHelper.getSparkConf("submission1", request, appConfig, sparkCluster);
+
+    // Assert fixed config takes precedence over the client requested config
+    Assert.assertEquals(sparkConf.get("defaultKey1"), "fixedValue1");
+    Assert.assertEquals(sparkConf.get("defaultKey2"), "fixedValue2");
   }
 
   @Test

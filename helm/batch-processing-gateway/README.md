@@ -51,3 +51,14 @@ At this point you'd need to manually create BPG configs, but you may use the tem
 - `config.yaml.j2`: A template that can be used by tools to generate BPG configs.
 - `spark-config.yaml.j2`: A template for the Spark cluster part of the `config.yaml.j2` template.
 - `config.example.yaml`: An example of BPG config with dummy values. You may adapt this file with your config values.
+
+### Spark configuration
+Spark can be pre-configured with default set of values by setting optional `defaultSparkConf` property in the BPG config with a list 
+of default spark configurations. This configuration is set as default and can be overriden with configuration propvided via 
+BPG Rest Api call. 
+
+In addition to setting default configuration it is possible to enforce certain spark settings by using optional `fixedSparkConf` 
+property in the BPG config file. Any configuration set this way will be enforced for all BPG api calls and will not be 
+reset by client providing alternative setting for listed configurations. 
+
+Please refer to `config.example.yaml` for an example on how to provide spark configurations. 
