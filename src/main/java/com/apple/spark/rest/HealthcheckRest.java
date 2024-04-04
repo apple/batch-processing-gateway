@@ -61,7 +61,8 @@ public class HealthcheckRest extends RestBase {
       content =
           @Content(
               mediaType = "application/json",
-              schema = @Schema(implementation = HealthcheckResponse.class)))
+                  schema = @Schema(implementation = HealthcheckResponse.class)),
+          description = "OK")
   public HealthcheckResponse healthcheckStatus(@Parameter(hidden = true) @Auth User user) {
     requestCounters.increment(
         REQUEST_METRIC_NAME, Tag.of("name", "healthcheck"), Tag.of("user", user.getName()));

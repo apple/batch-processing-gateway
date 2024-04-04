@@ -39,6 +39,7 @@ import io.micrometer.core.instrument.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.io.OutputStream;
 import javax.annotation.security.PermitAll;
@@ -71,7 +72,10 @@ public class AdminRest extends RestBase {
   @Operation(
       summary = "List submissions from all users",
       tags = {"Admin"})
-  @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
+  @ApiResponse(
+          responseCode = "200",
+          content = @Content(mediaType = "application/json", schema = @Schema(type = "string")),
+          description = "OK")
   public Response listSubmissions(
       @Parameter(hidden = true) @DefaultValue("none") @HeaderParam("Client-Version")
           String clientVersion,
@@ -158,7 +162,10 @@ public class AdminRest extends RestBase {
   @Operation(
       summary = "Show the version",
       tags = {"Admin"})
-  @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
+  @ApiResponse(
+          responseCode = "200",
+          content = @Content(mediaType = "application/json", schema = @Schema(type = "string")),
+          description = "OK")
   public Response version() {
     VersionInfo verInfo = ConfigUtil.readVersion();
     return Response.ok(

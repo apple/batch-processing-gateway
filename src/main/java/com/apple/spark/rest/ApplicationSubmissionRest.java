@@ -110,7 +110,6 @@ import org.slf4j.LoggerFactory;
 
 @PermitAll
 @Path(SPARK_API)
-@Produces(MediaType.APPLICATION_JSON)
 public class ApplicationSubmissionRest extends RestBase {
 
   private static final Logger logger = LoggerFactory.getLogger(ApplicationSubmissionRest.class);
@@ -194,12 +193,14 @@ public class ApplicationSubmissionRest extends RestBase {
       content =
           @Content(
               mediaType = "application/json",
-              schema = @Schema(implementation = SubmitApplicationResponse.class)))
+                  schema = @Schema(implementation = SubmitApplicationResponse.class)),
+          description = "OK")
   @ApiResponse(
       responseCode = "400",
       description = "Bad request due to wrong format or invalid values")
   @ApiResponse(responseCode = "415", description = "Unsupported content type")
   @ApiResponse(responseCode = "500", description = "Internal server error")
+  @Produces(MediaType.APPLICATION_JSON)
   @Consumes({MediaType.APPLICATION_JSON, "text/yaml", MediaType.WILDCARD})
   @ExceptionMetered(
       name = "WebApplicationException",
@@ -435,11 +436,13 @@ public class ApplicationSubmissionRest extends RestBase {
       content =
           @Content(
               mediaType = "application/json",
-              schema = @Schema(implementation = DeleteSubmissionResponse.class)))
+                  schema = @Schema(implementation = DeleteSubmissionResponse.class)),
+          description = "OK")
   @ApiResponse(
       responseCode = "400",
       description = "Bad request due to invalid submission ID or other issues")
   @ApiResponse(responseCode = "500", description = "Internal server error")
+  @Produces(MediaType.APPLICATION_JSON)
   public DeleteSubmissionResponse deleteSubmission(
       @Parameter(description = "The submission ID returned by submission API")
           @PathParam("submissionId")
@@ -468,8 +471,13 @@ public class ApplicationSubmissionRest extends RestBase {
           .inNamespace(sparkCluster.getSparkApplicationNamespace())
           .withName(submissionId)
           .delete();
+
+      DeleteSubmissionResponse response = new DeleteSubmissionResponse();
+      response.setSubmissionId(submissionId);
+
       context.stop();
-      return new DeleteSubmissionResponse();
+
+      return response;
     }
   }
 
@@ -489,11 +497,13 @@ public class ApplicationSubmissionRest extends RestBase {
       content =
           @Content(
               mediaType = "application/json",
-              schema = @Schema(implementation = SparkApplicationSpec.class)))
+                  schema = @Schema(implementation = SparkApplicationSpec.class)),
+          description = "OK")
   @ApiResponse(
       responseCode = "400",
       description = "Bad request due to invalid submission ID or other issues")
   @ApiResponse(responseCode = "500", description = "Internal server error")
+  @Produces(MediaType.APPLICATION_JSON)
   public SparkApplicationSpec getSparkSpec(
       @PathParam("submissionId") String submissionId,
       @Parameter(hidden = true) @DefaultValue("none") @HeaderParam("Client-Version")
@@ -522,6 +532,20 @@ public class ApplicationSubmissionRest extends RestBase {
       summary = "Get Spark application status by submission ID.",
       description = "May return an empty object when the Spark application is not be started yet.",
       tags = {"Examination"})
+  @ApiResponse(
+          responseCode = "200",
+          content =
+          @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = GetSubmissionStatusResponse.class)),
+          description = "OK")
+  @ApiResponse(
+          responseCode = "400",
+          description = "Bad request due to wrong format or invalid values")
+  @ApiResponse(responseCode = "415", description = "Unsupported content type")
+  @ApiResponse(responseCode = "500", description = "Internal server error")
+  @ApiResponse(responseCode = "403", description = "Forbidden")
+  @Produces(MediaType.APPLICATION_JSON)
   public GetSubmissionStatusResponse getStatus(
       @PathParam("submissionId") String submissionId,
       @Parameter(hidden = true) @DefaultValue("none") @HeaderParam("Client-Version")
@@ -672,11 +696,13 @@ public class ApplicationSubmissionRest extends RestBase {
       content =
           @Content(
               mediaType = "application/json",
-              schema = @Schema(implementation = GetDriverInfoResponse.class)))
+                  schema = @Schema(implementation = GetDriverInfoResponse.class)),
+          description = "OK")
   @ApiResponse(
       responseCode = "400",
       description = "Bad request due to invalid submission ID or other issues")
   @ApiResponse(responseCode = "500", description = "Internal server error")
+  @Produces(MediaType.APPLICATION_JSON)
   public GetDriverInfoResponse getDriverInfo(
       @PathParam("submissionId") String submissionId,
       @Parameter(hidden = true) @DefaultValue("none") @HeaderParam("Client-Version")
@@ -729,11 +755,15 @@ public class ApplicationSubmissionRest extends RestBase {
       summary = "Get spark application spec and related events as a text stream.",
       description = "May return an empty stream when the Spark application has not started yet.",
       tags = {"Examination"})
-  @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
+  @ApiResponse(
+          responseCode = "200",
+          content = @Content(mediaType = "application/octet-stream", schema = @Schema(type = "string")),
+          description = "OK")
   @ApiResponse(
       responseCode = "400",
       description = "Bad request due to invalid submission ID or other issues")
   @ApiResponse(responseCode = "500", description = "Internal server error")
+  @Produces(MediaType.APPLICATION_OCTET_STREAM)
   public Response describe(
       @PathParam("submissionId") String submissionId,
       @DefaultValue("none") @HeaderParam("Client-Version") String clientVersion,
@@ -820,6 +850,19 @@ public class ApplicationSubmissionRest extends RestBase {
   @Hidden
   @Timed
   @Operation(summary = "Get submissions for current user")
+  @ApiResponse(
+          responseCode = "200",
+          content =
+          @Content(
+                  mediaType = "application/json",
+                  schema = @Schema(implementation = GetMySubmissionsResponse.class)),
+          description = "OK")
+  @ApiResponse(
+          responseCode = "400",
+          description = "Bad request due to invalid submission ID or other issues")
+  @ApiResponse(responseCode = "500", description = "Internal server error")
+  @ApiResponse(responseCode = "403", description = "Forbidden")
+  @Produces(MediaType.APPLICATION_JSON)
   public GetMySubmissionsResponse getSubmissions(
       @DefaultValue("none") @HeaderParam("Client-Version") String clientVersion, @Auth User user) {
     logger.info(

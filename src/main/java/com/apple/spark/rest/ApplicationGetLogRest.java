@@ -49,6 +49,7 @@ import io.micrometer.core.instrument.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -76,7 +77,6 @@ import org.slf4j.LoggerFactory;
 
 @PermitAll
 @Path(LOG_API)
-@Produces(MediaType.APPLICATION_JSON)
 public class ApplicationGetLogRest extends RestBase {
 
   private static final Logger logger = LoggerFactory.getLogger(ApplicationGetLogRest.class);
@@ -119,11 +119,15 @@ public class ApplicationGetLogRest extends RestBase {
       summary = "Get driver/executor stdout logs from EKS",
       description = "By default driver logs will be returned, unless executor ID is specified.",
       tags = {"Examination"})
-  @ApiResponse(responseCode = "200", content = @Content(mediaType = "application/octet-stream"))
+  @ApiResponse(
+          responseCode = "200",
+          content = @Content(mediaType = "application/octet-stream", schema = @Schema(type = "string")),
+          description = "OK")
   @ApiResponse(
       responseCode = "400",
       description = "Bad request due to invalid submission ID, app ID or other issues")
   @ApiResponse(responseCode = "500", description = "Internal server error")
+  @Produces(MediaType.APPLICATION_OCTET_STREAM)
   public Response getLog(
       @Parameter(description = "submission ID (mutual exclusive with application ID)")
           @DefaultValue("")
