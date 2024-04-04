@@ -22,4 +22,14 @@ package com.apple.spark.api;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DeleteSubmissionResponse {}
+public class DeleteSubmissionResponse {
+    private String submissionId;
+
+    public String getSubmissionId() {
+        return submissionId;
+    }
+
+    public void setSubmissionId(String submissionId) {
+        this.submissionId = submissionId;
+    }
+}
