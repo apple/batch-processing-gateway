@@ -250,9 +250,10 @@ public class ApplicationSubmissionRest extends RestBase {
       String requestBody, String contentType, User user, String dagUser) {
     SubmitApplicationRequest request =
         ApplicationSubmissionHelper.parseSubmitRequest(requestBody, contentType);
+    String queue = SparkClusterHelper.getQueue(appConfig, request, user.getName());
 
     // some sanity check on some basic requirements for a request
-    validateSubmissionRequest(request);
+    validateSubmissionRequest(request, queue);
 
     // choose Spark cluster to submit the job to
     AppConfig.SparkCluster sparkCluster =
@@ -955,6 +956,25 @@ public class ApplicationSubmissionRest extends RestBase {
     return DEFAULT_MAX_RUNNING_MILLIS;
   }
 
+  private int getMaxExecutorInstanceForQueue(String queue) {
+    AppConfig.QueueConfig targetQueueConfig = null;
+    for (AppConfig.QueueConfig config: appConfig.getQueues()) {
+      if (config.getName().equalsIgnoreCase(queue)) {
+        targetQueueConfig = config;
+      }
+    }
+    if (targetQueueConfig == null) {
+      String errMsg =
+              String.format(
+                  "The queue %s does not exist. Please check the queue name and try again.", queue);
+      logger.error(errMsg);
+      throw new WebApplicationException(errMsg);
+    }
+    return targetQueueConfig.getMaxExecutorInstances() == null
+            ? MAX_EXECUTOR_INSTANCES
+            : targetQueueConfig.getMaxExecutorInstances();
+  }
+
   /**
    * Ensure the submission request satisfies certain requirements. If executor spec is present in
    * request, the number of executors shouldn't exceed the limit. If executor spec is present as
@@ -962,15 +982,18 @@ public class ApplicationSubmissionRest extends RestBase {
    * limit.
    *
    * @param request submission request
+   * @param queueName name of the queue
    */
-  private void validateSubmissionRequest(SubmitApplicationRequest request) {
+  private void validateSubmissionRequest(SubmitApplicationRequest request, String queueName) {
+    int maxExecutorInstances = getMaxExecutorInstanceForQueue(queueName);
     if (request.getExecutor() != null) {
       Integer instances = request.getExecutor().getInstances();
       if (instances != null) {
-        if (instances > MAX_EXECUTOR_INSTANCES) {
+        if (instances > maxExecutorInstances) {
           throw new WebApplicationException(
               String.format(
-                  "Executor instances (%s) exceeds limit %s)", instances, MAX_EXECUTOR_INSTANCES),
+                  "Executor instances in Spark config (%s) exceeds limit (%d)",
+                  instances, maxExecutorInstances),
               Response.Status.BAD_REQUEST);
         }
       }
@@ -985,15 +1008,15 @@ public class ApplicationSubmissionRest extends RestBase {
         } catch (Throwable ex) {
           throw new WebApplicationException(
               String.format(
-                  "Invalid value (%s) for Spark config: %s)",
+                  "Invalid value (%s) for Spark config: (%s)",
                   configValueStr, SparkConstants.SPARK_CONF_EXECUTOR_INSTANCES),
               Response.Status.BAD_REQUEST);
         }
-        if (instances > MAX_EXECUTOR_INSTANCES) {
+        if (instances > maxExecutorInstances) {
           throw new WebApplicationException(
               String.format(
-                  "Executor instances in Spark config (%s) exceeds limit %s)",
-                  instances, MAX_EXECUTOR_INSTANCES),
+                  "Executor instances in Spark config (%s) exceeds limit (%d)",
+                  instances, maxExecutorInstances),
               Response.Status.BAD_REQUEST);
         }
       }
