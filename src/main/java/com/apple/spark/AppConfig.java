@@ -521,6 +521,7 @@ public class AppConfig extends Configuration {
     private double executorCPUBufferRatio = 1.0;
     private double driverMemBufferRatio = 1.0;
     private double executorMemBufferRatio = 1.0;
+    private Integer maxExecutorInstances;
 
     public String getName() {
       return name;
@@ -628,6 +629,14 @@ public class AppConfig extends Configuration {
 
     public void setExecutorMemBufferRatio(String executorMemBufferRatio) {
       this.executorMemBufferRatio = Double.parseDouble(executorMemBufferRatio);
+    }
+
+    public Integer getMaxExecutorInstances() {
+      return maxExecutorInstances;
+    }
+
+    public void setMaxExecutorInstances(Integer maxExecutorInstances) {
+      this.maxExecutorInstances = maxExecutorInstances;
     }
   }
 
