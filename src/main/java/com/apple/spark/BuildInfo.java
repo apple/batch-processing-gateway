@@ -24,6 +24,9 @@ import java.util.Properties;
 
 public class BuildInfo {
 
+private BuildInfo() {
+}
+
   public static String UNKNOWN = "(unknown)";
 
   public static String Version;
