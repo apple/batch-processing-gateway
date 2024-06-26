@@ -59,6 +59,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -193,8 +194,8 @@ public class ApplicationSubmissionRest extends RestBase {
       content =
           @Content(
               mediaType = "application/json",
-                  schema = @Schema(implementation = SubmitApplicationResponse.class)),
-          description = "OK")
+              schema = @Schema(implementation = SubmitApplicationResponse.class)),
+      description = "OK")
   @ApiResponse(
       responseCode = "400",
       description = "Bad request due to wrong format or invalid values")
@@ -274,9 +275,11 @@ public class ApplicationSubmissionRest extends RestBase {
     String type = getType(request.getType(), request.getMainClass());
     String sparkVersion = request.getSparkVersion();
 
-    String queue = SparkClusterHelper.getQueue(appConfig, request, user.getName());
     String parentQueue = SparkClusterHelper.getParentQueue(queue);
     String queueTagValue = queue == null ? "" : queue;
+
+    // configure zones for the spark job to run
+    configureZonesForRequest(request, appConfig, parentQueue, sparkCluster, submissionId);
 
     // the Spark spec to be submitted to Spark cluster
     SparkApplicationSpec.Builder specBuilder =
@@ -437,8 +440,8 @@ public class ApplicationSubmissionRest extends RestBase {
       content =
           @Content(
               mediaType = "application/json",
-                  schema = @Schema(implementation = DeleteSubmissionResponse.class)),
-          description = "OK")
+              schema = @Schema(implementation = DeleteSubmissionResponse.class)),
+      description = "OK")
   @ApiResponse(
       responseCode = "400",
       description = "Bad request due to invalid submission ID or other issues")
@@ -498,8 +501,8 @@ public class ApplicationSubmissionRest extends RestBase {
       content =
           @Content(
               mediaType = "application/json",
-                  schema = @Schema(implementation = SparkApplicationSpec.class)),
-          description = "OK")
+              schema = @Schema(implementation = SparkApplicationSpec.class)),
+      description = "OK")
   @ApiResponse(
       responseCode = "400",
       description = "Bad request due to invalid submission ID or other issues")
@@ -534,15 +537,15 @@ public class ApplicationSubmissionRest extends RestBase {
       description = "May return an empty object when the Spark application is not be started yet.",
       tags = {"Examination"})
   @ApiResponse(
-          responseCode = "200",
-          content =
+      responseCode = "200",
+      content =
           @Content(
-                  mediaType = "application/json",
-                  schema = @Schema(implementation = GetSubmissionStatusResponse.class)),
-          description = "OK")
+              mediaType = "application/json",
+              schema = @Schema(implementation = GetSubmissionStatusResponse.class)),
+      description = "OK")
   @ApiResponse(
-          responseCode = "400",
-          description = "Bad request due to wrong format or invalid values")
+      responseCode = "400",
+      description = "Bad request due to wrong format or invalid values")
   @ApiResponse(responseCode = "415", description = "Unsupported content type")
   @ApiResponse(responseCode = "500", description = "Internal server error")
   @ApiResponse(responseCode = "403", description = "Forbidden")
@@ -697,8 +700,8 @@ public class ApplicationSubmissionRest extends RestBase {
       content =
           @Content(
               mediaType = "application/json",
-                  schema = @Schema(implementation = GetDriverInfoResponse.class)),
-          description = "OK")
+              schema = @Schema(implementation = GetDriverInfoResponse.class)),
+      description = "OK")
   @ApiResponse(
       responseCode = "400",
       description = "Bad request due to invalid submission ID or other issues")
@@ -757,9 +760,9 @@ public class ApplicationSubmissionRest extends RestBase {
       description = "May return an empty stream when the Spark application has not started yet.",
       tags = {"Examination"})
   @ApiResponse(
-          responseCode = "200",
-          content = @Content(mediaType = "application/octet-stream", schema = @Schema(type = "string")),
-          description = "OK")
+      responseCode = "200",
+      content = @Content(mediaType = "application/octet-stream", schema = @Schema(type = "string")),
+      description = "OK")
   @ApiResponse(
       responseCode = "400",
       description = "Bad request due to invalid submission ID or other issues")
@@ -852,15 +855,15 @@ public class ApplicationSubmissionRest extends RestBase {
   @Timed
   @Operation(summary = "Get submissions for current user")
   @ApiResponse(
-          responseCode = "200",
-          content =
+      responseCode = "200",
+      content =
           @Content(
-                  mediaType = "application/json",
-                  schema = @Schema(implementation = GetMySubmissionsResponse.class)),
-          description = "OK")
+              mediaType = "application/json",
+              schema = @Schema(implementation = GetMySubmissionsResponse.class)),
+      description = "OK")
   @ApiResponse(
-          responseCode = "400",
-          description = "Bad request due to invalid submission ID or other issues")
+      responseCode = "400",
+      description = "Bad request due to invalid submission ID or other issues")
   @ApiResponse(responseCode = "500", description = "Internal server error")
   @ApiResponse(responseCode = "403", description = "Forbidden")
   @Produces(MediaType.APPLICATION_JSON)
@@ -958,21 +961,21 @@ public class ApplicationSubmissionRest extends RestBase {
 
   private int getMaxExecutorInstanceForQueue(String queue) {
     AppConfig.QueueConfig targetQueueConfig = null;
-    for (AppConfig.QueueConfig config: appConfig.getQueues()) {
+    for (AppConfig.QueueConfig config : appConfig.getQueues()) {
       if (config.getName().equalsIgnoreCase(queue)) {
         targetQueueConfig = config;
       }
     }
     if (targetQueueConfig == null) {
       String errMsg =
-              String.format(
-                  "The queue %s does not exist. Please check the queue name and try again.", queue);
+          String.format(
+              "The queue %s does not exist. Please check the queue name and try again.", queue);
       logger.error(errMsg);
       throw new WebApplicationException(errMsg);
     }
     return targetQueueConfig.getMaxExecutorInstances() == null
-            ? MAX_EXECUTOR_INSTANCES
-            : targetQueueConfig.getMaxExecutorInstances();
+        ? MAX_EXECUTOR_INSTANCES
+        : targetQueueConfig.getMaxExecutorInstances();
   }
 
   /**
@@ -1021,5 +1024,27 @@ public class ApplicationSubmissionRest extends RestBase {
         }
       }
     }
+  }
+
+  @VisibleForTesting
+  protected void configureZonesForRequest(
+      final SubmitApplicationRequest request,
+      final AppConfig appConfig,
+      final String queueName,
+      final AppConfig.SparkCluster sparkCluster,
+      final String submissionId) {
+    List<String> pickedZones =
+        ZoneManager.pickZones(request, appConfig, queueName, sparkCluster, submissionId);
+    Map<String, String> sparkConf = request.getSparkConf();
+    if (sparkConf == null) {
+      sparkConf = new HashMap<>();
+    }
+    if (pickedZones == null || pickedZones.isEmpty()) {
+      // this should only be set by zone picker based on queue config
+      // will NOT allow application to hack this
+      sparkConf.remove(CONFIG_PICKED_ZONES);
+      return;
+    }
+    sparkConf.put(CONFIG_PICKED_ZONES, String.join(PICKED_ZONES_DELIMITER, pickedZones));
   }
 }

@@ -65,6 +65,8 @@ public class Constants {
   public static final String EXCEPTION_METER = "Exception.exceptions";
   public static final String CONFIG_MAX_RUNNING_MILLIS =
       String.format("%s.maxRunningMillis", SERVICE_ABBR);
+  public static final String CONFIG_PICKED_ZONES = String.format("%s.pickedZones", SERVICE_ABBR);
+  public static final String PICKED_ZONES_DELIMITER = ",";
   public static final int APPLICATION_MONITOR_QUEUE_CAPACITY = 100000;
   public static final long DEFAULT_STATUS_CACHE_EXPIRE_MILLIS = 990;
   public static final String DRIVER_NODE_AFFINITY_KEY = "node_group_category";
