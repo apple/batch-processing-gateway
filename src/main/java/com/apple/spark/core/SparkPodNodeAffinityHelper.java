@@ -52,8 +52,7 @@ public class SparkPodNodeAffinityHelper {
     return nodeAffinity;
   }
 
-  @VisibleForTesting
-  protected static NodeSelectorTerm createNodeSelectorTermForRequired(
+  private static NodeSelectorTerm createNodeSelectorTermForRequired(
       final SubmitApplicationRequest request,
       final AppConfig appConfig,
       final String queue,

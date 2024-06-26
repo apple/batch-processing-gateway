@@ -59,7 +59,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -1026,8 +1025,7 @@ public class ApplicationSubmissionRest extends RestBase {
     }
   }
 
-  @VisibleForTesting
-  protected void configureZonesForRequest(
+  private void configureZonesForRequest(
       final SubmitApplicationRequest request,
       final AppConfig appConfig,
       final String queueName,
