@@ -522,6 +522,8 @@ public class AppConfig extends Configuration {
     private double driverMemBufferRatio = 1.0;
     private double executorMemBufferRatio = 1.0;
     private Integer maxExecutorInstances;
+    private List<String> allowedZones;
+    private String zonePickerName;
 
     public String getName() {
       return name;
@@ -637,6 +639,22 @@ public class AppConfig extends Configuration {
 
     public void setMaxExecutorInstances(Integer maxExecutorInstances) {
       this.maxExecutorInstances = maxExecutorInstances;
+    }
+
+    public List<String> getAllowedZones() {
+      return allowedZones;
+    }
+
+    public void setAllowedZones(final List<String> allowedZones) {
+      this.allowedZones = allowedZones;
+    }
+
+    public String getZonePickerName() {
+      return zonePickerName;
+    }
+
+    public void setZonePickerName(final String zonePickerName) {
+      this.zonePickerName = zonePickerName;
     }
   }
 
