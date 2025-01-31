@@ -10,6 +10,6 @@ kubectl create namespace spark-applications || echo "spark-applications Namespac
 
 grep -q local-spark-operator <<<${installed} || \
   helm install -n local-spark-operator --create-namespace \
-    --repo https://googlecloudplatform.github.io/spark-on-k8s-operator \
+    --repo https://kubeflow.github.io/spark-operator \
     --set sparkJobNamespace=spark-applications \
     local-spark-operator spark-operator
