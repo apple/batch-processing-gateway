@@ -14,5 +14,5 @@ grep -q local-postgresql <<<${installed} || \
     --set auth.database=${database} \
     --set auth.username=${username} \
     --set auth.password=${password} \
-    --repo https://charts.bitnami.com/bitnami \
-    local-postgresql postgresql
+    local-postgresql oci://registry-1.docker.io/bitnamicharts/postgresql
+
