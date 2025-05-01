@@ -36,7 +36,7 @@ Just a plain service available on port 80.
 
 ### Ingress
 
-- A version needs to be specified by user (currently `/apiv2`) so that we can support multiple versions if needed.
+- A version needs to be specified by user (currently `/skatev2`) so that we can support multiple versions if needed.
 - The upload request body is limited to 800m. You may adjust accordingly, but it can take much longer for large request bodies.
 
 ### Swagger UI

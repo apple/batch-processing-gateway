@@ -112,7 +112,7 @@ As an example, you can publish a minimal PySpark app under `/src/test/resources`
 
     $ export AWS_ACCESS_KEY_ID="${USER}"
     $ export AWS_SECRET_ACCESS_KEY=$(openssl rand -hex 32)
-    $ curl -u user_name:dummy_password http://localhost:8080/apiv2/s3/MinimalSparkApp.py\?folder=foo/ -X POST \
+    $ curl -u user_name:dummy_password http://localhost:8080/skatev2/s3/MinimalSparkApp.py\?folder=foo/ -X POST \
         --data-binary "@src/test/resources/MinimalSparkApp.py"
 
     {"url":"s3a://bpg/uploaded/foo/MinimalSparkApp.py"}
@@ -120,7 +120,7 @@ As an example, you can publish a minimal PySpark app under `/src/test/resources`
 ### Submit a Spark app
 Now the REST endpoints are running locally at `http://localhost:8080`. You can submit a Spark app to the Spark endpoint. If everything goes well, you should get a 200 response with a `submissionId`, which is a unique identifier of a submitted Spark app.
 
-    $ curl -u user_name:dummy_password http://localhost:8080/apiv2/spark -i -X POST \
+    $ curl -u user_name:dummy_password http://localhost:8080/skatev2/spark -i -X POST \
         -H 'Content-Type: application/json' \
         -d '{
             "sparkVersion": "3.2",
@@ -158,7 +158,7 @@ From here, the rest of the work is done by Spark Operator. It will enqueue the j
 Use the status API to query the job status:
 
     $ curl -u user_name:dummy_password \
-      http://localhost:8080/apiv2/spark/minikube-9a2e2598d1ee4ff4b33ee7ebcdb63a6c/status
+      http://localhost:8080/skatev2/spark/minikube-9a2e2598d1ee4ff4b33ee7ebcdb63a6c/status
     
     {"creationTime":1662961198000,"duration":0,"applicationState":"UNKNOWN"}
 
@@ -167,11 +167,11 @@ Use the status API to query the job status:
 Retrieve a full job description including the metadata in submission request:
 
     $ curl -u user_name:dummy_password \
-        http://localhost:8080/apiv2/spark/minikube-9a2e2598d1ee4ff4b33ee7ebcdb63a6c/describe
+        http://localhost:8080/skatev2/spark/minikube-9a2e2598d1ee4ff4b33ee7ebcdb63a6c/describe
 
 #### Get job driver log
     $ curl -u user_name:dummy_password \
-        http://localhost:8080/apiv2/log?subId=minikube-9a2e2598d1ee4ff4b33ee7ebcdb63a6c
+        http://localhost:8080/skatev2/log?subId=minikube-9a2e2598d1ee4ff4b33ee7ebcdb63a6c
 
 The health check endpoint runs on port 8081 by default. Check the server health by sending GET to `/healthcheck`, or simply open this in browser: http://localhost:8081/healthcheck
 ```bash

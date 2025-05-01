@@ -54,7 +54,7 @@ Refer to [KEY COMPONENTS](docs/KEY_COMPONENTS.md) for more details of the key co
 
 ![REST Endpoints](docs/images/rest_endpoints.png "REST Endpoints")
 
-BPG exposes REST endpoints to end users / clients for Spark apps, e.g. `POST /apiv2/spark` to submit a Spark app.
+BPG exposes REST endpoints to end users / clients for Spark apps, e.g. `POST /skatev2/spark` to submit a Spark app.
 The REST components receive the user requests, manipulate the requests when necessary, and interact with Spark clusters via [fabric8](https://github.com/fabric8io/kubernetes-client) Kubernetes client.
 
 
