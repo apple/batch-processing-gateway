@@ -18,7 +18,7 @@ spec:
                 name: bpg
                 port:
                   number: 80
-            path: /apiv2/(.*)
+            path: /skatev2/(.*)
             pathType: ImplementationSpecific
   tls:
     - hosts:
