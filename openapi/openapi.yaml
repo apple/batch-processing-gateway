@@ -1,0 +1,568 @@
+openapi: 3.0.1
+info:
+  title: Batch Processing Gateway API
+  description: "Batch Processing Gateway API is a RESTful web service to submit, examine\
+    \ and delete Spark jobs."
+  version: "2.0"
+tags:
+- name: Submission
+  description: APIs to submit jobs
+- name: Deletion
+  description: APIs to delete jobs
+- name: Examination
+  description: APIs to examine jobs
+- name: Storage
+  description: API to upload artifact to S3
+- name: Admin
+  description: Admin related APIs
+- name: Health Check
+  description: Service availability health check
+paths:
+  /admin/version:
+    get:
+      tags:
+      - Admin
+      summary: Show the version
+      operationId: version
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+  /admin/submissions:
+    get:
+      tags:
+      - Admin
+      summary: List submissions from all users
+      operationId: listSubmissions
+      parameters:
+      - name: name
+        in: query
+        description: specify this to list only submissions under one application name
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+  /log:
+    get:
+      tags:
+      - Examination
+      summary: Get driver/executor stdout logs from EKS
+      description: "By default driver logs will be returned, unless executor ID is\
+        \ specified."
+      operationId: getLog
+      parameters:
+      - name: subId
+        in: query
+        description: submission ID (mutual exclusive with application ID)
+        schema:
+          type: string
+          default: ""
+      - name: appId
+        in: query
+        description: application ID (mutual exclusive with submission ID)
+        schema:
+          type: string
+          default: ""
+      - name: execId
+        in: query
+        description: "If execId is specified, logs from specific executor will be\
+          \ returned. Otherwise driver log will be returned."
+        schema:
+          type: string
+          default: ""
+        example: 11
+      responses:
+        "200":
+          description: OK
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+        "400":
+          description: "Bad request due to invalid submission ID, app ID or other\
+            \ issues"
+        "500":
+          description: Internal server error
+  /spark/{submissionId}/status:
+    get:
+      tags:
+      - Examination
+      summary: Get Spark application status by submission ID.
+      description: May return an empty object when the Spark application is not be
+        started yet.
+      operationId: getStatus
+      parameters:
+      - name: submissionId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSubmissionStatusResponse'
+        "400":
+          description: Bad request due to wrong format or invalid values
+        "415":
+          description: Unsupported content type
+        "500":
+          description: Internal server error
+        "403":
+          description: Forbidden
+  /spark:
+    post:
+      tags:
+      - Submission
+      summary: Submit a Spark application
+      description: "To submit a job, prepare a job payload in the request body either\
+        \ in JSON or YAML format."
+      operationId: submitApplication
+      parameters:
+      - name: content-type
+        in: header
+        description: "options: application/json, text/yaml, or leave it empty for\
+          \ API to figure out"
+        schema:
+          type: string
+      requestBody:
+        description: "All the specification of the job, including necessary artifacts,\
+          \ versions, driver and executor specs"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitApplicationRequest'
+          text/yaml:
+            schema:
+              $ref: '#/components/schemas/SubmitApplicationRequest'
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/SubmitApplicationRequest'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitApplicationResponse'
+        "400":
+          description: Bad request due to wrong format or invalid values
+        "415":
+          description: Unsupported content type
+        "500":
+          description: Internal server error
+  /spark/{submissionId}:
+    delete:
+      tags:
+      - Deletion
+      summary: Delete Spark application by submission ID
+      description: "After a job is submitted, you can use the submission ID returned\
+        \ to delete the job."
+      operationId: deleteSubmission
+      parameters:
+      - name: submissionId
+        in: path
+        description: The submission ID returned by submission API
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteSubmissionResponse'
+        "400":
+          description: Bad request due to invalid submission ID or other issues
+        "500":
+          description: Internal server error
+  /spark/{submissionId}/spec:
+    get:
+      tags:
+      - Examination
+      summary: Get Spark application spec by submission ID.
+      description: Return the detailed spec of the Spark job.
+      operationId: getSparkSpec
+      parameters:
+      - name: submissionId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SparkApplicationSpec'
+        "400":
+          description: Bad request due to invalid submission ID or other issues
+        "500":
+          description: Internal server error
+  /spark/{submissionId}/driver:
+    get:
+      tags:
+      - Examination
+      summary: Get Spark application driver information.
+      description: May return an empty object when the Spark application has not started
+        yet.
+      operationId: getDriverInfo
+      parameters:
+      - name: submissionId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDriverInfoResponse'
+        "400":
+          description: Bad request due to invalid submission ID or other issues
+        "500":
+          description: Internal server error
+  /spark/{submissionId}/describe:
+    get:
+      tags:
+      - Examination
+      summary: Get spark application spec and related events as a text stream.
+      description: May return an empty stream when the Spark application has not started
+        yet.
+      operationId: describe
+      parameters:
+      - name: submissionId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Client-Version
+        in: header
+        schema:
+          type: string
+          default: none
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+        "400":
+          description: Bad request due to invalid submission ID or other issues
+        "500":
+          description: Internal server error
+  /s3/{name}:
+    post:
+      tags:
+      - Storage
+      summary: Upload an artifact to S3 and save as a S3 object.
+      description: The content length parameter must be exactly same as the size of
+        the stream. DO NOT upload any sensitive data file.
+      operationId: uploadStream
+      parameters:
+      - name: name
+        in: path
+        description: name of the artifact without parent folders
+        required: true
+        schema:
+          type: string
+        example: artifact.jar
+      - name: content-length
+        in: query
+        description: content length can be provided in either query or header
+        schema:
+          type: integer
+          format: int64
+      - name: content-length
+        in: header
+        description: content length can be provided in either query or header
+        schema:
+          type: string
+      - name: folder
+        in: query
+        description: the folder path to which you want to publish the artifact
+        schema:
+          type: string
+        example: your/folder/
+      requestBody:
+        content:
+          application/octet-stream: {}
+      responses:
+        default:
+          description: default response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadS3Response'
+  /healthcheck/status:
+    get:
+      tags:
+      - Health Check
+      summary: Check the current service status
+      operationId: healthcheckStatus
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthcheckResponse'
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        name:
+          type: string
+    DeleteSubmissionResponse:
+      type: object
+      properties:
+        submissionId:
+          type: string
+    HealthcheckResponse:
+      type: object
+      properties:
+        status:
+          type: string
+    GetSubmissionStatusResponse:
+      type: object
+      properties:
+        creationTime:
+          type: integer
+          format: int64
+        sparkApplicationId:
+          type: string
+        executionAttempts:
+          type: integer
+          format: int32
+        terminationTime:
+          type: integer
+          format: int64
+        duration:
+          type: integer
+          format: int64
+        applicationState:
+          type: string
+        applicationErrorMessage:
+          type: string
+        sparkUIUrl:
+          type: string
+    SubmitApplicationResponse:
+      type: object
+      properties:
+        submissionId:
+          type: string
+    SubmitApplicationRequest:
+      required:
+      - driver
+      - executor
+      - mainApplicationFile
+      - sparkVersion
+      type: object
+      properties:
+        submissionIdSuffix:
+          type: string
+          description: "If specified, the suffix will be appended to the submission\
+            \ ID"
+        applicationName:
+          type: string
+          description: Name of the application. This will help listing submissions
+            under the same application later.
+        type:
+          type: string
+          description: "Should be: Java / Scala / Python. If not specified, the API\
+            \ will try to figure out by itself."
+        image:
+          type: string
+        spotInstance:
+          type: boolean
+          description: To enable Spot Instance feature that schedules all Spark Executor
+            pods to Spot nodes
+        sparkVersion:
+          type: string
+          description: "Spark version in the format of x.y, where x and y are integers."
+        mainClass:
+          type: string
+          description: The main class in the jar provided in mainApplicationFile for
+            a Java/Scala Spark job
+          example: com.spark.examples.OneStageApp
+        mainApplicationFile:
+          type: string
+          description: "For Java/Scala Spark jobs, provide the full path to the jar\
+            \ file. For PySpark jobs, provide the full path to the Python file."
+        arguments:
+          type: array
+          items:
+            type: string
+        annotations:
+          type: object
+          additionalProperties:
+            type: string
+        driver:
+          $ref: '#/components/schemas/DriverSpec'
+        executor:
+          $ref: '#/components/schemas/ExecutorSpec'
+        deps:
+          $ref: '#/components/schemas/Dependencies'
+        pythonVersion:
+          type: string
+        queue:
+          type: string
+          description: "If no queue is specified, a default 'poc' queue will be used."
+      description: Submit Application Request
+    SparkApplicationSpec:
+      type: object
+      properties:
+        type:
+          type: string
+        sparkVersion:
+          type: string
+        originalUser:
+          type: string
+        proxyUser:
+          type: string
+        image:
+          type: string
+        mainClass:
+          type: string
+        mainApplicationFile:
+          type: string
+        arguments:
+          type: array
+          items:
+            type: string
+        annotations:
+          type: object
+          additionalProperties:
+            type: string
+        driver:
+          $ref: '#/components/schemas/DriverSpec'
+        executor:
+          $ref: '#/components/schemas/ExecutorSpec'
+        deps:
+          $ref: '#/components/schemas/Dependencies'
+        pythonVersion:
+          type: string
+    GetDriverInfoResponse:
+      type: object
+      properties:
+        podName:
+          type: string
+        startTime:
+          type: integer
+          format: int64
+    ExecutorSpec:
+      type: object
+      properties:
+        cores:
+          type: integer
+          format: int32
+        coreRequest:
+          type: string
+        coreLimit:
+          type: string
+        memory:
+          type: string
+        memoryOverhead:
+          type: string
+        image:
+          type: string
+        env:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvVar'
+        annotations:
+          type: object
+          additionalProperties:
+            type: string
+        instances:
+          type: integer
+          format: int32
+    UploadS3Response:
+      type: object
+      properties:
+        url:
+          type: string
+    EnvVar:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+    Dependencies:
+      type: object
+      properties:
+        jars:
+          type: array
+          items:
+            type: string
+        files:
+          type: array
+          items:
+            type: string
+        pyFiles:
+          type: array
+          items:
+            type: string
+        packages:
+          type: array
+          items:
+            type: string
+        excludePackages:
+          type: array
+          items:
+            type: string
+        repositories:
+          type: array
+          items:
+            type: string
+        archives:
+          type: array
+          items:
+            type: string
+    DriverSpec:
+      type: object
+      properties:
+        cores:
+          type: integer
+          format: int32
+        coreRequest:
+          type: string
+        coreLimit:
+          type: string
+        memory:
+          type: string
+        memoryOverhead:
+          type: string
+        image:
+          type: string
+        env:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvVar'
+        annotations:
+          type: object
+          additionalProperties:
+            type: string

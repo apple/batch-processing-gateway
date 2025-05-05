@@ -1,0 +1,52 @@
+name: CI OpenAPI Spec 
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'build/generate-openapi-spec'
+      - 'openapi/**'
+  workflow_dispatch:
+
+jobs:
+  verify-openapi-spec:
+    name: Verify OpenAPI Spec Generation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Backup Current OpenAPI Files
+        run: |
+          mkdir -p ${{ github.workspace }}/input_openapi
+          cp -r ${{ github.workspace }}/openapi/* ${{ github.workspace }}/input_openapi/
+          ls -la ${{ github.workspace }}/input_openapi/
+          
+      - name: Run Generate OpenAPI Spec Script
+        working-directory: ${{ github.workspace }}/build
+        run: |
+          chmod +x ./generate-openapi-spec
+          ./generate-openapi-spec
+          
+      - name: Compare Generated Specs with Original
+        run: |
+          echo "Comparing JSON specs..."
+          diff -u ${{ github.workspace }}/input_openapi/openapi.json ${{ github.workspace }}/openapi/openapi.json
+          json_diff_result=$?
+          
+          echo "Comparing YAML specs..."
+          diff -u ${{ github.workspace }}/input_openapi/openapi.yaml ${{ github.workspace }}/openapi/openapi.yaml
+          yaml_diff_result=$?
+          
+          # Check if there are any differences and fail if there are
+          if [ $json_diff_result -ne 0 ] || [ $yaml_diff_result -ne 0 ]; then
+            echo "❌ Generated OpenAPI specs differ from checked-in specs!"
+            echo "Please run 'build/generate-openapi-spec' locally and commit the updated specs."
+            exit 1
+          else
+            echo "✅ Generated OpenAPI specs match checked-in specs."
+          fi

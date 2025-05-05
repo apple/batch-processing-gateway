@@ -57,6 +57,10 @@ Refer to [KEY COMPONENTS](docs/KEY_COMPONENTS.md) for more details of the key co
 BPG exposes REST endpoints to end users / clients for Spark apps, e.g. `POST /skatev2/spark` to submit a Spark app.
 The REST components receive the user requests, manipulate the requests when necessary, and interact with Spark clusters via [fabric8](https://github.com/fabric8io/kubernetes-client) Kubernetes client.
 
+### OpenAPI Spec
+
+BPG provides an OpenAPI specification for its REST endpoints. The specification is available in the [openapi](openapi) directory in both [YAML](openapi/openapi.yaml) and [JSON](openapi/openapi.json) formats. Developers can use this spec with [openapi-generator-cli](https://hub.docker.com/r/openapitools/openapi-generator-cli) to generate client libraries in various programming languages, making integration with BPG easier.
+
 
 ## Auth
 
