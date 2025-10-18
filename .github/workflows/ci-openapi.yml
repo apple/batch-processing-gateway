@@ -1,5 +1,8 @@
 name: CI OpenAPI Spec 
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths:
