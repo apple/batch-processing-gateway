@@ -23,7 +23,7 @@ import com.apple.spark.AppConfig;
 import com.apple.spark.api.SubmitApplicationRequest;
 import java.util.Arrays;
 import java.util.Collections;
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

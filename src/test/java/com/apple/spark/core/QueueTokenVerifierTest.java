@@ -22,7 +22,7 @@ package com.apple.spark.core;
 import com.apple.spark.util.JwtUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 import org.testng.annotations.Test;
 
 public class QueueTokenVerifierTest {
