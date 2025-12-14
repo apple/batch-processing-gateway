@@ -25,7 +25,7 @@ import com.apple.spark.operator.ExecutorSpec;
 import com.apple.spark.operator.SparkUIConfiguration;
 import com.apple.spark.operator.Volume;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import io.dropwizard.Configuration;
+import io.dropwizard.core.Configuration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;

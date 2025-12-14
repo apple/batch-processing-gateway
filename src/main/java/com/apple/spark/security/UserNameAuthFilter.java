@@ -24,8 +24,8 @@ import io.dropwizard.auth.AuthFilter;
 import io.dropwizard.auth.basic.BasicCredentials;
 import java.security.Principal;
 import javax.annotation.Nullable;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.container.ContainerRequestContext;
 
 /**
  * This auth filter accepts a header that contains the user, and uses that for basic authentication.
